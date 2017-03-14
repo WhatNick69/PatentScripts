@@ -2,6 +2,7 @@
 using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
+using UnityEngine.AI;
 
 namespace Game {
     /// <summary>
@@ -11,6 +12,7 @@ namespace Game {
     [RequireComponent(typeof(BoxCollider))]
     [RequireComponent(typeof(SphereCollider))]
     [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(NavMeshAgent))]
     public abstract class PlayerAbstract
         : NetworkBehaviour
     {
@@ -22,6 +24,8 @@ namespace Game {
         protected SpriteRenderer _spriteRenderer;
         [SerializeField, Tooltip("Объект-радиус")]
         protected GameObject _radiusOfAttackVisual;
+        [SerializeField, Tooltip("Агент")]
+        private NavMeshAgent _agent;
 
         protected static RuntimeAnimatorController[] _animationsOfPlayerObject; // Анимации юнита
         protected static Camera _mainCamera; // Главная камера
@@ -609,6 +613,8 @@ namespace Game {
             if (Vector3.Distance(gameObject.transform.position,
                 _startPosition) > 0.1f)
             {
+                //Debug.Log("Двигаемся");
+                //_agent.SetDestination(_startPosition);
                 transform.position = 
                     Vector3.MoveTowards(transform.position, _startPosition, _multiple);
             }

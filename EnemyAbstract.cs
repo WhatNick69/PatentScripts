@@ -10,6 +10,7 @@ namespace Game {
     /// Описывает основное поведение врага
     /// </summary>
     /// v1.01
+    [RequireComponent(typeof(NavMeshAgent))]
     public abstract class EnemyAbstract
         : NetworkBehaviour
     {
