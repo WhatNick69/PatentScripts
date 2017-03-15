@@ -64,7 +64,8 @@ namespace Game
 
             mask.value = 1 << 8; // convert mask to bit-system
 
-            _distance = gameObject.GetComponent<SphereCollider>().radius / 3.33f;
+            _distance = gameObject.GetComponent<SphereCollider>().radius / 4f;
+            transform.localEulerAngles = Vector3.zero;
             CheckRoad();
         }
 
@@ -77,7 +78,7 @@ namespace Game
             Debug.Log(gameObject.name + " загружен!");
             for (int i = 0; i < 360; i++)
             {
-                ray = new Ray(transform.position, transform.up);
+                ray = new Ray(transform.position, transform.forward);
 
                 if (Physics.Raycast(ray, out hit, _distance, mask))
                 {
@@ -86,7 +87,7 @@ namespace Game
                         _euler.Add(debI);
                     }
                 }
-                transform.Rotate(new Vector3(0, 0, 1));
+                transform.Rotate(new Vector3(0, 1, 0));
 
                 debI++;
             }
@@ -144,7 +145,7 @@ namespace Game
         private void PlantMine()
         {
             _currrentSide = _euler[randomer.Next(0, _euler.Count)]; // random element from list
-            transform.localEulerAngles = new Vector3(0, 0, _currrentSide); // rotates the gameObject
+            transform.localEulerAngles = new Vector3(0, _currrentSide, 0); // rotates the gameObject
             _mine.transform.rotation = gameObject.transform.rotation; // set rotate from GO to the mine
             _mine.transform.position = transform.position;
             _mine.GetComponent<Mine>().setDistance(_distance - (float)randomer.NextDouble()); // set distance

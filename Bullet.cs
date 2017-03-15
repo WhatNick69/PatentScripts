@@ -10,12 +10,18 @@ namespace Game
     public class Bullet
         : Cluster
     {
-        public GameObject _attackedObject;
-        public float _dmgBullet; // bullet damage
-        public float _accuracy; // bullet accuracy
-        public float _lifeTime; // bullet life
-        public float _speed; // bullet speed
-        protected static System.Random rnd = new System.Random();
+        [SerializeField, Tooltip("Атакуемый объект")]
+        protected GameObject _attackedObject;
+        [SerializeField, Tooltip("Пушка-родитель")]
+        protected GameObject _parentObject;
+        [SerializeField, Tooltip("Урон он снаряда")]
+        protected float _dmgBullet; // bullet damage
+        [SerializeField, Tooltip("Аккуратность полета снаряда")]
+        protected float _accuracy; // bullet accuracy
+        [SerializeField, Tooltip("Время жизни снаряда")]
+        protected float _lifeTime; // bullet life
+        [SerializeField, Tooltip("Скорость снаряда")]
+        protected float _speed; // bullet speed
         protected Vector3 _speedVec;
 
         /// <summary>
@@ -28,8 +34,9 @@ namespace Game
             _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy,0 , _speed);
         }
 
-        public void setAttackedObject(GameObject aO)
+        public void setAttackedObject(GameObject parent,GameObject aO)
         {
+            _parentObject = parent;
             _attackedObject = aO;
         }
 
@@ -37,7 +44,7 @@ namespace Game
         /// Set starting properties
         /// </summary>
         /// v1.01
-        void OnTriggerEnter(Collider col)
+        protected new void OnTriggerEnter(Collider col)
         {
             if (col.gameObject.tag == "Enemy" 
                 && col.gameObject.GetComponent<EnemyAbstract>().IsAlive)
@@ -46,6 +53,7 @@ namespace Game
                 if (col.gameObject.GetComponent<EnemyAbstract>().EnemyDamage(_dmgBullet) != 0
                         && _countOfPenetrations > 0)
                 {
+                    Debug.Log("Снижено");
                     _countOfPenetrations--;
   
                 }
@@ -56,10 +64,12 @@ namespace Game
                         _cluster.transform.position = transform.position;
                         Instantiate(_cluster);
                         Destroy(gameObject);
+                        _parentObject.GetComponent<PlayerAbstract>().RestartValues();
                     }
                     else
                     {
                         Destroy(gameObject);
+                        _parentObject.GetComponent<PlayerAbstract>().RestartValues();
                     }
                 }
             }

@@ -13,9 +13,12 @@ namespace Game
     {
         private EnemyAbstract _enemyAbstract;
 
-        public override void OnStartServer()
+        public override void Start()
         {
-            _enemyAbstract = _attackedObject.GetComponent<EnemyAbstract>();
+            if (_attackedObject != null)
+                _enemyAbstract = _attackedObject.GetComponent<EnemyAbstract>();
+            Destroy(gameObject, _lifeTime);
+            _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
         }
 
         /// <summary>
@@ -27,7 +30,7 @@ namespace Game
             {
                 if (_enemyAbstract.IsAlive)
                 {
-                    transform.LookAt(_attackedObject.transform.position + new Vector3(0,0, 0.3f));
+                    transform.LookAt(_attackedObject.transform.position);
                 }
             }
             gameObject.transform.Translate(_speedVec * Time.deltaTime);

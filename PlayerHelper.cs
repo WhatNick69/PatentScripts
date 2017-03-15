@@ -154,7 +154,8 @@ namespace Game
         {
             pos.y = 0;
             GameObject objectForInstantiate = Instantiate(units[currentUnit],pos,Quaternion.Euler(90,0,0));
-            objectForInstantiate.name = "P"+_numberOfUnits;
+            objectForInstantiate.name = "Player#Cost"+
+                objectForInstantiate.GetComponent<PlayerAbstract>().Cost+"#"+_numberOfUnits;
             _numberOfUnits++;
             NetworkServer.Spawn(objectForInstantiate);
         }

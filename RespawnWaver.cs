@@ -226,7 +226,7 @@ namespace Game
         void Instansing()
         {
             GameObject clone = GameObject.Instantiate(_currentEnemy);
-            clone.name = "E"+_numberOfEnemies;
+            clone.name = "Enemy#Power"+clone.GetComponent<EnemyAbstract>().GetPower()+"#"+_numberOfEnemies;
             _numberOfEnemies++;
             NetworkServer.Spawn(clone);
 

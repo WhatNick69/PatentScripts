@@ -790,15 +790,15 @@ namespace Game {
         {
             _timer += Time.deltaTime;
             if (_timer < _restartTimer - 1f)
-            {
-               
-                if (Vector3.Distance(transform.position,_randomPosition) <0.01f)
+            {   
+                if (Vector3.Distance(transform.position,_randomPosition) <0.05f)
                 {
                     _animatorOfPlayer.runtimeAnimatorController
                     = _animationsOfPlayerObject[5];
                 }    
                 else
                 {
+                    Mover();
                     _agent.SetDestination(_randomPosition);
                 }
             }
@@ -929,8 +929,11 @@ namespace Game {
 
             if (gameObject.tag == "Player")
             {
-                _animatorOfPlayer.runtimeAnimatorController
-                     = _animationsOfPlayerObject[5];
+                if (_animatorOfPlayer != null)
+                {
+                    _animatorOfPlayer.runtimeAnimatorController
+                         = _animationsOfPlayerObject[5];
+                }
             }
         }
 
@@ -950,6 +953,8 @@ namespace Game {
         public void SetSizeOfUnitVisibleRadius(float _side)
         {
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
+            float temp = _side / 4;
+            _radiusOfAttackVisual.transform.GetComponent<SphereCollider>().radius /= temp;
         }
 
         #region Корутины

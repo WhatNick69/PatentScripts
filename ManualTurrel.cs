@@ -27,13 +27,14 @@ namespace Game
         /// </summary>
         void LookAter()
         {
+            if (!_isAlive) return;
             mouse = Input.mousePosition;
             if (_mainCamera == null)
             {
                 SetCamera();
             }
             Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
-            target.y = 0.5f;
+            target.y = 0;
             transform.LookAt(target);
         }
 
@@ -47,7 +48,7 @@ namespace Game
             {
                 if (_coroutineReload)
                 {
-                    if (Input.GetMouseButton(0))
+                    if (Input.GetMouseButton(1))
                     {
                         AttackAnim();
                     }

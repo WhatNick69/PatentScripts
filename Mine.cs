@@ -30,9 +30,9 @@ namespace Game
         {
             _angle = rnd.Next(720, 1480);
             _smooth = rnd.NextDouble() * 10;
-            _quar = Quaternion.Euler(0, 0, _angle);
+            _quar = Quaternion.Euler(0, _angle, 0);
             _startPosition = transform.position;
-            _speedVec = new Vector3(0, _speedOfPlanting, 0);
+            _speedVec = new Vector3(0, 0, _speedOfPlanting);
         }
 
         /// <summary>

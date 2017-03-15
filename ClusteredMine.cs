@@ -21,7 +21,7 @@ namespace Game
         /// </summary>
         void Start()
         {
-            _speedVector = new Vector3(0, _speed, 0);
+            _speedVector = new Vector3(0, 0, _speed);
             _clustering = gameObject.transform.GetChild(0).gameObject;
             _clustering.transform.position = transform.position;
             _angle = 360 / _countOfClusterings;
@@ -30,7 +30,7 @@ namespace Game
             {
                 GameObject _newClustering = 
                     Instantiate(_clustering, transform.position, Quaternion.identity) as GameObject;
-                _newClustering.transform.Rotate(0, 0, _angle * i);
+                _newClustering.transform.Rotate(0, _angle * i,0 );
                 _newClustering.transform.parent = gameObject.transform;
                 Destroy(gameObject, _timerToDestroy);
             }
