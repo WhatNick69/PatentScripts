@@ -123,15 +123,11 @@ namespace Game
                     _attackedObject.transform.position + _enemyPoint) < _sideCof)
                 {
                     _cofForChangeAnim = _cofForRest;
-                    _multiple = 0.1f;
                     _isStoppingWalkFight = true;
                 }
                 else
                 {
-                    ChangeEnemy();
-                    transform.position =
-                        Vector3.MoveTowards(transform.position,
-                            _attackedObject.transform.position + _enemyPoint, _multiple);
+                    _agent.SetDestination(_enemyPoint + AttackedObject.transform.position);
                 }
             }
             else
@@ -150,7 +146,6 @@ namespace Game
                     NullAttackedObject();
                     _isStoppingWalkFight = false;
                 }
-                _multiple = 0.01f;
             }
         }
     }

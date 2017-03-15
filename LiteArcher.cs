@@ -42,8 +42,6 @@ namespace Game
         /// <param name="col"></param>
         public new void OnCollisionEnter(Collision col)
         {
-            // FOR AVOID_MODULE
-            // checkSideOfCollision(col);
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
@@ -64,7 +62,6 @@ namespace Game
                         col.gameObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
                     }
                 }
-                _multiple = 0.01f;
                 _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
                 _canRandomWalk = false;
                 _cofForChangeAnim = _cofForFight;
@@ -141,24 +138,20 @@ namespace Game
                     _attackedObject.transform.position + _enemyPoint) < _sideCof)
                 {
                     _cofForChangeAnim = _cofForRest;
-                    _multiple = 0.01f;
                     _isStoppingWalkFight = true;
                 }
                 
                 else
                 {
-                    ChangeEnemy();
-                    transform.position =
-                        Vector3.MoveTowards(transform.position,
-                            _attackedObject.transform.position + _enemyPoint, _multiple);
+                    _agent.SetDestination(_enemyPoint + AttackedObject.transform.position);
                 }
             }
             else 
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position
-                                + _enemyPoint) < _sideCof * 2)
+                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2 )
                 {
+                    _toHitToEnemy = true;
                     _animatorOfPlayer.runtimeAnimatorController
                         = _animationsOfPlayerObject[0];
                 }

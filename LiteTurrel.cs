@@ -58,6 +58,7 @@ namespace Game {
         /// v1.01
         new void Start()
         {
+            transform.localEulerAngles = Vector3.zero;
             Application.runInBackground = true;
             _points = new bool[4];
             _minDistance = 1000;
@@ -181,9 +182,10 @@ namespace Game {
             if (_attackedObject != null)
             {
                 Debug.DrawLine(gameObject.transform.position,
-                    _attackedObject.transform.position + new Vector3(0, 0, 0.3f), Color.blue);
-
-                transform.LookAt(_attackedObject.transform.position + new Vector3(0, 0, 0.3f));
+                    _attackedObject.transform.position, Color.blue);
+                _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x, 
+                    0, _attackedObject.transform.position.z);
+                transform.LookAt(_attackedObject.transform.position);
                 if (!_attackedObject.GetComponent<EnemyAbstract>().IsAlive)
                 {
                     NullAttackedObject();
@@ -228,7 +230,6 @@ namespace Game {
             _attackedObject = null;
             _isFighting = false;
             _animatorOfPlayer.speed = 1;
-            _multiple = 1f;
             ChangeValues(true, true, true, true);
         }
 
@@ -286,7 +287,7 @@ namespace Game {
 
         private new void FixedUpdate()
         {
-            return;
+            if (_isAlive) ChangeEnemy();
         }
     }
 }

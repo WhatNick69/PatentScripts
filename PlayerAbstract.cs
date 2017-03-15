@@ -24,14 +24,15 @@ namespace Game {
         protected SpriteRenderer _spriteRenderer;
         [SerializeField, Tooltip("Объект-радиус")]
         protected GameObject _radiusOfAttackVisual;
-        [SerializeField, Tooltip("Агент")]
-        private NavMeshAgent _agent;
+        [SerializeField, Tooltip("Компонент-агент")]
+        protected NavMeshAgent _agent;
 
         protected static RuntimeAnimatorController[] _animationsOfPlayerObject; // Анимации юнита
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
-        protected List<GameObject> _enemyList; // Лист противников
+        protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
+        [SerializeField, Tooltip("Компонент-агент")]
         protected GameObject _attackedObject; // Цель юнита для атаки
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
@@ -57,11 +58,11 @@ namespace Game {
         protected byte _maxCountOfAttackers;  
         protected float _hpTurrelTemp; // Жизни юнита для статической туррели
         protected float _maxEdge;
+        protected Color _startColor;
 
         // ЗНАЧЕНИЯ ДЛЯ АТАКУЕМОЙ ПОЗИЦИИ
         protected byte _point;
-        protected float _multiple;
-        protected const float _sideCof = 0.25f;
+        protected const float _sideCof = 0.3f;
         protected Vector3 _enemyPoint;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ ЮНИТА
@@ -72,7 +73,7 @@ namespace Game {
         protected bool _isReturning; // reduce count of returtings
         protected bool _isStoppingWalkFight;
         protected bool _isCanon;
-        protected bool _isMayToAvoid;
+        protected bool _toHitToEnemy;
 
         // ПЕРЕМЕННЫЕ ДЛЯ СМЕНЫ АНИМАЦИИ ПРИ ДВИЖЕНИИ
         protected bool _animFlag1;
@@ -97,6 +98,7 @@ namespace Game {
         protected bool _canRandomWalk; // Можно ли отдыхать?
         protected int _startDmg; // Промежуточный урон юнита
         protected float _timer; // Таймер на отдых
+        [SerializeField]
         protected float _restartTimer; // Рестарт-таймер на отдых
         protected Vector3 _randomPosition; // Случайная позиция во время отдыха
 
@@ -221,9 +223,7 @@ namespace Game {
             {
                 _maxEdge *= 2;
             }
-            _isMayToAvoid = false;
-
-            _enemyList = new List<GameObject>();
+            _startColor = _spriteRenderer.color;
             _isStoppingWalkFight = false;
             _isAlive = true;
             _moveBack = false;
@@ -250,7 +250,19 @@ namespace Game {
         {
             if (_isAlive)
             {
-                Mover();
+                if (!_toHitToEnemy)
+                {
+                    Mover();
+                }
+                else if (_attackedObject != null
+                    && !_isStoppingWalkFight)
+                {
+                    if (Vector3.Distance(gameObject.transform.position,
+                        (_attackedObject.transform.position + _enemyPoint)) >= _sideCof)
+                    {
+                        ChangeEnemy();
+                    }
+                }
             }
         }
 
@@ -265,32 +277,29 @@ namespace Game {
             }
             if (_isAlive)
             {
-                if (!_isMayToAvoid)
+                if (_attackedObject != null
+                    && _isFighting
+                        && _attackedObject.GetComponent<EnemyAbstract>().
+                            IsAlive)
                 {
-                    if (_attackedObject != null
-                        && _isFighting
-                            && _attackedObject.GetComponent<EnemyAbstract>().
-                                IsAlive)
+                    AttackAnim();
+                }
+                else if (_isFighting
+                    && _attackedObject == null
+                        || _isFighting
+                            && !_attackedObject.GetComponent<EnemyAbstract>().
+                                IsAlive || _moveBack)
+                {
+                    MoveToBack();
+                }
+                else if (_canRandomWalk)
+                {
+                    if (_canToChangeCofForChangeAnim)
                     {
-                        AttackAnim();
+                        ChangeCofForAnim();
                     }
-                    else if (_isFighting
-                        && _attackedObject == null
-                            || _isFighting
-                                && !_attackedObject.GetComponent<EnemyAbstract>().
-                                    IsAlive || _moveBack)
-                    {
-                        MoveToBack();
-                    }
-                    else if (_canRandomWalk)
-                    {
-                        if (_canToChangeCofForChangeAnim)
-                        {
-                            ChangeCofForAnim();
-                        }
 
-                        RandomWalker();
-                    }
+                    RandomWalker();
                 }
             }
             else
@@ -319,7 +328,6 @@ namespace Game {
 
                     col.gameObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
                 }
-                _multiple = 0.01f;
                 _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
                 CalculatePoint(_point);
                 _canRandomWalk = false;
@@ -342,6 +350,7 @@ namespace Game {
         /// <returns></returns>
         public bool ChangeEnemy()
         {
+            Debug.Log("Пытаемся сменить противника");
             _changeEnemyFlag = false;
             if (_isAlive)
             {
@@ -480,6 +489,7 @@ namespace Game {
             Timing.RunCoroutine(DamageAnimation());
             if (_hpTurrel <= 0)
             {
+                _agent.enabled = false;
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
@@ -554,10 +564,13 @@ namespace Game {
             {
                 RpcRandomHit();
                 _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(gameObject, _playerDmg);
+                _toHitToEnemy = false;
+                Debug.Log("удар");
             }
             else
             {
                 NullAttackedObject();
+                _toHitToEnemy = false;
             }
         }
 
@@ -613,10 +626,7 @@ namespace Game {
             if (Vector3.Distance(gameObject.transform.position,
                 _startPosition) > 0.1f)
             {
-                //Debug.Log("Двигаемся");
-                //_agent.SetDestination(_startPosition);
-                transform.position = 
-                    Vector3.MoveTowards(transform.position, _startPosition, _multiple);
+                _agent.SetDestination(_startPosition);
             }
             else if (Vector3.Distance(gameObject.transform.position,
                 _startPosition) <= 0.1f)
@@ -668,21 +678,15 @@ namespace Game {
             else if (_attackedObject != null
                 && !_isStoppingWalkFight)
             {
-
                 if (Vector3.Distance(gameObject.transform.position,
-                    _attackedObject.transform.position + _enemyPoint) < _sideCof)
+                    (_attackedObject.transform.position+_enemyPoint)) < _sideCof)
                 {
                     _cofForChangeAnim = _cofForRest;
-                    _multiple = 0.01f;
                     _isStoppingWalkFight = true;
                 }
                 else
                 {
-                    ChangeEnemy();
-                    
-                    transform.position = 
-                        Vector3.MoveTowards(transform.position, 
-                            _attackedObject.transform.position + _enemyPoint, _multiple);
+                    _agent.SetDestination(_enemyPoint + AttackedObject.transform.position);
                 }
             }
 
@@ -691,16 +695,19 @@ namespace Game {
             else
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2)
+                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
+                                && !_toHitToEnemy)
                 {
+                    _toHitToEnemy = true;
+                    Debug.Log("Взмах");
                     _animatorOfPlayer.runtimeAnimatorController
                         = _animationsOfPlayerObject[0];
+
                 }
                 else
                 {
                     _isStoppingWalkFight = false;
                 }
-                _multiple = 0.01f;
             }
         }
 
@@ -710,6 +717,7 @@ namespace Game {
         /// v1.01
         public virtual void NullAttackedObject()
         {
+            _toHitToEnemy = false;
             _isStoppingWalkFight = false;
             try
             {
@@ -728,7 +736,6 @@ namespace Game {
             _canRandomWalk = true;
             _canToChangeCofForChangeAnim = true;
 
-            _multiple = 0.01f;
             _cofForChangeAnim = _cofForRest;
             ChangeValues(true, true, true, true);
             ChangeEnemy();
@@ -769,7 +776,7 @@ namespace Game {
         public void ToMoveBack()
         {
             _moveBack = true;
-            CalculateAndCheckMultiple(_startPosition);
+            _toHitToEnemy = false;
         }
 
         /// <summary>
@@ -789,14 +796,16 @@ namespace Game {
             _timer += Time.deltaTime;
             if (_timer < _restartTimer - 1f)
             {
-                transform.position =
-                    Vector3.MoveTowards(transform.position,
-                        _randomPosition, _multiple);
-                if (transform.position == _randomPosition)
+               
+                if (Vector3.Distance(transform.position,_randomPosition) <0.01f)
                 {
                     _animatorOfPlayer.runtimeAnimatorController
                     = _animationsOfPlayerObject[5];
-                }     
+                }    
+                else
+                {
+                    _agent.SetDestination(_randomPosition);
+                }
             }
             else if (_timer < _restartTimer
                 && _timer > _restartTimer - 1f)
@@ -828,7 +837,6 @@ namespace Game {
         public void ChangeCofForAnim()
         {
             _cofForChangeAnim = _cofForRest;
-            _isMayToAvoid = false;
             _canToChangeCofForChangeAnim = false;
         }
 
@@ -867,17 +875,17 @@ namespace Game {
             }
             else if (!_points[1])
             {
-                return new Vector3(gameObject.transform.position.x,0,
+                return new Vector3(gameObject.transform.position.x, 0,
                     gameObject.transform.position.z - 0.5f);
             }
             else if (!_points[2])
             {
-                return new Vector3(gameObject.transform.position.x - 0.5f,0,
+                return new Vector3(gameObject.transform.position.x - 0.5f, 0,
                     gameObject.transform.position.z);
             }
             else if (!_points[3])
             {
-                return new Vector3(gameObject.transform.position.x,0,
+                return new Vector3(gameObject.transform.position.x, 0,
                     gameObject.transform.position.z + 0.5f);
             }
             else
@@ -950,19 +958,6 @@ namespace Game {
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
         }
 
-        /// <summary>
-        /// Проверить границы скорости движения юнита
-        /// </summary>
-        void CalculateAndCheckMultiple(Vector3 _pos)
-        {
-            _multiple = Vector3.Distance(transform.position,
-                _pos) * Time.deltaTime;
-            if (_multiple > 0.01f)
-            {
-                _multiple = 0.01f;
-            }
-        }
-
         #region Корутины
         /// <summary>
         /// Корутин на изменение цвета юнита при получении урона
@@ -972,7 +967,7 @@ namespace Game {
         {
             CmdChangeColor(Color.red);
             yield return Timing.WaitForSeconds(0.2f);
-            CmdChangeColor(Color.white);
+            CmdChangeColor(_startColor);
         }
 
         /// <summary>
@@ -1045,7 +1040,6 @@ namespace Game {
             _randomPosition
                 = new Vector3(_startPosition.x + (float)randomer.NextDouble() / 2 - 0.3f, 0,
                     _startPosition.z + (float)randomer.NextDouble() / 2 - 0.3f);
-            CalculateAndCheckMultiple(_randomPosition);
             _timer = 0;
             _restartTimer = (float)randomer.NextDouble() + randomer.Next(2, 3);
         }

@@ -20,6 +20,7 @@ namespace Game {
         protected bool[] _points; // enemy's points for player
         public string _path; // track path
         protected static RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
+        [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfEnemy; // current animation of enemy
 
         // main variables of enemy
@@ -46,7 +47,7 @@ namespace Game {
 
         // points values
         protected byte _point; // bool-point of player
-        protected const float _sideCof = 0.3f; // point side coefficient
+        protected const float _sideCof = 0.25f; // point side coefficient
         protected float _multiple; // multiplier for moving of enemy
         protected Vector3 _playerPoint; // point, which should be placed by enemy
 
@@ -153,15 +154,12 @@ namespace Game {
                 _animFlag3 = true;
                 _animFlag4 = true;
                 _startDmg = _dmg;
-                _animatorOfEnemy =
-                    gameObject.GetComponent<Animator>();
                 _startColor = _spriteRenderer.color;
                 _power = _hp * _dmg;
                 StartMethod();
                 transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
             }
         }
-
 
         /// <summary>
         /// Стартовый метод. Еще один
@@ -170,6 +168,7 @@ namespace Game {
         public void StartMethod()
         {
             _walkSpeed = (float)randomer.NextDouble() + 0.5f;
+            _agent.speed = _walkSpeed;
             _animatorOfEnemy.speed = _walkSpeed * 2;
             _cofForChangeAnim = 0.3f;
             _animationsOfEnemy =
@@ -198,8 +197,7 @@ namespace Game {
             {
                 if (_walkSpeed != 0)
                 {
-                    _walkSpeed = 0;
-                    transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
+                    transform.StopFollowing();
                     _animatorOfEnemy.runtimeAnimatorController
                         = _animationsOfEnemy[2];
                 }
@@ -229,6 +227,7 @@ namespace Game {
                         && _attackedObject == null
                             && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition())
             {
+                _agent.enabled = true;
                 _multiple = 0.01f;
                 _attackedObject = col.gameObject;
                 _attackFlag = true;
@@ -363,8 +362,7 @@ namespace Game {
                     if (!_isStopingOnWay || _walkSpeed != 0)
                     {
                         _agentSpeed = _walkSpeed;
-                        _walkSpeed = 0;
-                        transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
+                        transform.StopFollowing();
                         _isStopingOnWay = true;
                     }
                     if (_attackedObject != null)
@@ -417,28 +415,20 @@ namespace Game {
             {
                 
                 if (Vector3.Distance(gameObject.transform.position,
-                    _attackedObject.transform.position + _playerPoint) < _sideCof)
+                    _attackedObject.transform.position+_playerPoint) < _sideCof)
                 {
                     _cofForChangeAnim = 0.3f;
                     _multiple = 0.01f;
                     _isStoppingWalkFight = true;
-                    transform.localEulerAngles = new Vector2(90, 0);
                     _agent.enabled = false;
+                    Debug.Log("Агент выключен");
                 }
                 else
                 {
-                    try
+                    if (_agent.enabled)
                     {
-                        if (_agent.enabled == false)
-                        {
-                            _agent.enabled = true;
-                            _agent.speed = _agentSpeed;
-                        }
-
-                        _agent.SetDestination(_playerPoint+AttackedObject.transform.position);
-                        transform.localEulerAngles = new Vector2(90, 0); // КОСТЫЛЬ
+                        _agent.SetDestination(_playerPoint + AttackedObject.transform.position);
                     }
-                    catch { }
                 }
             }
             else
@@ -451,6 +441,7 @@ namespace Game {
                 }
                 else
                 {
+                    _agent.enabled = true;
                     _isStoppingWalkFight = false;
                 }
             }
@@ -558,6 +549,7 @@ namespace Game {
         /// </summary>
         public void NullAttackedObject()
         {
+            _agent.enabled = false;
             _isStoppingWalkFight = false;
             _multiple = 0.01f;
             _animatorOfEnemy.runtimeAnimatorController
@@ -596,7 +588,6 @@ namespace Game {
         /// </summary>
         public void ToGo()
         {
-            _walkSpeed = (float)randomer.NextDouble() + 0.5f;
             _animatorOfEnemy.speed = _walkSpeed*2;
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
@@ -693,7 +684,6 @@ namespace Game {
         /// </summary>
         public void GoEnemyMoving()
         {
-            _walkSpeed = (float)randomer.NextDouble() + 0.5f;
             _animatorOfEnemy.speed = _walkSpeed*2;
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
@@ -704,8 +694,7 @@ namespace Game {
         /// </summary>
         public void StopEnemyMoving()
         {
-            _walkSpeed = 0;
-            transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
+            transform.StopFollowing();
         }
 
         /// <summary>
