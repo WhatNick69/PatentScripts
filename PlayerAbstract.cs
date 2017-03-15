@@ -194,7 +194,6 @@ namespace Game {
         public void StartMethod()
         {
             SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
-            Debug.Log(gameObject.name + " загружен!");
             _animationsOfPlayerObject
                 = Resources.LoadAll<RuntimeAnimatorController>("Animators");
             if (_isTurrel)
@@ -250,7 +249,7 @@ namespace Game {
         {
             if (_isAlive)
             {
-                if (!_toHitToEnemy)
+                if (!_toHitToEnemy || _moveBack)
                 {
                     Mover();
                 }
@@ -323,10 +322,12 @@ namespace Game {
             {
                 if (!ChangeEnemy())
                 {
+
                     _attackedObject = col.gameObject;
                     AddToList(_attackedObject); // adding to list
 
                     col.gameObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
+                    //Debug.Log(_attackedObject.name + " => " + gameObject.name);
                 }
                 _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
                 CalculatePoint(_point);
@@ -350,7 +351,6 @@ namespace Game {
         /// <returns></returns>
         public bool ChangeEnemy()
         {
-            Debug.Log("Пытаемся сменить противника");
             _changeEnemyFlag = false;
             if (_isAlive)
             {
@@ -565,7 +565,6 @@ namespace Game {
                 RpcRandomHit();
                 _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(gameObject, _playerDmg);
                 _toHitToEnemy = false;
-                Debug.Log("удар");
             }
             else
             {
@@ -633,7 +632,7 @@ namespace Game {
             {
                 _animatorOfPlayer.runtimeAnimatorController
                     = _animationsOfPlayerObject[5];
-                _moveBack = false;
+                _moveBack = false; 
                 NullAttackedObject();
                 _isReturning = false;
             }
@@ -664,9 +663,9 @@ namespace Game {
                         gameObject.transform.position.z > _startPosition.z + _maxEdge ||
                             gameObject.transform.position.z < _startPosition.z - _maxEdge)
             {
-                Debug.Log(gameObject.name + " " + "Превышен лимит. Обнуляемся");
                 RemoveFromList(_attackedObject);
                 _isReturning = true;
+                //Debug.Log(_attackedObject.name + " понижен и обнулен, т.к " + gameObject.name + " превысил границы");
                 Decreaser();
                 NullAttackedObject();
             }
@@ -695,14 +694,10 @@ namespace Game {
             else
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
-                                && !_toHitToEnemy)
+                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2)
                 {
-                    _toHitToEnemy = true;
-                    Debug.Log("Взмах");
                     _animatorOfPlayer.runtimeAnimatorController
                         = _animationsOfPlayerObject[0];
-
                 }
                 else
                 {
@@ -762,8 +757,8 @@ namespace Game {
             if (!_isStoppingWalkFight)
             {
                 Decreaser();
-                Debug.Log("PLAYER SET");
                 _attackedObject = obj;
+                //Debug.Log("(SET) " + _attackedObject.name + " => " + gameObject.name);
                 obj.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
                 _isFighting = true;
             }
@@ -827,6 +822,7 @@ namespace Game {
         {
             if (!_moveBack && _canToNull)
             {
+                //Debug.Log(_attackedObject.name + " обнулен, т.к " + gameObject.name + " перезагружен");
                 NullAttackedObject();
             }
         }
@@ -925,13 +921,11 @@ namespace Game {
         /// <summary>
         /// Обнулить атакуемый объект
         /// </summary>
-        public void NullObject()
+        public void RestartValues()
         {
             _minDistance = float.MaxValue;
             _minPower = 0;
             _minSpeed = -1;
-
-            _attackedObject = null;
 
             if (gameObject.tag == "Player")
             {

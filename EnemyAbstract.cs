@@ -234,6 +234,7 @@ namespace Game {
                 _point = _attackedObject.GetComponent<PlayerAbstract>().SwitchPoint();
                 CalculatePoint(_point);
                 _attackedObject.GetComponent<PlayerAbstract>().IncreaseCountOfTurrelFighters(gameObject);
+                //Debug.Log(_attackedObject.name + " => " + gameObject.name);
             }
         }
 
@@ -253,7 +254,7 @@ namespace Game {
         [Client]
         public void RpcClientDeath()
         {
-            Debug.Log("Сервер вызвал!");
+            //Debug.Log(gameObject.name + " погиб");
             Destroy(gameObject);
         }
 
@@ -292,6 +293,7 @@ namespace Game {
         public void DecreaseCountOfTurrelFighters(GameObject _obj)
         {
             if (_countOfAttackers >= 1) _countOfAttackers--;
+            //Debug.Log("Количество снижено, у " + gameObject.name);
         }
 
         /// <summary>
@@ -421,7 +423,6 @@ namespace Game {
                     _multiple = 0.01f;
                     _isStoppingWalkFight = true;
                     _agent.enabled = false;
-                    Debug.Log("Агент выключен");
                 }
                 else
                 {
@@ -452,9 +453,9 @@ namespace Game {
         /// </summary>
         public void SetPlayerOfEnemy(GameObject obj)
         {
-            Decreaser();
-            Debug.Log("ENEMY SET");
+            Decreaser();       
             _attackedObject = obj;
+            //Debug.Log("(SET) " + _attackedObject.name + " => " + gameObject.name);
             _attackFlag = true;
             obj.GetComponent<PlayerAbstract>().IncreaseCountOfTurrelFighters(gameObject);
         }
@@ -578,7 +579,7 @@ namespace Game {
                 _pA.DecreaseCountOfTurrelFighters(gameObject);
                 _pA.ToMoveBack();
                 _pA.ChangeCanToNull();
-                _pA.NullObject(); // increase level AI
+                _pA.RestartValues(); // increase AI
                 _pA.ChangeEnemy(); // changing enemy, if it haves
             }
         }

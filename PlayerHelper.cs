@@ -21,6 +21,20 @@ namespace Game
         private LayerMask _playerLayer;
         public bool _isRadiusVisible;
         public GameObject _tempRadiusGameObject;
+        private static int _numberOfUnits;
+
+        public static int NumberOfUnits
+        {
+            get
+            {
+                return _numberOfUnits;
+            }
+
+            set
+            {
+                _numberOfUnits = value;
+            }
+        }
 
         /// <summary>
         /// Начальный метод
@@ -47,7 +61,6 @@ namespace Game
 
                 if (_money - units[currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
                 {
-                    Debug.Log(units[currentUnit].GetComponent<PlayerAbstract>().IsDynamic);
                     if (units[currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _roadLayer))
                     {
@@ -141,6 +154,8 @@ namespace Game
         {
             pos.y = 0;
             GameObject objectForInstantiate = Instantiate(units[currentUnit],pos,Quaternion.Euler(90,0,0));
+            objectForInstantiate.name = "P"+_numberOfUnits;
+            _numberOfUnits++;
             NetworkServer.Spawn(objectForInstantiate);
         }
     }

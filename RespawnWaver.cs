@@ -48,7 +48,21 @@ namespace Game
         public float _respawnTime; // time for respawn an enemy
         public float _tempRespawnTime;
         public float _waveTime; // time for respawn an enemy
+        private static int _numberOfEnemies;
         private System.Random rnd = new System.Random(); // random
+
+        public static int NumberOfEnemies
+        {
+            get
+            {
+                return _numberOfEnemies;
+            }
+
+            set
+            {
+                _numberOfEnemies = value;
+            }
+        }
 
         /// <summary>
         /// Starting of respawner 
@@ -157,8 +171,6 @@ namespace Game
             _waves++;
             Array.Copy(_tempEnemyCountLevels, _enemyCountLevels,
                 _tempEnemyCountLevels.Length);
-
-            Debug.Log("Сменили позиции");
         }
 
         /// <summary>
@@ -214,6 +226,8 @@ namespace Game
         void Instansing()
         {
             GameObject clone = GameObject.Instantiate(_currentEnemy);
+            clone.name = "E"+_numberOfEnemies;
+            _numberOfEnemies++;
             NetworkServer.Spawn(clone);
 
             _enemyCountLevels[_instEnemy]--;
