@@ -211,6 +211,8 @@ namespace Game {
         /// </summary>
         public void Start()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             _points = new bool[4];
             _maskCursor = 1 << 9;
             for (byte i = 0; i < _points.Length; i++)
@@ -247,21 +249,27 @@ namespace Game {
         /// </summary>
         public virtual void FixedUpdate()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive)
             {
+                ChangeEnemy();
                 if (!_toHitToEnemy || _moveBack)
                 {
                     Mover();
                 }
+
+                // Может, еще и пригодится, если не будет работать правильно
+                /*
                 else if (_attackedObject != null
                     && !_isStoppingWalkFight)
                 {
                     if (Vector3.Distance(gameObject.transform.position,
                         (_attackedObject.transform.position + _enemyPoint)) >= _sideCof)
                     {
-                        ChangeEnemy();
+
                     }
-                }
+                }*/
             }
         }
 
@@ -270,10 +278,6 @@ namespace Game {
         /// </summary>
         public void AliveUpdater()
         {
-            if (!isServer)
-            {
-                //return;
-            }
             if (_isAlive)
             {
                 if (_attackedObject != null
@@ -317,8 +321,7 @@ namespace Game {
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
                         && _attackedObject == null
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && !_isReturning)
+                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition())
             {
                 if (!ChangeEnemy())
                 {
@@ -758,7 +761,6 @@ namespace Game {
             {
                 Decreaser();
                 _attackedObject = obj;
-                //Debug.Log("(SET) " + _attackedObject.name + " => " + gameObject.name);
                 obj.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
                 _isFighting = true;
             }

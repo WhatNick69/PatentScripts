@@ -104,6 +104,7 @@ namespace Game {
                     _bullet.transform.position = gameObject.transform.position;
                     _bullet.transform.rotation = gameObject.transform.rotation;
                     _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
+
                     Instantiate(_bullet);
                 }
                 else
@@ -113,6 +114,7 @@ namespace Game {
                         _bullet.transform.position = gameObject.transform.position;
                         _bullet.transform.rotation = gameObject.transform.rotation;
                         _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
+
                         _bullet.transform.Rotate(new Vector3(i, 0, 0));
                         Instantiate(_bullet);
                     }

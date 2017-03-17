@@ -32,6 +32,8 @@ namespace Game
         /// </summary>
         void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             AliveUpdater();
             AliveDrawerAndNuller();
         }
@@ -81,6 +83,7 @@ namespace Game
                     + new Vector3(0,0, 0.3f));
                 _bullet.transform.position = _instantier.transform.position;
                 _bullet.transform.rotation = _instantier.transform.rotation;
+                _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
 
                 Instantiate(_bullet);
                 _countOfAmmo--;
@@ -94,6 +97,8 @@ namespace Game
                     _bullet.transform.position = _instantier.transform.position;
                     _bullet.transform.rotation = _instantier.transform.rotation;
                     _bullet.transform.Rotate(new Vector3(i, 0, 0));
+                    _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+
                     if (_countOfAmmo > 0)
                     {
                         Instantiate(_bullet);

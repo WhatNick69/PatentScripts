@@ -135,30 +135,27 @@ namespace Game {
         /// </summary>
         public void Starter()
         {
-            if (isServer)
+            _points = new bool[4];
+            for (byte i = 0; i < _points.Length; i++)
             {
-                _points = new bool[4];
-                for (byte i = 0; i < _points.Length; i++)
-                {
-                    _points[i] = false;
-                }
-
-                _mayDamagedByFire = true;
-                _isStoppingWalkFight = false;
-                _isStopingOnWay = false;
-                _isAlive = true;
-                _oldPosition = transform.position;
-                _attackFlag = false;
-                _animFlag1 = true;
-                _animFlag2 = true;
-                _animFlag3 = true;
-                _animFlag4 = true;
-                _startDmg = _dmg;
-                _startColor = _spriteRenderer.color;
-                _power = _hp * _dmg;
-                StartMethod();
-                transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
+                _points[i] = false;
             }
+
+            _mayDamagedByFire = true;
+            _isStoppingWalkFight = false;
+            _isStopingOnWay = false;
+            _isAlive = true;
+            _oldPosition = transform.position;
+            _attackFlag = false;
+            _animFlag1 = true;
+            _animFlag2 = true;
+            _animFlag3 = true;
+            _animFlag4 = true;
+            _startDmg = _dmg;
+            _startColor = _spriteRenderer.color;
+            _power = _hp * _dmg;
+            StartMethod();
+            transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
 
         /// <summary>
@@ -181,6 +178,8 @@ namespace Game {
         /// v1.01
         public void Start()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             Starter();
         }
 
@@ -189,6 +188,8 @@ namespace Game {
         /// </summary>
         public void Update()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive)
             {
                 CmdAttackShell();
@@ -209,6 +210,8 @@ namespace Game {
         /// </summary>
         private void FixedUpdate()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive)
             {
                 Mover();
@@ -383,7 +386,7 @@ namespace Game {
         }
 
         /// <summary>
-        /// Зов к драке игроку
+        /// Призыв игрока драться
         /// </summary>
         public void CallToFight()
         {
@@ -396,6 +399,7 @@ namespace Game {
                             && _attackedObject.GetComponent<PlayerAbstract>().
                                 AttackedObject.transform.GetComponent<EnemyAbstract>().AttackedObject == null)
                 {
+                    Debug.Log("Подозвал драться");
                     _attackedObject.GetComponent<PlayerAbstract>().SetEnemyOfPlayer(gameObject);
                 }
             }
@@ -479,6 +483,7 @@ namespace Game {
             if (_attackedObject != null
                 && _attackedObject.GetComponent<PlayerAbstract>().IsAlive)
             {
+                CallToFight();
                 RandomHit();
                 _attackedObject.GetComponent<PlayerAbstract>().PlayerDamage(gameObject, _dmg);
             }

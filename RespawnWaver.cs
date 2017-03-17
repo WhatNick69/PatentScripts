@@ -1,12 +1,9 @@
 ﻿using UnityEngine;
 using System;
 using Mr1;
-using System.Runtime.InteropServices;
-using System.Collections;
 using MovementEffects;
 using System.Collections.Generic;
 using UnityEngine.Networking;
-using UnityEngine.Networking.NetworkSystem;
 
 namespace Game
 {
@@ -19,38 +16,50 @@ namespace Game
     public class RespawnWaver
         : NetworkBehaviour
     {
+        #region Переменные
         // pathes, enemies, respawns and count of enemiesLvL
-        public PathData[] _arrayOfPathes; // contains all pathes on level
-        public GameObject[] _allEnemies; // array of all enemy-objects
-        public GameObject[] _respawnPoints; // array of respawnes
-        public double[] _enemyCountLevels; // bumbers of activity enemies
-        public double[] _tempEnemyCountLevels; // bumbers of activity enemies
+        private PathData[] _arrayOfPathes; // Массив путей
+        [SerializeField, Tooltip("Префабы всех врагов")]
+        private GameObject[] _allEnemies; // Массив врагов
+        private GameObject[] _respawnPoints; // Массив респаунов
+        [SerializeField, Tooltip("Массив количества активных врагов")]
+        private double[] _enemyCountLevels; // Массив количества активных врагов
+        [SerializeField, Tooltip("Массив-память количества активных врагов")]
+        private double[] _tempEnemyCountLevels; // Массив-память количества активных врагов
 
         // lenght of enemy-array, path-name and count of null-elements
-        public int _allEnemiesLenght; // lenght of enemies array
-        public string _levelName; // name of current level
-        protected int _nullElem; // count of null elements in an enemy-array
+        private int _allEnemiesLenght; // Длина массивов всех врагов
+        [SerializeField, Tooltip("Название текущего уровня")]
+        private string _levelName; // Название уровня
+        private int _nullElem; // Количество пустых элементов в массиваз
 
         // instanting
-        public byte _instEnemy; // instantied enemy-level number
-        public byte _instRespawn; // instantied respawn number
-        protected GameObject _currentEnemy; // instanted enemy
-        protected bool _coroutineRespawn = true;
+        private byte _instEnemy; // Номер следующего врага для респауна
+        private byte _instRespawn; // Номер респауна для респауна
+        private GameObject _currentEnemy; // Префаб текущего врага
+        private bool _coroutineRespawn = true; // Корутина на респаун
 
         // waves
-        public byte _waves; // count of waves
-        public bool _isWave; // condition of current wave
-        public bool _isMayBeInstanced;
-        public bool _isEndWave;
+        [SerializeField, Tooltip("Количество волн")]
+        private byte _waves; // Количество волн
+        [SerializeField, Tooltip("Идет ли волна?")]
+        private bool _isWave; // Состояние о текущей волне
+        private bool _isMayBeInstanced; // Может ли враг быть инстантирован
+        [SerializeField, Tooltip("Закончилась ли волна?")]
+        private bool _isEndWave; // Состояние об окончании волны
 
         // timers and random
         private float _currentTime; // tik-tak timer for respawn
-        public float _respawnTime; // time for respawn an enemy
-        public float _tempRespawnTime;
-        public float _waveTime; // time for respawn an enemy
+        [SerializeField, Tooltip("Время респауна врага")]
+        private float _respawnTime; // time for respawn an enemy
+        private float _tempRespawnTime;
+        [SerializeField,Tooltip("Время между последующими волнами")]
+        private float _waveTime; // time for respawn an enemy
         private static int _numberOfEnemies;
-        private System.Random rnd = new System.Random(); // random
+        private static System.Random rnd = new System.Random(); // random
+        #endregion
 
+        #region Геттеры и сеттеры
         public static int NumberOfEnemies
         {
             get
@@ -64,14 +73,28 @@ namespace Game
             }
         }
 
+        public string LevelName
+        {
+            get
+            {
+                return _levelName;
+            }
+
+            set
+            {
+                _levelName = value;
+            }
+        }
+        #endregion
+
         /// <summary>
-        /// Starting of respawner 
+        /// Стартовый метод
         /// </summary>
         /// v1.01
-        void Start()
+        private void Start()
         {
-            _levelName = "TestLevel";
             Application.runInBackground = true;
+            _levelName = "TestLevel";
             _isEndWave = false;
             _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
             _tempRespawnTime = _respawnTime;
@@ -91,34 +114,28 @@ namespace Game
         }
 
         /// <summary>
-        /// Instanting of enemies 
+        /// Работа для сервера
         /// </summary>
         /// v1.01
-        void Update()
+        private void Update()
         {
-            // beeper();
-            // If isWave:
-            //  -if curTime >= resptime
-            //      if isMayBeInstance => instancing(), curTime = 0
-            //      else => prepare()
-            //  -else
-            //      curTime += delta
-            //      if not-isMayBeInstance => check(), prepare()  
-            //beeper(); 
-            if (!_isEndWave)
+            if (isServer)
             {
-                if (_isWave)
+                if (!_isEndWave)
                 {
-                    if (_coroutineRespawn)
+                    if (_isWave)
                     {
-                        Timing.RunCoroutine(RespawnTimer(_respawnTime));
-                    }
-                    else
-                    {
-                        if (!_isMayBeInstanced)
+                        if (_coroutineRespawn)
                         {
-                            CheckEnemyArray();
-                            PrepareToInstance(); // вызов на сервер, для инстанса
+                            Timing.RunCoroutine(RespawnTimer(_respawnTime));
+                        }
+                        else
+                        {
+                            if (!_isMayBeInstanced)
+                            {
+                                CheckEnemyArray();
+                                PrepareToInstance(); // вызов на сервер, для инстанса
+                            }
                         }
                     }
                 }
@@ -126,31 +143,9 @@ namespace Game
         }
 
         /// <summary>
-        /// Таймер, для респайна врагов
-        /// </summary>
-        /// <param name="_time"></param>
-        /// <returns></returns>
-        private IEnumerator<float> RespawnTimer(float _time)
-        {
-            _coroutineRespawn = false;
-
-            if (_isMayBeInstanced)
-            {
-                Instansing();
-                _currentTime = 0;
-            }
-            else
-            {
-                CmdPrepareToInstance();
-            }
-            yield return Timing.WaitForSeconds(_time);
-            _coroutineRespawn = true;
-        }
-
-        /// <summary>
         /// Повысить число волн
         /// </summary>
-        public void ToIncrementTheWave()
+        private void ToIncrementTheWave()
         {
             double _value;
             for (int i = 0; i < _tempEnemyCountLevels.Length; i++)
@@ -174,10 +169,28 @@ namespace Game
         }
 
         /// <summary>
-        /// Preparing for enemy-object 
+        /// Просим сервер зареспаунить врага
+        /// </summary>
+        [Command]
+        private void CmdPrepareToInstance()
+        {
+            RpcPrepareToInstance();
+        }
+
+        /// <summary>
+        /// Говорим всем клиентам, чтобы те респаунили врага
+        /// </summary>
+        [ClientRpc]
+        private void RpcPrepareToInstance()
+        {
+            PrepareToInstance();
+        }
+
+        /// <summary>
+        /// подготовка к респауну врага
         /// </summary>
         /// v1.01
-        void PrepareToInstance()
+        private void PrepareToInstance()
         {
             if (_nullElem == _enemyCountLevels.Length)
             {
@@ -202,28 +215,10 @@ namespace Game
         }
 
         /// <summary>
-        /// Просим сервер зареспаунить врага
-        /// </summary>
-        [Command]
-        public void CmdPrepareToInstance()
-        {
-            RpcPrepareToInstance();
-        }
-
-        /// <summary>
-        /// Говорим всем клиентам, чтобы те респаунили врага
-        /// </summary>
-        [ClientRpc]
-        public void RpcPrepareToInstance()
-        {
-            PrepareToInstance();
-        }
-
-        /// <summary>
-        /// Instansing of enemy-object 
+        /// Респаун врага непосредственно
         /// </summary>
         /// v1.01
-        void Instansing()
+        private void Instansing()
         {
             GameObject clone = GameObject.Instantiate(_currentEnemy);
             clone.name = "Enemy#Power"+clone.GetComponent<EnemyAbstract>().GetPower()+"#"+_numberOfEnemies;
@@ -236,10 +231,10 @@ namespace Game
         }
 
         /// <summary>
-        /// Check enemy-array by NULL
+        /// Проверить массивы на нулевые элементы
         /// </summary>
         /// v1.01
-        void CheckEnemyArray()
+        private void CheckEnemyArray()
         {
             _nullElem = 0;
             foreach (int i in _enemyCountLevels)
@@ -249,6 +244,29 @@ namespace Game
                     _nullElem++;
                 }
             }
+        }
+
+
+        /// <summary>
+        /// Таймер, для респауна врагов
+        /// </summary>
+        /// <param name="_time"></param>
+        /// <returns></returns>
+        private IEnumerator<float> RespawnTimer(float _time)
+        {
+            _coroutineRespawn = false;
+
+            if (_isMayBeInstanced)
+            {
+                Instansing();
+                _currentTime = 0;
+            }
+            else
+            {
+                CmdPrepareToInstance();
+            }
+            yield return Timing.WaitForSeconds(_time);
+            _coroutineRespawn = true;
         }
     }
 }
