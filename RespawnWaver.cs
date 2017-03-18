@@ -221,7 +221,9 @@ namespace Game
         private void Instansing()
         {
             GameObject clone = GameObject.Instantiate(_currentEnemy);
-            clone.name = "Enemy#Power"+clone.GetComponent<EnemyAbstract>().GetPower()+"#"+_numberOfEnemies;
+            clone.name = "Enemy" + clone.GetComponent<EnemyAbstract>().EnemyType 
+                +"#Power" +clone.GetComponent<EnemyAbstract>().GetPower()+"#"+_numberOfEnemies;
+            clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
             _numberOfEnemies++;
             NetworkServer.Spawn(clone);
 
@@ -245,7 +247,6 @@ namespace Game
                 }
             }
         }
-
 
         /// <summary>
         /// Таймер, для респауна врагов

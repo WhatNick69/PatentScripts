@@ -30,8 +30,11 @@ namespace Game
         /// v1.01
         virtual public void Start()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             Destroy(gameObject, _lifeTime);
             _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy,0 , _speed);
+            GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 
         public void setAttackedObject(GameObject parent,GameObject aO)
@@ -46,6 +49,8 @@ namespace Game
         /// v1.01
         protected new void OnTriggerEnter(Collider col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (col.gameObject.tag == "Enemy" 
                 && col.gameObject.GetComponent<EnemyAbstract>().IsAlive)
             {
@@ -81,6 +86,8 @@ namespace Game
         /// v1.01
         public virtual void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             gameObject.transform.Translate(_speedVec * Time.deltaTime);
         }
     }

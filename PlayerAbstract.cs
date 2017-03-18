@@ -22,20 +22,21 @@ namespace Game {
         protected Animator _animatorOfPlayer; // Аниматор юнита
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
-        [SerializeField, Tooltip("Объект-радиус")]
-        protected GameObject _radiusOfAttackVisual;
         [SerializeField, Tooltip("Компонент-агент")]
         protected NavMeshAgent _agent;
 
         protected static RuntimeAnimatorController[] _animationsOfPlayerObject; // Анимации юнита
+        [SyncVar]
+        private int _currentAnimation;
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
-        [SerializeField, Tooltip("Компонент-агент")]
         protected GameObject _attackedObject; // Цель юнита для атаки
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
+        [SerializeField,SyncVar, Tooltip("Название вражеской единицы")]
+        protected string _playerType;
         [SerializeField, Tooltip("Этот юнит является туррелью?")]
         protected bool _isTurrel; // isTurrel condition of player
         [SerializeField, Tooltip("Юнит ищет самого мощного противника")]
@@ -54,6 +55,9 @@ namespace Game {
         protected float _hpTurrel; // Жизни юнита
         [SerializeField, Tooltip("Это динамический юнит?")]
         protected bool isDynamic;
+        [SerializeField, Tooltip("Объект-радиус")]
+        protected GameObject _radiusOfAttackVisual;
+
         protected bool[] _points; // Позиции для атакующих врагов
         protected byte _maxCountOfAttackers;  
         protected float _hpTurrelTemp; // Жизни юнита для статической туррели
@@ -186,6 +190,19 @@ namespace Game {
                 _attackedObject = value;
             }
         }
+
+        public string PlayerType
+        {
+            get
+            {
+                return _playerType;
+            }
+
+            set
+            {
+                _playerType = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -194,8 +211,6 @@ namespace Game {
         public void StartMethod()
         {
             SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
-            _animationsOfPlayerObject
-                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
             if (_isTurrel)
             {
                 _maxCountOfAttackers = 3;
@@ -203,6 +218,26 @@ namespace Game {
             else
             {
                 _maxCountOfAttackers = 1;
+            }
+        }
+
+        /// <summary>
+        /// Каждый клиента загружает анимации
+        /// </summary>
+        public override void OnStartClient()
+        {
+            _animationsOfPlayerObject
+                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
+            if (isServer)
+            {
+                _currentAnimation = _animationsOfPlayerObject.Length-1;
+
+            }
+            else if (!isServer)
+            {
+                gameObject.name = _playerType;
+                _animatorOfPlayer.runtimeAnimatorController
+                    = _animationsOfPlayerObject[_currentAnimation];
             }
         }
 
@@ -307,8 +342,7 @@ namespace Game {
             }
             else
             {
-                _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[2];
+                RpcChangeAnimation(2, false);
             }
         }
 
@@ -317,6 +351,8 @@ namespace Game {
         /// </summary>
         public void OnCollisionEnter(Collision col)
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
@@ -589,31 +625,25 @@ namespace Game {
                 if (_speed.x >= _cofForChangeAnim
                     && _animFlag1)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[4];
-                    _spriteRenderer.flipX = false;
+                    RpcChangeAnimation(4,false);
                     ChangeValues(false, true, true, true);
                 }
                 else if (_speed.x <= -_cofForChangeAnim
                   && _animFlag2)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[4];
-                    _spriteRenderer.flipX = true;
+                    RpcChangeAnimation(4,true);
                     ChangeValues(true, false, true, true);
                 }
                 else if (_speed.z >= _cofForChangeAnim
                   && _animFlag3)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                            = _animationsOfPlayerObject[1];
+                    RpcChangeAnimation(1, false);
                     ChangeValues(true, true, false, true);
                 }
                 else if (_speed.z <= -_cofForChangeAnim
                   && _animFlag4)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[3];
+                    RpcChangeAnimation(3, false);
                     ChangeValues(true, true, true, false);
                 }
                 Timing.RunCoroutine(AnimationTime());
@@ -633,8 +663,7 @@ namespace Game {
             else if (Vector3.Distance(gameObject.transform.position,
                 _startPosition) <= 0.1f)
             {
-                _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[5];
+                RpcChangeAnimation(5, false);
                 _moveBack = false; 
                 NullAttackedObject();
                 _isReturning = false;
@@ -699,8 +728,7 @@ namespace Game {
                 if (Vector3.Distance(gameObject.transform.position,
                             _attackedObject.transform.position + _enemyPoint) < _sideCof * 2)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[0];
+                    RpcChangeAnimation(0, false);
                 }
                 else
                 {
@@ -717,16 +745,9 @@ namespace Game {
         {
             _toHitToEnemy = false;
             _isStoppingWalkFight = false;
-            try
-            {
-                _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[5];
-                _animatorOfPlayer.speed = 1;
-            }
-            catch
-            {
-                Debug.Log("Анимация у " + gameObject.name + " отсутствует!");
-            }
+
+            CmdChangeAnimation(5);
+            _animatorOfPlayer.speed = 1;
 
             _attackedObject = null;
             _isFighting = false;
@@ -795,8 +816,7 @@ namespace Game {
             {   
                 if (Vector3.Distance(transform.position,_randomPosition) <0.05f)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[5];
+                    RpcChangeAnimation(5, false);
                 }    
                 else
                 {
@@ -807,14 +827,25 @@ namespace Game {
             else if (_timer < _restartTimer
                 && _timer > _restartTimer - 1f)
             {
-                _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[5];
+                RpcChangeAnimation(5, false);
                 _isReturning = false;
             }
             else if (_timer >= _restartTimer)
             {
-                RpcRandomPositionMethod();
+                RandomPositionMethod();
             }
+        }
+
+        /// <summary>
+        /// Установить случайную позиция для отдыха
+        /// </summary>
+        public void RandomPositionMethod()
+        {
+            _randomPosition
+                = new Vector3(_startPosition.x + (float)randomer.NextDouble() / 2 - 0.3f, 0,
+                    _startPosition.z + (float)randomer.NextDouble() / 2 - 0.3f);
+            _timer = 0;
+            _restartTimer = (float)randomer.NextDouble() + randomer.Next(2, 3);
         }
 
         /// <summary>
@@ -824,7 +855,6 @@ namespace Game {
         {
             if (!_moveBack && _canToNull)
             {
-                //Debug.Log(_attackedObject.name + " обнулен, т.к " + gameObject.name + " перезагружен");
                 NullAttackedObject();
             }
         }
@@ -933,8 +963,7 @@ namespace Game {
             {
                 if (_animatorOfPlayer != null)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                         = _animationsOfPlayerObject[5];
+                    RpcChangeAnimation(5, false);
                 }
             }
         }
@@ -997,7 +1026,7 @@ namespace Game {
         /// Сменить цвет при ударе. На всех клиентах
         /// </summary>
         /// <param name="color"></param>
-        [Client]
+        [ClientRpc]
         public void RpcChangeColor(Color color)
         {
             _spriteRenderer.color = color;
@@ -1015,34 +1044,12 @@ namespace Game {
         /// <summary>
         /// Случайная величина урона. На всех клиентах
         /// </summary>
-        [Client]
+        [ClientRpc]
         public void RpcRandomHit()
         {
             _animatorOfPlayer.speed = (float)randomer.NextDouble() / 4 + 1;
             _playerDmg =
                 randomer.Next(_startDmg - (_startDmg / 3), _startDmg + (_startDmg / 3));
-        }
-
-        /// <summary>
-        /// Установить случайную позиция для отдыха. Запрос на сервер
-        /// </summary>
-        [Command]
-        public void CmdRandomPositionMethod()
-        {
-            RpcRandomPositionMethod();
-        }
-
-        /// <summary>
-        /// Установить случайную позиция для отдыха. Запрос на клиентах
-        /// </summary>
-        [Client]
-        public void RpcRandomPositionMethod()
-        {
-            _randomPosition
-                = new Vector3(_startPosition.x + (float)randomer.NextDouble() / 2 - 0.3f, 0,
-                    _startPosition.z + (float)randomer.NextDouble() / 2 - 0.3f);
-            _timer = 0;
-            _restartTimer = (float)randomer.NextDouble() + randomer.Next(2, 3);
         }
 
         /// <summary>
@@ -1053,14 +1060,39 @@ namespace Game {
         {
             RpcClientDeath();
         }
+
         /// <summary>
         /// Смерть врага. На всех клиентах
         /// </summary>
-        /// 
-        [Server]
+        [ClientRpc]
         public void RpcClientDeath()
         {
+            _animatorOfPlayer.Stop();
             Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Смена анимации. Запрос на сервер
+        /// </summary>
+        /// <param name="i"></param>
+        [Command]
+        private void CmdChangeAnimation(int i)
+        {
+            RpcChangeAnimation(i, false);
+        }
+
+        /// <summary>
+        /// Смена анимации. Выполнение на всех клиентах
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="side"></param>
+        [ClientRpc]
+        private void RpcChangeAnimation(int i, bool side)
+        {
+            _animatorOfPlayer.runtimeAnimatorController
+                = _animationsOfPlayerObject[i];
+            _spriteRenderer.flipX = side;
+            if (isServer) _currentAnimation = i;
         }
         #endregion
     }

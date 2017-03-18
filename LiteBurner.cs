@@ -1,5 +1,6 @@
 ﻿using MovementEffects;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -84,7 +85,7 @@ namespace Game
             _bullet.transform.position = _instantier.transform.position;
             _bullet.transform.rotation = _instantier.transform.rotation;
 
-            Instantiate(_bullet);
+            CmdInstantiate(_bullet);
             _countOfAmmo--;
         }
 

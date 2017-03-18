@@ -166,23 +166,28 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// инстанс префаба. Запрос на сервер
+        /// </summary>
+        /// <param name="_target"></param>
         [Command]
         private void CmdInstantiateObject(Vector3 _target)
         {
-            InstantiateObject(_target);
+            RpcInstantiateObject(_target);
         }
 
         /// <summary>
-        /// Сервер, покажи всем, что я разместил юнита
+        /// Инстанс префаба. На всех клиентах
         /// </summary>
         /// <param name="pos"></param>
         [Client]
-        public void InstantiateObject(Vector3 pos)
+        public void RpcInstantiateObject(Vector3 pos)
         {
             pos.y = 0;
             GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
-            objectForInstantiate.name = "Player#Cost" +
-                objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
+            objectForInstantiate.name = "Player"+ objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#Cost"
+                + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
+            objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
             _numberOfUnits++;
             NetworkServer.Spawn(objectForInstantiate);
         }

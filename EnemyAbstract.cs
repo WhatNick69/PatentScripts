@@ -14,33 +14,38 @@ namespace Game {
     public abstract class EnemyAbstract
         : NetworkBehaviour
     {
+        #region Переменные
         // list of player object's animations
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
         protected bool[] _points; // enemy's points for player
-        public string _path; // track path
-        protected static RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
+        protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
+        [SyncVar]
+        private int _currentAnimation;
         [SerializeField, Tooltip("Компонент Animator")]
-        protected Animator _animatorOfEnemy; // current animation of enemy
+        protected Animator _animatorOfEnemy; // current animation of enemyv
+        [SerializeField, Tooltip("Компонент NavMeshAgent")]
+        private NavMeshAgent _agent;
 
         // main variables of enemy
-        [SerializeField]
+        public string _path; // track path
+        [SerializeField,SyncVar, Tooltip("Название вражеской единицы")]
+        protected string _enemyType;
+        [SerializeField, Tooltip("Вознаграждение за убийство")]
+        protected int _enemyBonus;
+        [SerializeField, Tooltip("Здоровье врага")]
         protected float _hp; // hp of player
-        [SerializeField]
+        [SerializeField, Tooltip("Урон, который враг наносит")]
         protected int _dmg; // dmg of player
-        [SerializeField]
+        [SerializeField, Tooltip("Префаб пули врага")]
         protected GameObject _bullet; // bullet-prefab
-        [SerializeField]
+        [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
         private float _agentSpeed;
-        [SerializeField]
-        private NavMeshAgent _agent;
-        [SerializeField]
         protected GameObject _attackedObject; // attacked object by player
 
-        [SerializeField]
         protected byte _countOfAttackers; // count attackers of enemy
-        [SerializeField]
+        [SerializeField, Tooltip("Максимальное количество атакующих")]
         protected byte _maxCountOfAttackers; // max count attackers of enemy
         protected bool _mayDamagedByFire;
         protected float _power;
@@ -73,10 +78,11 @@ namespace Game {
 
         // random walking and dmg/speed
         private int _startDmg;
-        protected System.Random randomer 
+        protected static System.Random randomer 
             = new System.Random(); // Рандомная переменная
+        #endregion
 
-        #region Переменные
+        #region Геттеры и сеттеры
         public bool IsAlive
         {
             get
@@ -128,7 +134,48 @@ namespace Game {
                 _attackedObject = value;
             }
         }
+
+        public string EnemyType
+        {
+            get
+            {
+                return _enemyType;
+            }
+
+            set
+            {
+                _enemyType = value;
+            }
+        }
+
+        public int EnemyBonus
+        {
+            get
+            {
+                return _enemyBonus;
+            }
+        }
         #endregion
+
+        /// <summary>
+        /// Каждый клиент загружает анимации
+        /// </summary>
+        public override void OnStartClient()
+        {
+            _animationsOfEnemy =
+                Resources.LoadAll<RuntimeAnimatorController>("Animators");
+
+            if (isServer)
+            {
+                _currentAnimation = _animationsOfEnemy.Length-1;        
+            }
+            else if (!isServer)
+            {
+                gameObject.name = _enemyType;
+                _animatorOfEnemy.runtimeAnimatorController
+                    = _animationsOfEnemy[_currentAnimation];
+            }
+        }
 
         /// <summary>
         /// Стартовый метод
@@ -168,8 +215,6 @@ namespace Game {
             _agent.speed = _walkSpeed;
             _animatorOfEnemy.speed = _walkSpeed * 2;
             _cofForChangeAnim = 0.3f;
-            _animationsOfEnemy =
-                Resources.LoadAll<RuntimeAnimatorController>("Animators");
         }
 
         /// <summary>
@@ -192,15 +237,14 @@ namespace Game {
 
             if (_isAlive)
             {
-                CmdAttackShell();
+                AttackShell();
             }
             else
             {
                 if (_walkSpeed != 0)
                 {
                     transform.StopFollowing();
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[2];
+                    RpcChangeAnimation(2, false);
                 }
             }
         }
@@ -223,6 +267,8 @@ namespace Game {
         /// </summary>
         public void OnTriggerEnter(Collider col)
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive &&
                 (col.tag == "Player" || col.tag == "Turrel")
                 && col.gameObject.GetComponent<PlayerAbstract>().IsAlive
@@ -239,26 +285,6 @@ namespace Game {
                 _attackedObject.GetComponent<PlayerAbstract>().IncreaseCountOfTurrelFighters(gameObject);
                 //Debug.Log(_attackedObject.name + " => " + gameObject.name);
             }
-        }
-
-        /// <summary>
-        /// Смерть врага. Запрос на сервере
-        /// </summary>
-        [Command]
-        public void CmdDead()
-        {
-            RpcClientDeath();
-        }
-
-        /// <summary>
-        /// Смерть врага. На всех клиентах
-        /// </summary>
-        /// 
-        [Client]
-        public void RpcClientDeath()
-        {
-            //Debug.Log(gameObject.name + " погиб");
-            Destroy(gameObject);
         }
 
         /// <summary>
@@ -312,31 +338,25 @@ namespace Game {
                 if (_speed.x >= _cofForChangeAnim
                     && _animFlag1)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[4];
-                    _spriteRenderer.flipX = false;
+                    RpcChangeAnimation(4,false);
                     ChangeValues(false, true, true, true);
                 }
                 else if (_speed.x <= -_cofForChangeAnim
                     && _animFlag2)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[4];
-                    _spriteRenderer.flipX = true;
+                    RpcChangeAnimation(4,true); 
                     ChangeValues(true, false, true, true);
                 }
                 else if (_speed.z >= _cofForChangeAnim
                     && _animFlag3)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[1];
+                    RpcChangeAnimation(1,false);
                     ChangeValues(true, true, false, true);
                 }
                 else if (_speed.z <= -_cofForChangeAnim
                     && _animFlag4)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[3];
+                    RpcChangeAnimation(3, false);
                     ChangeValues(true, true, true, false);
                 }
                 Timing.RunCoroutine(AnimationTime());
@@ -344,42 +364,27 @@ namespace Game {
         }
 
         /// <summary>
-        /// Промежуток времени между сменами анимации
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerator<float> AnimationTime()
-        {
-            _coroutineAnimation = false;
-            yield return Timing.WaitForSeconds(0.25f);
-            _coroutineAnimation = true;
-        }
-
-        /// <summary>
         /// Оболочка для атаки игрока
         /// </summary>
-        [Command]
-        public void CmdAttackShell()
+        public void AttackShell()
         {
-            if (isServer)
+            if (_attackFlag)
             {
-                if (_attackFlag)
+                if (!_isStopingOnWay || _walkSpeed != 0)
                 {
-                    if (!_isStopingOnWay || _walkSpeed != 0)
+                    _agentSpeed = _walkSpeed;
+                    transform.StopFollowing();
+                    _isStopingOnWay = true;
+                }
+                if (_attackedObject != null)
+                {
+                    if (_attackedObject.GetComponent<PlayerAbstract>().IsAlive)
                     {
-                        _agentSpeed = _walkSpeed;
-                        transform.StopFollowing();
-                        _isStopingOnWay = true;
+                        AttackAnim();
                     }
-                    if (_attackedObject != null)
+                    else
                     {
-                        if (_attackedObject.GetComponent<PlayerAbstract>().IsAlive)
-                        {
-                            AttackAnim();
-                        }
-                        else
-                        {
-                            NullAttackedObject();
-                        }
+                        NullAttackedObject();
                     }
                 }
             }
@@ -441,8 +446,7 @@ namespace Game {
                 if (Vector3.Distance(gameObject.transform.position,
                             _attackedObject.transform.position + _playerPoint) < _sideCof * 2)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[0];
+                    RpcChangeAnimation(0, false);
                 }
                 else
                 {
@@ -507,8 +511,7 @@ namespace Game {
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
-                _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[2];
+                RpcChangeAnimation(2, false);
                 return Mathf.Abs(_hp);
             }
             else
@@ -540,8 +543,7 @@ namespace Game {
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
-                _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[2];
+                RpcChangeAnimation(2, false);
                 return Mathf.Abs(_hp);
             }
             else
@@ -558,8 +560,7 @@ namespace Game {
             _agent.enabled = false;
             _isStoppingWalkFight = false;
             _multiple = 0.01f;
-            _animatorOfEnemy.runtimeAnimatorController
-                = _animationsOfEnemy[5];
+            CmdChangeAnimation(5);
             if (_attackedObject != null)
             {
                 _attackedObject.GetComponent<PlayerAbstract>().RemoveFromList(gameObject);
@@ -676,16 +677,6 @@ namespace Game {
         }
 
         /// <summary>
-        /// Совершает действие раз в указанное количество секунд
-        /// Не используется, потому что количество обновляемых кадров для физики мало
-        /// </summary>
-        public IEnumerator<float> Waiter()
-        {
-            yield return 0.5f;
-            _mayDamagedByFire = true;
-        }
-
-        /// <summary>
         /// Останавливаем либо возобновляем движение врага
         /// </summary>
         public void GoEnemyMoving()
@@ -703,24 +694,101 @@ namespace Game {
             transform.StopFollowing();
         }
 
+        #region Мультиплеерные функции
+        /// <summary>
+        /// Сменить цвет при ударе. Запрос на сервер
+        /// </summary>
+        [Command]
+        public void CmdChangeColor(Color color)
+        {
+            RpcChangeColor(color);
+        }
+
+        /// <summary>
+        /// Сменить цвет при ударе. На всех клиентах
+        /// </summary>
+        /// <param name="color"></param>
+        [ClientRpc]
+        public void RpcChangeColor(Color color)
+        {
+            _spriteRenderer.color = color;
+        }
+
+        /// <summary>
+        /// Смерть врага. Запрос на сервере
+        /// </summary>
+        [Command]
+        public void CmdDead()
+        {
+            RpcClientDeath();
+        }
+
+        /// <summary>
+        /// Смерть врага. На всех клиентах
+        /// </summary>
+        [ClientRpc]
+        public void RpcClientDeath()
+        {
+            Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Смена анимации. Запрос на сервер
+        /// </summary>
+        /// <param name="i"></param>
+        [Command]
+        private void CmdChangeAnimation(int i)
+        {
+            RpcChangeAnimation(i, false);
+        }
+
+        /// <summary>
+        /// Смена анимации. Выполнение на всех клиентах
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="side"></param>
+        [ClientRpc]
+        private void RpcChangeAnimation(int i, bool side)
+        {
+            _animatorOfEnemy.runtimeAnimatorController
+                = _animationsOfEnemy[i];
+            _spriteRenderer.flipX = side;
+            if (isServer) _currentAnimation = i;
+        }
+        #endregion
+
+        #region Корутины
+        /// <summary>
+        /// Промежуток времени между сменами анимации
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator<float> AnimationTime()
+        {
+            _coroutineAnimation = false;
+            yield return Timing.WaitForSeconds(0.25f);
+            _coroutineAnimation = true;
+        }
+
+        /// <summary>
+        /// Совершает действие раз в указанное количество секунд
+        /// Не используется, потому что количество обновляемых кадров для физики мало
+        /// </summary>
+        public IEnumerator<float> Waiter()
+        {
+            yield return 0.5f;
+            _mayDamagedByFire = true;
+        }
+
         /// <summary>
         /// Таймер анимации получения урона
         /// </summary>
         /// <returns></returns>
         public IEnumerator<float> DamageAnimation()
         {
-            ChangeColor(Color.red);
+            CmdChangeColor(Color.red);
             yield return Timing.WaitForSeconds(0.2f);
-            ChangeColor(_startColor);
+            CmdChangeColor(_startColor);
         }
-
-        /// <summary>
-        /// Сменить цвет
-        /// </summary>
-        /// <param name="color"></param>
-        public void ChangeColor(Color color)
-        {
-            _spriteRenderer.color = color;
-        }
+        #endregion
     }
 }

@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -16,6 +18,7 @@ namespace Game
         protected static System.Random rnd = new System.Random();
         public float _speed; // bullet speed
         public float _accuracy; // bullet accuracy
+        [SyncVar]
         public bool _can;
 
         /// <summary>
@@ -32,9 +35,11 @@ namespace Game
         /// </summary>
         void Start()
         {
-            _can = true;
+            if (!isServer) return; // Выполняется только на сервере
+
             _speedVec = new Vector3((float)rnd.NextDouble()
                 * rnd.Next(-1, 2) * _accuracy,0, _speed);
+            GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 
         /// <summary>
@@ -42,6 +47,8 @@ namespace Game
         /// </summary>
         public virtual void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_can)
             {
                 if (Vector3.Distance(gameObject.transform.position, _burningPosition) > 0.1f)
@@ -50,9 +57,17 @@ namespace Game
                 }
                 else
                 {
-                    burner();
+                    CmdBurner();
                 }
             }
+        }
+
+        /// <summary>
+        /// Пустая реализация
+        /// </summary>
+        protected override void OnTriggerEnter(Collider col)
+        {
+            return;
         }
 
         /// <summary>
@@ -61,11 +76,13 @@ namespace Game
         /// <param name="collision"></param>
         public void OnCollisionEnter(Collision collision)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (collision.gameObject.tag == "Enemy")
             {
                 if (_can)
                 {
-                    burner();
+                    CmdBurner();
                 }
                 else
                 {
@@ -75,25 +92,26 @@ namespace Game
             }
         }
 
-        /// <summary>
-        /// Пустая реализация
-        /// </summary>
-        public void OnTriggerEnter()
+        [Command]
+        private void CmdBurner()
         {
-
+            RpcBurner();
         }
 
         /// <summary>
         /// Создать пламя, вместо бутылки
         /// </summary>
-        public void burner()
+        [ClientRpc]
+        public void RpcBurner()
         {
+            _can = false;
+            GetComponent<BulletMotionSync>().IsStopped = true;
+            Debug.Log("Бутылка лопнула!");
             Destroy(gameObject, _burningTime);
             transform.localRotation = Quaternion.identity;
             transform.GetComponent<BoxCollider>().enabled = false;
             transform.GetComponent<MeshRenderer>().enabled = false;
             transform.GetChild(0).gameObject.SetActive(true);
-            _can = false;
         }
     }
 }

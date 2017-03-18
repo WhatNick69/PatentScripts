@@ -24,8 +24,10 @@ namespace Game {
         /// Наносит урон и взрывается при соприкосновении
         /// </summary>
         /// <param name="col"></param>
-        protected void OnTriggerEnter(Collider col)
+        protected virtual void OnTriggerEnter(Collider col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (col.gameObject.tag == "Enemy")
             {
                 col.GetComponent<EnemyAbstract>().EnemyDamage(

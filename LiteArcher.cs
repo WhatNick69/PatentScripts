@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -44,6 +45,8 @@ namespace Game
         /// <param name="col"></param>
         public new void OnCollisionEnter(Collision col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
@@ -85,7 +88,7 @@ namespace Game
                 _bullet.transform.rotation = _instantier.transform.rotation;
                 _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
 
-                Instantiate(_bullet);
+                CmdInstantiate(_bullet);
                 _countOfAmmo--;
             }
             else
@@ -101,11 +104,24 @@ namespace Game
 
                     if (_countOfAmmo > 0)
                     {
-                        Instantiate(_bullet);
+                        CmdInstantiate(_bullet);
                         _countOfAmmo--;
                     }
                 }
             }
+        }
+
+        [Command]
+        protected void CmdInstantiate(GameObject _bullet)
+        {
+            RpcInstantiate(_bullet);
+        }
+
+        [Client]
+        protected void RpcInstantiate(GameObject _bullet)
+        {
+            GameObject clone = GameObject.Instantiate(_bullet);
+            NetworkServer.Spawn(clone);
         }
 
         /// <summary>
