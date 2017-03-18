@@ -172,7 +172,6 @@ namespace Game
                 if (Vector3.Distance(gameObject.transform.position,
                             _attackedObject.transform.position + _enemyPoint) < _sideCof * 2 )
                 {
-                    _toHitToEnemy = true;
                     _animatorOfPlayer.runtimeAnimatorController
                         = _animationsOfPlayerObject[0];
                 }

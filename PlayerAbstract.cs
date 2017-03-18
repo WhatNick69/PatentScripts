@@ -32,7 +32,6 @@ namespace Game {
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
-        protected GameObject _attackedObject; // Цель юнита для атаки
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
         [SerializeField,SyncVar, Tooltip("Название вражеской единицы")]
@@ -45,8 +44,11 @@ namespace Game {
         protected bool _firstFast;
         [SerializeField, Tooltip("Юнит ищет самого близкого противника")]
         protected bool _firstStandart;
+        [SerializeField, Tooltip("Цель юнита для атаки")]
+        protected GameObject _attackedObject; // Цель юнита для атаки
         [SerializeField, Tooltip("Количество противников, которые одновременно атакуют юнита")]
         protected byte _countOfAttackers; // count of active fighters for turrel/player's fighter 
+        protected byte _maxCountOfAttackers;
         [SerializeField, Tooltip("Урон, который наносит юнит")]
         protected int _playerDmg; // dmg of player's object
         [SerializeField, Tooltip("Стоимость юнита в денежном эквиваленте")]
@@ -57,9 +59,10 @@ namespace Game {
         protected bool isDynamic;
         [SerializeField, Tooltip("Объект-радиус")]
         protected GameObject _radiusOfAttackVisual;
+        [SerializeField, Tooltip("Может ли анимация удара проигрываться?")]
+        protected bool _canPlayAnimAttack;
 
         protected bool[] _points; // Позиции для атакующих врагов
-        protected byte _maxCountOfAttackers;  
         protected float _hpTurrelTemp; // Жизни юнита для статической туррели
         protected float _maxEdge;
         protected Color _startColor;
@@ -77,7 +80,6 @@ namespace Game {
         protected bool _isReturning; // reduce count of returtings
         protected bool _isStoppingWalkFight;
         protected bool _isCanon;
-        protected bool _toHitToEnemy;
 
         // ПЕРЕМЕННЫЕ ДЛЯ СМЕНЫ АНИМАЦИИ ПРИ ДВИЖЕНИИ
         protected bool _animFlag1;
@@ -87,7 +89,7 @@ namespace Game {
         protected bool _coroutineAnimation = true;
 
         // СКОРОСТЬ, ПОЗИЦИЯ, ВРЕМЯ
-        [SerializeField]
+        [SerializeField, Tooltip("Коэффициент для смены анимации")]
         protected float _cofForChangeAnim; // coefficient of changing animation
         protected float _moverTimer;
         protected const float _cofForRest = 0.05f; // coefficient of changing animation while resting
@@ -102,7 +104,6 @@ namespace Game {
         protected bool _canRandomWalk; // Можно ли отдыхать?
         protected int _startDmg; // Промежуточный урон юнита
         protected float _timer; // Таймер на отдых
-        [SerializeField]
         protected float _restartTimer; // Рестарт-таймер на отдых
         protected Vector3 _randomPosition; // Случайная позиция во время отдыха
 
@@ -276,6 +277,7 @@ namespace Game {
             _animFlag4 = true;
             _cofForChangeAnim = _cofForRest;
             _startPosition = gameObject.transform.position;
+            _canPlayAnimAttack = true;
             StartMethod();
         }
 
@@ -289,11 +291,10 @@ namespace Game {
             if (_isAlive)
             {
                 ChangeEnemy();
-                if (!_toHitToEnemy || _moveBack)
+                if (_canPlayAnimAttack)
                 {
                     Mover();
                 }
-
                 // Может, еще и пригодится, если не будет работать правильно
                 /*
                 else if (_attackedObject != null
@@ -598,18 +599,19 @@ namespace Game {
         /// </summary>
         public void Attack()
         {
+            if (!isServer) return; // Выполняем только на сервере
+
             if (_attackedObject != null
                 && _attackedObject.GetComponent<EnemyAbstract>().IsAlive)
             {
                 RpcRandomHit();
                 _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(gameObject, _playerDmg);
-                _toHitToEnemy = false;
             }
             else
             {
                 NullAttackedObject();
-                _toHitToEnemy = false;
             }
+            _canPlayAnimAttack = true;
         }
 
         /// <summary>
@@ -726,9 +728,12 @@ namespace Game {
             else
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2)
+                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
+                                && _canPlayAnimAttack)
                 {
+                    _canPlayAnimAttack = false;
                     RpcChangeAnimation(0, false);
+                    Debug.Log("Бьем");
                 }
                 else
                 {
@@ -743,7 +748,7 @@ namespace Game {
         /// v1.01
         public virtual void NullAttackedObject()
         {
-            _toHitToEnemy = false;
+            _canPlayAnimAttack = true;
             _isStoppingWalkFight = false;
 
             CmdChangeAnimation(5);
@@ -765,6 +770,7 @@ namespace Game {
         /// </summary>
         public void Decreaser()
         {
+            _canPlayAnimAttack = true;
             if (_attackedObject != null)
             {
                 _attackedObject.GetComponent<EnemyAbstract>().ClearPoint(_point);
@@ -794,7 +800,7 @@ namespace Game {
         public void ToMoveBack()
         {
             _moveBack = true;
-            _toHitToEnemy = false;
+            _canPlayAnimAttack = true;
         }
 
         /// <summary>
@@ -1058,6 +1064,8 @@ namespace Game {
         [Command]
         public void CmdDead()
         {
+            if (!isServer) return; // Выполняем только на сервере
+
             RpcClientDeath();
         }
 

@@ -1,10 +1,15 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 
-namespace Game {
+namespace Game
+{
+    /// <summary>
+    /// Контроллер анимаций у пользовательского юнита на элементе Body
+    /// </summary>
     public class AnimatorControllerBody 
-        : MonoBehaviour {
+        : NetworkBehaviour {
 
-        [SerializeField]
+        [SerializeField, Tooltip("Компонент PlayerAbstract из родителя")]
         private PlayerAbstract _playerAbstract;
 
         public void AttackAnim()

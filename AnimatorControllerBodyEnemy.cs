@@ -1,24 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
+    /// <summary>
+    /// Контроллер анимаций у вражеского юнита на элементе Body
+    /// </summary>
     public class AnimatorControllerBodyEnemy
-        : MonoBehaviour
+        : NetworkBehaviour
     {
-
-        [SerializeField]
+        [SerializeField, Tooltip("Компонент EnemyAbstract из родителя")]
         private EnemyAbstract _enemyAbstract;
 
         public void AttackAnim()
         {
-            _enemyAbstract.Attack();
+           _enemyAbstract.Attack();
         }
 
         public void DeadAnim()
         {
-            _enemyAbstract.CmdDead();
+           _enemyAbstract.CmdDead();
         }
     }
 }

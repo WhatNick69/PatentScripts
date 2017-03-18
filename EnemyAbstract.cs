@@ -42,8 +42,9 @@ namespace Game {
         [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
         private float _agentSpeed;
+        [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
-
+        [SerializeField, Tooltip("Количество атакующих")]
         protected byte _countOfAttackers; // count attackers of enemy
         [SerializeField, Tooltip("Максимальное количество атакующих")]
         protected byte _maxCountOfAttackers; // max count attackers of enemy
@@ -273,8 +274,7 @@ namespace Game {
                 (col.tag == "Player" || col.tag == "Turrel")
                 && col.gameObject.GetComponent<PlayerAbstract>().IsAlive
                     && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition()
-                        && _attackedObject == null
-                            && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition())
+                        && _attackedObject == null)
             {
                 _agent.enabled = true;
                 _multiple = 0.01f;
@@ -484,6 +484,8 @@ namespace Game {
         /// </summary>
         public void Attack()
         {
+            if (!isServer) return; // Выполняем только на сервере
+
             if (_attackedObject != null
                 && _attackedObject.GetComponent<PlayerAbstract>().IsAlive)
             {
@@ -720,6 +722,8 @@ namespace Game {
         [Command]
         public void CmdDead()
         {
+            if (!isServer) return; // Выполняем только на сервере
+
             RpcClientDeath();
         }
 
