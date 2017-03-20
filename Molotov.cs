@@ -87,7 +87,7 @@ namespace Game
                 else
                 {
                     collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec);
+                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec,2);
                 }
             }
         }

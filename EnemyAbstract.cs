@@ -26,11 +26,19 @@ namespace Game {
         [SyncVar]
         protected float _animationSpeed;
 
+        // ЗАГРУЖАЕМЫЙ КОНТЕНТ
+        protected AudioClip[] _audioHitsClose;
+        protected AudioClip[] _audioHitsFar;
+        protected AudioClip[] _audioHitsFire;
+        protected AudioClip[] _audioDeaths;
+        protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
+
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
+        [SerializeField, Tooltip("Компонент Аудио")]
+        protected AudioSource _audioSource;
         protected bool[] _points; // enemy's points for player
-        protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
         [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfEnemy; // current animation of enemyv
         [SerializeField, Tooltip("Компонент NavMeshAgent")]
@@ -172,6 +180,10 @@ namespace Game {
         {
             _animationsOfEnemy =
                 Resources.LoadAll<RuntimeAnimatorController>("Animators");
+            _audioHitsClose = Resources.LoadAll<AudioClip>("Sounds/HitsPunches");
+            _audioHitsFar = Resources.LoadAll<AudioClip>("Sounds/HitsBullets");
+            _audioDeaths = Resources.LoadAll<AudioClip>("Sounds/Deaths");
+            _audioHitsFire = Resources.LoadAll<AudioClip>("Sounds/FireHits");
 
             if (isServer)
             {
@@ -509,14 +521,16 @@ namespace Game {
         }
 
         /// <summary>
-        /// Получить урон
+        /// Получить урон и попробовать установить противника
         /// </summary>
         public float EnemyDamage(GameObject obj, float _dmg)
         {
             _hp -= _dmg;
+            CmdPlayAudio(0); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving();
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
@@ -545,11 +559,14 @@ namespace Game {
         /// </summary>
         /// <param name="_dmg"></param>
         /// <returns></returns>
-        public float EnemyDamage(float _dmg)
+        public float EnemyDamage(float _dmg,byte condition = 1)
         {
             _hp -= _dmg;
+            CmdPlayAudio(condition); // Звук получения урона
+            Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
                 Decreaser();
@@ -723,6 +740,56 @@ namespace Game {
         public void RpcChangeColor(Color color)
         {
             _spriteRenderer.color = color;
+        }
+
+        /// <summary>
+        /// Воспроизведение звука:
+        /// 0 - получить удар вблизи,
+        /// 1 - получить удар пулей,
+        /// 2 - получить удар огнем,
+        /// 3 - нанести удар,
+        /// 4 - умереть
+        /// </summary>
+        /// <param name="condition"></param>
+        [Command]
+        public void CmdPlayAudio(byte condition)
+        {
+            RpcPlayAudio(condition);
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [ClientRpc]
+        private void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = _audioHitsClose[randomer.Next(0, _audioHitsClose.Length)];
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = _audioHitsFar[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = _audioHitsFire[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.Play();
+                    break;
+                case 3:
+
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = _audioDeaths[randomer.Next(0, _audioDeaths.Length)];
+                    _audioSource.Play();
+                    break;
+            }  
         }
 
         /// <summary>

@@ -276,11 +276,13 @@ namespace Game {
         /// Set damage to player
         /// </summary>
         /// v1.01
-        override public void PlayerDamage(GameObject obj, float _dmg)
+        override public void PlayerDamage(GameObject obj, float _dmg,byte condition = 1)
         {
             _hpTurrel -= _dmg;
+            CmdPlayAudio(condition);
             if (_hpTurrel <= 0)
             {
+                CmdPlayAudio(4);
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();

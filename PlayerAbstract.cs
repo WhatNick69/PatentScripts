@@ -27,14 +27,22 @@ namespace Game {
         [SyncVar]
         protected float _animationSpeed;
 
+        // ЗАГРУЖАЕМЫЙ КОНТЕНТ
+        protected AudioClip[] _audioHitsClose;
+        protected AudioClip[] _audioHitsFar;
+        protected AudioClip[] _audioHitsFire;
+        protected AudioClip[] _audioDeaths;
+        protected RuntimeAnimatorController[] _animationsOfPlayerObject; // array of enemy animations
+
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField,Tooltip("Компонент Animator")]
         protected Animator _animatorOfPlayer; // Аниматор юнита
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
+        [SerializeField, Tooltip("Компонент Аудио")]
+        protected AudioSource _audioSource;
         [SerializeField, Tooltip("Компонент-агент")]
         protected NavMeshAgent _agent;
-        protected static RuntimeAnimatorController[] _animationsOfPlayerObject; // Анимации юнита
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
@@ -234,6 +242,11 @@ namespace Game {
         {
             _animationsOfPlayerObject
                 = Resources.LoadAll<RuntimeAnimatorController>("Animators");
+            _audioHitsClose = Resources.LoadAll<AudioClip>("Sounds/HitsPunches");
+            _audioHitsFar = Resources.LoadAll<AudioClip>("Sounds/HitsBullets");
+            _audioDeaths = Resources.LoadAll<AudioClip>("Sounds/Deaths");
+            _audioHitsFire = Resources.LoadAll<AudioClip>("Sounds/FireHits");
+
             if (isServer)
             {
                 _currentAnimation = _animationsOfPlayerObject.Length-1;
@@ -529,12 +542,14 @@ namespace Game {
         /// <summary>
         /// Получить урон
         /// </summary>
-        public virtual void PlayerDamage(GameObject obj, float _dmg)
+        public virtual void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
         {
             _hpTurrel -= _dmg;
+            CmdPlayAudio(condition);
             Timing.RunCoroutine(DamageAnimation());
             if (_hpTurrel <= 0)
             {
+                CmdPlayAudio(4);
                 _agent.enabled = false;
                 _isAlive = false;
                 Decreaser();
@@ -1132,6 +1147,56 @@ namespace Game {
         private void RpcSyncAnimationSpeed(float speedAnim)
         {
             _animatorOfPlayer.speed = speedAnim;
+        }
+
+        /// <summary>
+        /// Воспроизведение звука:
+        /// 0 - получить удар вблизи,
+        /// 1 - получить удар пулей,
+        /// 2 - получить удар огнем,
+        /// 3 - нанести удар,
+        /// 4 - умереть
+        /// </summary>
+        /// <param name="condition"></param>
+        [Command]
+        public void CmdPlayAudio(byte condition)
+        {
+            RpcPlayAudio(condition);
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [ClientRpc]
+        private void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = _audioHitsClose[randomer.Next(0, _audioHitsClose.Length)];
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = _audioHitsFar[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = _audioHitsFire[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.Play();
+                    break;
+                case 3:
+
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = _audioDeaths[randomer.Next(0, _audioDeaths.Length)];
+                    _audioSource.Play();
+                    break;
+            }
         }
         #endregion
     }
