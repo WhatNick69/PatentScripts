@@ -13,12 +13,28 @@ namespace Game
     {
         private EnemyAbstract _enemyAbstract;
 
-        public override void Start()
+        public EnemyAbstract EnemyAbstract
         {
-            if (_attackedObject != null)
-                _enemyAbstract = _attackedObject.GetComponent<EnemyAbstract>();
-            Destroy(gameObject, _lifeTime);
-            _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+            get
+            {
+                return _enemyAbstract;
+            }
+        }
+
+        /// <summary>
+        /// Вызов на клиентах
+        /// </summary>
+        public override void OnStartClient()
+        {
+            if (isServer)
+            {
+                Destroy(gameObject, _lifeTime);
+
+                if (_attackedObject != null)
+                    _enemyAbstract = _attackedObject.GetComponent<EnemyAbstract>();
+                _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+            }
+            GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 
         /// <summary>
@@ -26,6 +42,8 @@ namespace Game
         /// </summary>
         public override void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_attackedObject != null)
             {
                 if (_enemyAbstract.IsAlive)

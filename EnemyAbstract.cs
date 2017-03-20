@@ -3,6 +3,7 @@ using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
+using System;
 
 namespace Game {
 
@@ -15,22 +16,28 @@ namespace Game {
         : NetworkBehaviour
     {
         #region Переменные
-        // list of player object's animations
+        // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
+        [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
+        protected string _enemyType;
+        [SyncVar]
+        private int _currentAnimation; // Текущая анимация
+        [SyncVar]
+        protected bool _isFlipped; // Перевернут ли спрайт?
+        [SyncVar]
+        protected float _animationSpeed;
+
+        // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
         protected bool[] _points; // enemy's points for player
         protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
-        [SyncVar]
-        private int _currentAnimation;
         [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfEnemy; // current animation of enemyv
         [SerializeField, Tooltip("Компонент NavMeshAgent")]
         private NavMeshAgent _agent;
 
-        // main variables of enemy
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
         public string _path; // track path
-        [SerializeField,SyncVar, Tooltip("Название вражеской единицы")]
-        protected string _enemyType;
         [SerializeField, Tooltip("Вознаграждение за убийство")]
         protected int _enemyBonus;
         [SerializeField, Tooltip("Здоровье врага")]
@@ -51,33 +58,33 @@ namespace Game {
         protected bool _mayDamagedByFire;
         protected float _power;
 
-        // points values
+        // ЗНАЧЕНИЯ ДЛЯ АТАКУЕМОЙ ПОЗИЦИИ
         protected byte _point; // bool-point of player
         protected const float _sideCof = 0.25f; // point side coefficient
         protected float _multiple; // multiplier for moving of enemy
         protected Vector3 _playerPoint; // point, which should be placed by enemy
 
-        // main behaviors of enemy
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ ЮНИТА
         protected bool _isAlive;
         protected bool _attackFlag;
         protected bool _isStopingOnWay;
         protected bool _isStoppingWalkFight;
 
-        // moving variables
+        // ПЕРЕМЕННЫЕ ДЛЯ СМЕНЫ АНИМАЦИИ ПРИ ДВИЖЕНИИ
         protected bool _animFlag1;
         protected bool _animFlag2;
         protected bool _animFlag3;
         protected bool _animFlag4;
         protected bool _coroutineAnimation = true;
 
-        // speed, new and old positions and cof of changing anim vector
+        // СКОРОСТЬ, ПОЗИЦИЯ, ВРЕМЯ
         protected float _cofForChangeAnim;
         protected Vector3 _oldPosition;
         protected Vector3 _newPosition;
         protected Vector3 _speed;
         private Color _startColor;
 
-        // random walking and dmg/speed
+        // ОТДЫХ
         private int _startDmg;
         protected static System.Random randomer 
             = new System.Random(); // Рандомная переменная
@@ -173,6 +180,8 @@ namespace Game {
             else if (!isServer)
             {
                 gameObject.name = _enemyType;
+                _spriteRenderer.flipX = _isFlipped;
+                _animatorOfEnemy.speed = this._animationSpeed;
                 _animatorOfEnemy.runtimeAnimatorController
                     = _animationsOfEnemy[_currentAnimation];
             }
@@ -214,7 +223,7 @@ namespace Game {
         {
             _walkSpeed = (float)randomer.NextDouble() + 0.5f;
             _agent.speed = _walkSpeed;
-            _animatorOfEnemy.speed = _walkSpeed * 2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
         }
 
@@ -569,7 +578,7 @@ namespace Game {
             }
             _attackedObject = null;
             _attackFlag = false;
-            _animatorOfEnemy.speed = 1;
+            CmdSyncAnimationSpeed(1);
             _isStopingOnWay = false;
             ChangeValues(true, true, true, true);
             GoEnemyMoving();
@@ -597,7 +606,7 @@ namespace Game {
         /// </summary>
         public void ToGo()
         {
-            _animatorOfEnemy.speed = _walkSpeed*2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
@@ -607,7 +616,7 @@ namespace Game {
         /// </summary>
         public void RandomHit()
         {
-            _animatorOfEnemy.speed = (float)randomer.NextDouble() / 4 + 1;
+            CmdSyncAnimationSpeed((float)randomer.NextDouble() / 4 + 1);
             _dmg =
                 randomer.Next(_startDmg - (_startDmg / 3), _startDmg + (_startDmg / 3));
         }
@@ -683,7 +692,7 @@ namespace Game {
         /// </summary>
         public void GoEnemyMoving()
         {
-            _animatorOfEnemy.speed = _walkSpeed*2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
@@ -757,7 +766,32 @@ namespace Game {
             _animatorOfEnemy.runtimeAnimatorController
                 = _animationsOfEnemy[i];
             _spriteRenderer.flipX = side;
-            if (isServer) _currentAnimation = i;
+            if (isServer)
+            {
+                _isFlipped = side;
+                _currentAnimation = i;
+            }
+        }
+
+        /// <summary>
+        /// Синхронизация анимации. Запрос на сервер
+        /// </summary>
+        /// <param name="speedAnim"></param>
+        [Command]
+        protected void CmdSyncAnimationSpeed(float speedAnim)
+        {
+            _animationSpeed = speedAnim;
+            RpcSyncAnimationSpeed(speedAnim);
+        }
+
+        /// <summary>
+        /// Синхронизация анимации. Выполнение на клиентах
+        /// </summary>
+        /// <param name="speedAnim"></param>
+        [ClientRpc]
+        private void RpcSyncAnimationSpeed(float speedAnim)
+        {
+            _animatorOfEnemy.speed = speedAnim;
         }
         #endregion
 

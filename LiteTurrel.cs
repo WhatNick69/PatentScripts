@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using UnityEngine.Networking;
 
 namespace Game {
 
@@ -20,6 +22,8 @@ namespace Game {
         public bool _isBurst;
         protected bool _coroutineReload = true;
         protected bool _coroutineReAlive = true;
+        [SerializeField, Tooltip("Скорость стрельбы")]
+        protected float _shootingSpeed; // speed of bullet
 
         /// <summary>
         /// Действие, при столкновении
@@ -27,6 +31,8 @@ namespace Game {
         /// <param name="col"></param>
         public new void OnCollisionEnter(Collision col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
@@ -52,13 +58,19 @@ namespace Game {
             }
         }
 
+        public override void OnStartClient()
+        {
+            transform.localEulerAngles = Vector3.zero;
+        }
+
         /// <summary>
         /// Initialising variables
         /// </summary>
         /// v1.01
         new void Start()
         {
-            transform.localEulerAngles = Vector3.zero;
+            if (!isServer) return; // Выполняется только на сервере
+   
             Application.runInBackground = true;
             _points = new bool[4];
             _minDistance = 1000;
@@ -105,7 +117,7 @@ namespace Game {
                     _bullet.transform.rotation = gameObject.transform.rotation;
                     _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
 
-                    Instantiate(_bullet);
+                    CmdInstantiateObject(_bullet);
                 }
                 else
                 {
@@ -116,10 +128,31 @@ namespace Game {
                         _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
 
                         _bullet.transform.Rotate(new Vector3(i, 0, 0));
-                        Instantiate(_bullet);
+                        CmdInstantiateObject(_bullet);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Инстанс снаряда. Запрос на сервер
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Command]
+        private void CmdInstantiateObject(GameObject _bullet)
+        {
+            RpcInstantiateObject(_bullet);
+        }
+
+        /// <summary>
+        /// Инстанс снаряда. Выполнение на клиентах
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Client]
+        private void RpcInstantiateObject(GameObject _bullet)
+        {
+            GameObject clone = Instantiate(_bullet);
+            NetworkServer.Spawn(clone);
         }
 
         /// <summary>
@@ -128,6 +161,8 @@ namespace Game {
         /// v1.01
         void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             AliveUpdater();
             AliveDrawerAndNuller();
         }
@@ -233,6 +268,7 @@ namespace Game {
             _isFighting = false;
             _animatorOfPlayer.speed = 1;
             ChangeValues(true, true, true, true);
+            RestartValues();
         }
 
         /// <summary>
@@ -282,13 +318,15 @@ namespace Game {
         protected IEnumerator<float> ReloadTimer()
         {
             _coroutineReload = false;
-            yield return Timing.WaitForSeconds(_restartTimer);
             Bursting();
+            yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineReload = true;
         }
 
         private new void FixedUpdate()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive) ChangeEnemy();
         }
     }

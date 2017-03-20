@@ -14,14 +14,13 @@ namespace Game
     public class LiteArcher
         : PlayerAbstract
     {
-        [SerializeField,Tooltip("Стрельба очередью")]
+        [SerializeField, Tooltip("Стрельба очередью")]
         protected bool _isBurst; // is burst-shooting-mode?
         protected bool _coroutineShoot = true;
         [SerializeField, Tooltip("Количество аммуниции")]
         protected int _countOfAmmo; // count of ammo
         [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _shootingSpeed; // speed of bullet
-        [SerializeField, Tooltip("Дистанция до противника")]
         protected float _distance; // distance, which need to shooting
         [SerializeField, Tooltip("Снаряд")]
         protected GameObject _bullet; // bullet-prefab
@@ -51,8 +50,7 @@ namespace Game
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
                         && _attackedObject == null
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && !_isReturning)
+                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition())
             {
                 if (!ChangeEnemy())
                 {
@@ -79,11 +77,10 @@ namespace Game
         /// </summary>
         public virtual void Bursting()
         {
-            _coroutineShoot = false;
             if (!_isBurst)
             {
                 _instantier.transform.LookAt(_attackedObject.transform.position
-                    + new Vector3(0,0, 0.3f));
+                    + _up);
                 _bullet.transform.position = _instantier.transform.position;
                 _bullet.transform.rotation = _instantier.transform.rotation;
                 _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
@@ -96,7 +93,7 @@ namespace Game
                 for (sbyte i = -5; i <= 5; i += 5)
                 {
                     _instantier.transform.LookAt(_attackedObject.transform.position
-                            + new Vector3(0, 0, 0.3f));
+                            + _up);
                     _bullet.transform.position = _instantier.transform.position;
                     _bullet.transform.rotation = _instantier.transform.rotation;
                     _bullet.transform.Rotate(new Vector3(i, 0, 0));
@@ -111,12 +108,20 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Инстанс снаряда. Запрос на сервер
+        /// </summary>
+        /// <param name="_bullet"></param>
         [Command]
         protected void CmdInstantiate(GameObject _bullet)
         {
             RpcInstantiate(_bullet);
         }
 
+        /// <summary>
+        /// Инстанс снаряда. Выполнение на клиентах
+        /// </summary>
+        /// <param name="_bullet"></param>
         [Client]
         protected void RpcInstantiate(GameObject _bullet)
         {
@@ -138,6 +143,7 @@ namespace Game
                          gameObject.transform.position.z > _startPosition.z + _maxEdge ||
                              gameObject.transform.position.z < _startPosition.z - _maxEdge)
             {
+                Debug.Log("Превысили");
                 RemoveFromList(_attackedObject);
                 _isReturning = true;
                 Decreaser();
@@ -149,6 +155,7 @@ namespace Game
                 && !_isStoppingWalkFight && 
                     (_distance <= _maxEdge && _distance > _maxEdge/4 && _countOfAmmo > 0))
             {
+                RpcChangeAnimation(5, false);
                 Timing.RunCoroutine(BurstingTimer()); // ЗАПУСК КОРУТИНА
             }
             else if (_attackedObject != null
@@ -170,17 +177,24 @@ namespace Game
             else 
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2 )
+                            _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
+                                && _canPlayAnimAttack)
                 {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[0];
+                    Timing.RunCoroutine(HitTime());
                 }
-                else
+                else 
                 {
-                    RemoveFromList(_attackedObject);
-                    Decreaser();
-                    NullAttackedObject();
-                    _isStoppingWalkFight = false;            
+                    if (_isStoppingWalkFight)
+                    {
+                        _isStoppingWalkFight = false;
+                    }
+                    else if (Vector3.Distance(_attackedObject.transform.position, transform.position) > _maxEdge*1.1f)
+                    {
+                        Debug.Log("Враг сбежал");
+                        RemoveFromList(_attackedObject);
+                        Decreaser();
+                        NullAttackedObject();
+                    }
                 }
             }
         }
@@ -191,6 +205,7 @@ namespace Game
         /// <returns></returns>
         protected IEnumerator<float> BurstingTimer()
         {
+            _coroutineShoot = false;
             Bursting();
             yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineShoot = true;

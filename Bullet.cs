@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -22,18 +24,27 @@ namespace Game
         protected float _lifeTime; // bullet life
         [SerializeField, Tooltip("Скорость снаряда")]
         protected float _speed; // bullet speed
+        [SyncVar]
         protected Vector3 _speedVec;
 
-        /// <summary>
-        /// Initialising DestroyByTimer and Moving
-        /// </summary>
-        /// v1.01
-        virtual public void Start()
+        public GameObject AttackedObject
         {
-            if (!isServer) return; // Выполняется только на сервере
+            get
+            {
+                return _attackedObject;
+            }
+        }
 
-            Destroy(gameObject, _lifeTime);
-            _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy,0 , _speed);
+        /// <summary>
+        /// Запуск на клиентах
+        /// </summary>
+        public override void OnStartClient()
+        {
+            if (isServer)
+            {
+                Destroy(gameObject, _lifeTime);
+                _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+            }
             GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 

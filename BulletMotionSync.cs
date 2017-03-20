@@ -6,20 +6,24 @@ namespace Game
     public class BulletMotionSync
         : NetworkBehaviour
     {
-
         #region Переменные
+        // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
         [SyncVar]
         private Vector3 syncPos;
-        private Vector3 lastPos;
         [SyncVar]
-        private Vector3 speedVec;
+        public Vector3 speedVec;
 
-        [SerializeField, Tooltip("Скорость интерполяции")]
-        private float lerpRate = 10;
-        [SerializeField, Tooltip("Transform вражеского юнита")]
+        // ОСТАЛЬНЫЕ ПЕРЕМЕННЫЕ
+        [SerializeField, Tooltip("Transform компонент")]
         private Transform myTransform;
+        [SerializeField, Tooltip("Цель")]
+        private GameObject _enemy;
+        [SerializeField, Tooltip("Включить самонаводку?")]
+
+        private bool _isAutoAim;
         private bool _isStopped;
         private bool _hasStopped;
+        private Vector3 lastPos;
 
         public Vector3 SpeedVec
         {
@@ -50,6 +54,10 @@ namespace Game
         public override void OnStartClient()
         {
             syncPos = myTransform.position;
+            if (_isAutoAim)
+            {
+                _enemy = GetComponent<Bullet>().AttackedObject;
+            }
         }
 
         /// <summary>
@@ -84,7 +92,18 @@ namespace Game
         {
             if (!_isStopped)
             {
-                myTransform.Translate(speedVec * Time.deltaTime);
+                if (!_isAutoAim)
+                {
+                    myTransform.Translate(speedVec * Time.deltaTime);
+                }
+                else
+                {
+                    if (_enemy != null)
+                    {
+                        myTransform.LookAt(_enemy.transform.position);
+                    }
+                    myTransform.Translate(speedVec * Time.deltaTime);
+                }
             }
         }
     }

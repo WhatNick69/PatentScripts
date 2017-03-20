@@ -15,12 +15,13 @@ namespace Game
         public Vector2 _tempVec;
         public GameObject _targetSpot;
 
-
         /// <summary>
         /// Обновление
         /// </summary>
         void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             CheckTarget();
             AliveUpdater();
         }

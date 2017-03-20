@@ -12,14 +12,23 @@ namespace Game
     {
         protected Vector2 mouse;
 
+        public override void OnStartClient()
+        {
+            SetCamera();
+            transform.localEulerAngles = Vector3.zero;
+        }
+
         /// <summary>
         /// Обновление
         /// </summary>
         void Update()
         {
+            if (isServer)
+            {
+                AliveUpdater();
+                AliveDrawerAndNuller();
+            }
             LookAter();
-            AliveUpdater();
-            AliveDrawerAndNuller();
         }
 
         /// <summary>
@@ -29,10 +38,6 @@ namespace Game
         {
             if (!_isAlive) return;
             mouse = Input.mousePosition;
-            if (_mainCamera == null)
-            {
-                SetCamera();
-            }
             Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
             target.y = 0;
             transform.LookAt(target);

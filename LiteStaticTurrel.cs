@@ -33,6 +33,8 @@ namespace Game
         /// v1.01
         new void Start()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             _points = new bool[4];
             for (int i = 0; i < _points.Length; i++)
             {
@@ -99,6 +101,8 @@ namespace Game
         /// v1.01
         private void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive)
             {
                 if (_coroutineReload)
