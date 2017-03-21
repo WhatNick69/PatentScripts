@@ -27,11 +27,8 @@ namespace Game {
         protected float _animationSpeed;
 
         // ЗАГРУЖАЕМЫЙ КОНТЕНТ
-        protected AudioClip[] _audioHitsClose;
-        protected AudioClip[] _audioHitsFar;
-        protected AudioClip[] _audioHitsFire;
-        protected AudioClip[] _audioDeaths;
         protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
+        private AudioPlayerHelper audioPlayerHelper;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
@@ -180,10 +177,8 @@ namespace Game {
         {
             _animationsOfEnemy =
                 Resources.LoadAll<RuntimeAnimatorController>("Animators");
-            _audioHitsClose = Resources.LoadAll<AudioClip>("Sounds/HitsPunches");
-            _audioHitsFar = Resources.LoadAll<AudioClip>("Sounds/HitsBullets");
-            _audioDeaths = Resources.LoadAll<AudioClip>("Sounds/Deaths");
-            _audioHitsFire = Resources.LoadAll<AudioClip>("Sounds/FireHits");
+            audioPlayerHelper = 
+                GameObject.FindGameObjectWithTag("Core").GetComponent<AudioPlayerHelper>();
 
             if (isServer)
             {
@@ -762,23 +757,26 @@ namespace Game {
         /// </summary>
         /// <param name="condition"></param>
         [ClientRpc]
-        private void RpcPlayAudio(byte condition)
+        protected virtual void RpcPlayAudio(byte condition)
         {
             switch (condition)
             {
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = _audioHitsClose[randomer.Next(0, _audioHitsClose.Length)];
+                    _audioSource.clip = audioPlayerHelper.
+                        GetElementFromAudioHitsClose((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsCLose()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = _audioHitsFar[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.clip = audioPlayerHelper.
+                        GetElementFromAudioHitsFar((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFar()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
-                    _audioSource.clip = _audioHitsFire[randomer.Next(0, _audioHitsFar.Length)];
+                    _audioSource.clip = audioPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
@@ -786,7 +784,8 @@ namespace Game {
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() + 2f;
-                    _audioSource.clip = _audioDeaths[randomer.Next(0, _audioDeaths.Length)];
+                    _audioSource.clip = audioPlayerHelper.
+                        GetElementFromAudioDeaths((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioDeaths()));
                     _audioSource.Play();
                     break;
             }  
