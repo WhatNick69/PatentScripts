@@ -61,6 +61,8 @@ namespace Game {
         public override void OnStartClient()
         {
             transform.localEulerAngles = Vector3.zero;
+            resourcesPlayerHelper =
+                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
         }
 
         /// <summary>
@@ -109,8 +111,9 @@ namespace Game {
         /// </summary>
         public void Bursting()
         {
-            if (IsAlive)
+            if (_isAlive)
             {
+                CmdPlayAudio(3);
                 if (!_isBurst)
                 {
                     _bullet.transform.position = gameObject.transform.position;
@@ -121,13 +124,13 @@ namespace Game {
                 }
                 else
                 {
-                    for (int i = -5; i <= 5; i += 5)
+                    for (int i = -10; i <= 20; i += 10)
                     {
                         _bullet.transform.position = gameObject.transform.position;
                         _bullet.transform.rotation = gameObject.transform.rotation;
                         _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
 
-                        _bullet.transform.Rotate(new Vector3(i, 0, 0));
+                        _bullet.transform.Rotate(new Vector3(0, 0, i));
                         CmdInstantiateObject(_bullet);
                     }
                 }
@@ -182,10 +185,6 @@ namespace Game {
                     AttackAnim();
                 }
             }
-            else
-            {
-                Timing.RunCoroutine(ReAliveTimer());
-            }
         }
 
         /// <summary>
@@ -239,10 +238,7 @@ namespace Game {
             SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
             _hpTurrelTemp = _hpTurrel;
             Debug.Log(gameObject.name + " загружен!");
-            _animatorOfPlayer =
-                gameObject.transform.GetChild(0).GetComponent<Animator>();
-            _animationsOfPlayerObject
-                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
+
             if (_isTurrel)
             {
                 _maxCountOfAttackers = 3;
@@ -276,12 +272,13 @@ namespace Game {
         /// Set damage to player
         /// </summary>
         /// v1.01
-        override public void PlayerDamage(GameObject obj, float _dmg,byte condition = 1)
+        public override void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
         {
             _hpTurrel -= _dmg;
             CmdPlayAudio(condition);
             if (_hpTurrel <= 0)
             {
+                Timing.RunCoroutine(ReAliveTimer());
                 CmdPlayAudio(4);
                 _isAlive = false;
                 Decreaser();
@@ -330,6 +327,44 @@ namespace Game {
             if (!isServer) return; // Выполняется только на сервере
 
             if (_isAlive) ChangeEnemy();
+        }
+
+        [ClientRpc]
+        protected override void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+                    _audioSource.pitch = (float)randomer.NextDouble()/5 + 0.8f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioShotsTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble()/3 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsTurrel()));
+                    _audioSource.Play();
+                    break;
+            }
         }
     }
 }

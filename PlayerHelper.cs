@@ -187,9 +187,19 @@ namespace Game
             GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
             objectForInstantiate.name = "Player"+ objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#Cost"
                 + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
-            objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+            //objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
             _numberOfUnits++;
-            NetworkServer.Spawn(objectForInstantiate);
+            if (objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType.Equals("ManualTurrel"))
+            {
+                objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+                NetworkServer.SpawnWithClientAuthority(objectForInstantiate,connectionToClient);
+            }
+            else
+            {
+                objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+                NetworkServer.Spawn(objectForInstantiate);
+            }
+            
         }
     }
 }

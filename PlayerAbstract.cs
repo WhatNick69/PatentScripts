@@ -21,6 +21,8 @@ namespace Game {
         [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
         protected string _playerType;
         [SyncVar]
+        protected bool _isAlive; // alive condition of player
+        [SyncVar]
         protected int _currentAnimation; // Текущая анимация
         [SyncVar]
         protected bool _isFlipped;  // Перевернут ли спрайт?
@@ -28,8 +30,7 @@ namespace Game {
         protected float _animationSpeed;
 
         // ЗАГРУЖАЕМЫЙ КОНТЕНТ
-        protected RuntimeAnimatorController[] _animationsOfPlayerObject; // array of enemy animations
-        private AudioPlayerHelper audioPlayerHelper;
+        protected ResourcesPlayerHelper resourcesPlayerHelper;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField,Tooltip("Компонент Animator")]
@@ -83,7 +84,6 @@ namespace Game {
         protected Vector3 _enemyPoint;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ ЮНИТА
-        protected bool _isAlive; // alive condition of player
         protected bool _moveBack; // for cannable to move back!
         protected bool _canToNull; // for just one null
         protected bool _isFighting; // isFighting condition of player
@@ -237,14 +237,12 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            _animationsOfPlayerObject
-                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
-            audioPlayerHelper =
-                GameObject.FindGameObjectWithTag("Core").GetComponent<AudioPlayerHelper>();
+            resourcesPlayerHelper =
+                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
 
             if (isServer)
             {
-                _currentAnimation = _animationsOfPlayerObject.Length-1;
+                _currentAnimation = resourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
             {
@@ -252,7 +250,7 @@ namespace Game {
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfPlayer.speed = this._animationSpeed;
                 _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[_currentAnimation];
+                    = resourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
         }
 
@@ -1114,7 +1112,7 @@ namespace Game {
         protected void RpcChangeAnimation(int i, bool side)
         {
             _animatorOfPlayer.runtimeAnimatorController
-                = _animationsOfPlayerObject[i];
+                = resourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;
             if (isServer)
             {
@@ -1170,20 +1168,20 @@ namespace Game {
             {
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsClose((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsCLose()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsFar((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFar()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarUnit()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsFire((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
@@ -1191,8 +1189,8 @@ namespace Game {
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() + 2f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioDeaths((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioDeaths()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsUnit()));
                     _audioSource.Play();
                     break;
             }

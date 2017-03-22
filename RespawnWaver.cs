@@ -93,24 +93,27 @@ namespace Game
         /// v1.01
         private void Start()
         {
-            Application.runInBackground = true;
-            _levelName = "TestLevel";
-            _isEndWave = false;
-            _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
-            _tempRespawnTime = _respawnTime;
-            _currentTime = _respawnTime;
-            GetComponent<BoxCollider>().size
-                = new Vector3(100, 100, 1);
-            _arrayOfPathes
-                = Resources.LoadAll<PathData>("Tracks/" + _levelName);
-            _allEnemies =
-                Resources.LoadAll<GameObject>("PrefabsEnemy/");
-            foreach (PathData data in _arrayOfPathes)
+            if (isServer)
             {
-                GetComponent<WaypointManager>().SetPathData(data);
-            }
+                Application.runInBackground = true;
+                _levelName = "TestLevel";
+                _isEndWave = false;
+                _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
+                _tempRespawnTime = _respawnTime;
+                _currentTime = _respawnTime;
+                GetComponent<BoxCollider>().size
+                    = new Vector3(100, 100, 1);
+                _arrayOfPathes
+                    = Resources.LoadAll<PathData>("Tracks/" + _levelName);
+                _allEnemies =
+                    Resources.LoadAll<GameObject>("PrefabsEnemy/");
+                foreach (PathData data in _arrayOfPathes)
+                {
+                    GetComponent<WaypointManager>().SetPathData(data);
+                }
 
-            _allEnemiesLenght = _allEnemies.Length;
+                _allEnemiesLenght = _allEnemies.Length;
+            }
         }
 
         /// <summary>

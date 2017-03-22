@@ -106,21 +106,6 @@ namespace Game
                     Timing.RunCoroutine(ReloadTimer());
                 }
             }
-            else
-            {
-                Timing.RunCoroutine(ReAliveTimer());
-            }
-        }
-
-        /// <summary>
-        /// таймер для возрождения пушки
-        /// </summary>
-        /// <returns></returns>
-        new protected IEnumerator<float> ReAliveTimer()
-        {
-            yield return Timing.WaitForSeconds(_timeToReAlive);
-            _hpTurrel = _hpTurrelTemp;
-            _isAlive = true;
         }
 
         /// <summary>

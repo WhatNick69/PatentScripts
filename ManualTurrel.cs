@@ -14,8 +14,17 @@ namespace Game
 
         public override void OnStartClient()
         {
+            _isAlive = true;
+            _coroutineReload = true;
             SetCamera();
             transform.localEulerAngles = Vector3.zero;
+            resourcesPlayerHelper =
+                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
+        }
+
+        private new void OnCollisionEnter(Collision collision)
+        {
+            return;
         }
 
         /// <summary>
@@ -26,7 +35,6 @@ namespace Game
             if (isServer)
             {
                 AliveUpdater();
-                AliveDrawerAndNuller();
             }
             LookAter();
         }
@@ -58,10 +66,6 @@ namespace Game
                         AttackAnim();
                     }
                 }
-            }
-            else
-            {
-                Timing.RunCoroutine(ReAliveTimer());
             }
         }
 

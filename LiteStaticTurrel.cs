@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -114,10 +115,6 @@ namespace Game
                     }
                 }
             }
-            else
-            {
-                  Timing.RunCoroutine(ReAliveTimer());
-            }
         }
 
         /// <summary>
@@ -168,6 +165,7 @@ namespace Game
             if (_hpTurrel <= 0)
             {
                 CmdPlayAudio(4);
+                Timing.RunCoroutine(ReAliveTimer());
                 _isAlive = false;
                 Decreaser();
                 _countOfAttackers = 0;
@@ -178,6 +176,41 @@ namespace Game
         private new void FixedUpdate()
         {
             return;
+        }
+
+        [ClientRpc]
+        protected override void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 3 + 0.9f;
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsTurrel()));
+                    _audioSource.Play();
+                    break;
+            }
         }
     }
 }

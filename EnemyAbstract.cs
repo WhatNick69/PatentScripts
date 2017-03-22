@@ -27,8 +27,7 @@ namespace Game {
         protected float _animationSpeed;
 
         // ЗАГРУЖАЕМЫЙ КОНТЕНТ
-        protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
-        private AudioPlayerHelper audioPlayerHelper;
+        public ResourcesPlayerHelper resourcesPlayerHelper;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
@@ -175,14 +174,12 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            _animationsOfEnemy =
-                Resources.LoadAll<RuntimeAnimatorController>("Animators");
-            audioPlayerHelper = 
-                GameObject.FindGameObjectWithTag("Core").GetComponent<AudioPlayerHelper>();
+            resourcesPlayerHelper = 
+                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
 
             if (isServer)
             {
-                _currentAnimation = _animationsOfEnemy.Length-1;        
+                _currentAnimation = resourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
             {
@@ -190,7 +187,7 @@ namespace Game {
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfEnemy.speed = this._animationSpeed;
                 _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[_currentAnimation];
+                    = resourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
         }
 
@@ -763,20 +760,20 @@ namespace Game {
             {
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsClose((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsCLose()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsFar((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFar()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarUnit()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioHitsFire((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
@@ -784,11 +781,11 @@ namespace Game {
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() + 2f;
-                    _audioSource.clip = audioPlayerHelper.
-                        GetElementFromAudioDeaths((byte)randomer.Next(0, audioPlayerHelper.LenghtAudioDeaths()));
+                    _audioSource.clip = resourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsUnit()));
                     _audioSource.Play();
                     break;
-            }  
+            }
         }
 
         /// <summary>
@@ -830,7 +827,7 @@ namespace Game {
         private void RpcChangeAnimation(int i, bool side)
         {
             _animatorOfEnemy.runtimeAnimatorController
-                = _animationsOfEnemy[i];
+                = resourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;
             if (isServer)
             {
