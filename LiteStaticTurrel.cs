@@ -79,8 +79,6 @@ namespace Game
         public override void OnStartClient()
         {
             transform.localEulerAngles = Vector3.zero;
-            resourcesPlayerHelper =
-                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
         }
 
         /// <summary>

@@ -12,6 +12,8 @@ namespace Game
         #region Переменные
         [SyncVar]
         public bool _can;
+        [SerializeField, Tooltip("Аудио компоненит")]
+        private AudioSource _audio;
 
         public float _burningTime;
         public int _dmgPerSec;
@@ -107,8 +109,12 @@ namespace Game
         public void RpcBurner()
         {
             _can = false;
+            _audio.clip = ResourcesPlayerHelper.
+                getElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
+            _audio.pitch =(float)rnd.NextDouble() / 4 + 0.75f;
+            _audio.Play();
+
             GetComponent<BulletMotionSync>().IsStopped = true;
-            Debug.Log("Бутылка лопнула!");
             Destroy(gameObject, _burningTime);
             transform.localRotation = Quaternion.identity;
             transform.GetComponent<BoxCollider>().enabled = false;

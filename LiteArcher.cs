@@ -206,6 +206,7 @@ namespace Game
         protected IEnumerator<float> BurstingTimer()
         {
             _coroutineShoot = false;
+            CmdPlayAudio(3);
             Bursting();
             yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineShoot = true;

@@ -19,8 +19,6 @@ namespace Game
         {
             SetCamera();
             transform.localEulerAngles = Vector3.zero;
-            resourcesPlayerHelper =
-                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
         }
 
         private new void OnCollisionEnter(Collision collision)

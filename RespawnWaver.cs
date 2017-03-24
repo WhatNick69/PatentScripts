@@ -19,6 +19,8 @@ namespace Game
         #region Переменные
         // pathes, enemies, respawns and count of enemiesLvL
         private PathData[] _arrayOfPathes; // Массив путей
+        [SerializeField, Tooltip("Аудио компонент")]
+        private AudioSource _generalSounder;
         [SerializeField, Tooltip("Префабы всех врагов")]
         private GameObject[] _allEnemies; // Массив врагов
         private GameObject[] _respawnPoints; // Массив респаунов
@@ -53,7 +55,7 @@ namespace Game
         [SerializeField, Tooltip("Время респауна врага")]
         private float _respawnTime; // time for respawn an enemy
         private float _tempRespawnTime;
-        [SerializeField,Tooltip("Время между последующими волнами")]
+        [SerializeField, Tooltip("Время между последующими волнами")]
         private float _waveTime; // time for respawn an enemy
         private static int _numberOfEnemies;
         private static System.Random rnd = new System.Random(); // random
@@ -93,6 +95,7 @@ namespace Game
         /// v1.01
         private void Start()
         {
+            CmdPlayGeneralSounds(0);
             if (!isServer) return; // Выполняет только сервер
 
             Application.runInBackground = true;
@@ -110,7 +113,6 @@ namespace Game
             {
                 GetComponent<WaypointManager>().SetPathData(data);
             }
-
             _allEnemiesLenght = _allEnemies.Length;
         }
 
@@ -169,7 +171,7 @@ namespace Game
         }
 
         /// <summary>
-        /// пПодготовка к респауну врага
+        /// Подготовка к респауну врага
         /// </summary>
         /// v1.01
         private void PrepareToInstance()
@@ -247,7 +249,7 @@ namespace Game
             }
             else
             {
-                CmdPrepareToInstance();
+                PrepareToInstance();
             }
             yield return Timing.WaitForSeconds(_time);
             _coroutineRespawn = true;
@@ -255,22 +257,23 @@ namespace Game
         #endregion
 
         #region Мультиплеерные методы
-        /// <summary>
-        /// Просим сервер зареспаунить врага
-        /// </summary>
         [Command]
-        private void CmdPrepareToInstance()
+        public void CmdPlayGeneralSounds(byte condition)
         {
-            RpcPrepareToInstance();
+            RpcPlayGeneralSound(condition);
         }
 
         /// <summary>
-        /// Говорим всем клиентам, чтобы те респаунили врага
+        /// Воспроизведение звука. Вызов на клиентах
         /// </summary>
-        [ClientRpc]
-        private void RpcPrepareToInstance()
+        /// <param name="condition"></param>
+        [Client]
+        protected virtual void RpcPlayGeneralSound(byte condition)
         {
-            PrepareToInstance();
+            _generalSounder.volume = 0.5f;
+            _generalSounder.clip = ResourcesPlayerHelper.
+                GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
+            _generalSounder.Play();
         }
         #endregion
     }

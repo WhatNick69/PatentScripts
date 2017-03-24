@@ -4,7 +4,8 @@ using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
 
-namespace Game {
+namespace Game
+{
     /// <summary>
     /// Описывает основное поведение игрока
     /// </summary>
@@ -29,11 +30,8 @@ namespace Game {
         [SyncVar]
         protected float _animationSpeed;
 
-        // ЗАГРУЖАЕМЫЙ КОНТЕНТ
-        protected ResourcesPlayerHelper resourcesPlayerHelper;
-
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
-        [SerializeField,Tooltip("Компонент Animator")]
+        [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfPlayer; // Аниматор юнита
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
@@ -237,9 +235,6 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            resourcesPlayerHelper =
-                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
-
             if (isServer)
             {
                 _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
@@ -448,8 +443,8 @@ namespace Game {
                     {
                         try
                         {
-                            _tempDistance = 
-                                Vector3.Distance(gameObject.transform.position, 
+                            _tempDistance =
+                                Vector3.Distance(gameObject.transform.position,
                                     _enemyList[i].transform.position);
                             if (_tempDistance < _minDistance)
                             {
@@ -535,7 +530,7 @@ namespace Game {
         /// <summary>
         /// Получить урон
         /// </summary>
-        public virtual void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
+        public virtual void PlayerDamage(GameObject obj, float _dmg, byte condition = 0)
         {
             _hpTurrel -= _dmg;
             CmdPlayAudio(condition);
@@ -641,13 +636,13 @@ namespace Game {
                 if (_speed.x >= _cofForChangeAnim
                     && _animFlag1)
                 {
-                    RpcChangeAnimation(4,false);
+                    RpcChangeAnimation(4, false);
                     ChangeValues(false, true, true, true);
                 }
                 else if (_speed.x <= -_cofForChangeAnim
                   && _animFlag2)
                 {
-                    RpcChangeAnimation(4,true);
+                    RpcChangeAnimation(4, true);
                     ChangeValues(true, false, true, true);
                 }
                 else if (_speed.z >= _cofForChangeAnim
@@ -680,7 +675,7 @@ namespace Game {
                 _startPosition) <= 0.1f)
             {
                 RpcChangeAnimation(5, false);
-                _moveBack = false; 
+                _moveBack = false;
                 NullAttackedObject();
                 _isReturning = false;
             }
@@ -725,7 +720,7 @@ namespace Game {
                 && !_isStoppingWalkFight)
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                    (_attackedObject.transform.position+_enemyPoint)) < _sideCof)
+                    (_attackedObject.transform.position + _enemyPoint)) < _sideCof)
                 {
                     _cofForChangeAnim = _cofForRest;
                     _isStoppingWalkFight = true;
@@ -831,11 +826,11 @@ namespace Game {
         {
             _timer += Time.deltaTime;
             if (_timer < _restartTimer - 1f)
-            {   
-                if (Vector3.Distance(transform.position,_randomPosition) <0.05f)
+            {
+                if (Vector3.Distance(transform.position, _randomPosition) < 0.05f)
                 {
                     RpcChangeAnimation(5, false);
-                }    
+                }
                 else
                 {
                     Mover();
@@ -916,7 +911,7 @@ namespace Game {
         {
             if (!_points[0])
             {
-                return new Vector3(gameObject.transform.position.x + 0.5f,0,
+                return new Vector3(gameObject.transform.position.x + 0.5f, 0,
                     gameObject.transform.position.z);
             }
             else if (!_points[1])
@@ -1185,7 +1180,10 @@ namespace Game {
                     _audioSource.Play();
                     break;
                 case 3:
-
+                    _audioSource.pitch = (float)randomer.NextDouble() / 5 + 0.8f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioShotsTurrel()));
+                    _audioSource.Play();
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() + 2f;
