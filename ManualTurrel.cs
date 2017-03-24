@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using MovementEffects;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -12,10 +12,11 @@ namespace Game
     {
         protected Vector2 mouse;
 
+        /// <summary>
+        /// Предзагрузка на клиенте
+        /// </summary>
         public override void OnStartClient()
         {
-            _isAlive = true;
-            _coroutineReload = true;
             SetCamera();
             transform.localEulerAngles = Vector3.zero;
             resourcesPlayerHelper =
@@ -32,20 +33,29 @@ namespace Game
         /// </summary>
         void Update()
         {
-            if (isServer)
+            if (isClient)
             {
-                AliveUpdater();
+                Vector2 mouse = Input.mousePosition;
+                CmdLookAter(mouse);
+                if (Input.GetMouseButton(1))
+                {
+                    CmdAliveUpdater();
+                }
             }
-            LookAter();
         }
 
         /// <summary>
         /// Смотреть на тап
         /// </summary>
-        void LookAter()
+        [Command]
+        void CmdLookAter(Vector2 mouse)
         {
-            if (!_isAlive) return;
-            mouse = Input.mousePosition;
+            RpcLookAter(mouse);
+        }
+
+        [Client]
+        void RpcLookAter(Vector2 mouse)
+        {
             Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
             target.y = 0;
             transform.LookAt(target);
@@ -55,18 +65,10 @@ namespace Game
         /// Part of Update
         /// </summary>
         /// v1.01
-        new void AliveUpdater()
+        [Command]
+        void CmdAliveUpdater()
         {
-            if (_isAlive)
-            {
-                if (_coroutineReload)
-                {
-                    if (Input.GetMouseButton(1))
-                    {
-                        AttackAnim();
-                    }
-                }
-            }
+            RpcAttackAnim();
         }
 
         /// <summary>
@@ -74,9 +76,16 @@ namespace Game
         /// Alive behavior
         /// </summary>
         /// v1.01
-        new void AttackAnim()
+        [Client]
+        void RpcAttackAnim()
         {
-            Timing.RunCoroutine(ReloadTimer());
+            if (_isAlive)
+            {
+                if (_coroutineReload)
+                {
+                    Timing.RunCoroutine(ReloadTimer());
+                }
+            }   
         }
     }
 }

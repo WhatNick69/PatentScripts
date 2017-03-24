@@ -3,110 +3,113 @@ using UnityEngine.Networking;
 
 namespace Game
 {
+    /// <summary>
+    /// Медиа-данные
+    /// </summary>
     public class ResourcesPlayerHelper
         : NetworkBehaviour
     {
         #region Массивы данных
-        private RuntimeAnimatorController[] animationsPenguins; // array of enemy animations
+        private static RuntimeAnimatorController[] animationsPenguins; // array of enemy animations
 
-        private AudioClip[] audioHitsCloseUnit;
-        private AudioClip[] audioHitsFarUnit;
-        private AudioClip[] audioHitsFire;
-        private AudioClip[] audioDeathsUnit;
+        private static AudioClip[] audioHitsCloseUnit;
+        private static AudioClip[] audioHitsFarUnit;
+        private static AudioClip[] audioHitsFire;
+        private static AudioClip[] audioDeathsUnit;
 
-        private AudioClip[] audioHitsCloseTurrel;
-        private AudioClip[] audioHitsFarTurrel;
-        private AudioClip[] audioShotsTurrel;
-        private AudioClip[] audioDeathsTurrel;
+        private static AudioClip[] audioHitsCloseTurrel;
+        private static AudioClip[] audioHitsFarTurrel;
+        private static AudioClip[] audioShotsTurrel;
+        private static AudioClip[] audioDeathsTurrel;
         #endregion
 
         #region Геттеры и сеттеры
-        public RuntimeAnimatorController GetElementFromAnimationsPenguins(int i)
+        public static RuntimeAnimatorController GetElementFromAnimationsPenguins(int i)
         {
             return animationsPenguins[i];
         }
 
-        public int LenghtAnimationsPenguins()
+        public static int LenghtAnimationsPenguins()
         {
             return animationsPenguins.Length;
         }
 
-        public AudioClip GetElementFromAudioHitsCloseUnit(byte i)
+        public static AudioClip GetElementFromAudioHitsCloseUnit(byte i)
         {
             return audioHitsCloseUnit[i];
         }
 
-        public AudioClip GetElementFromAudioHitsFarUnit(byte i)
+        public static AudioClip GetElementFromAudioHitsFarUnit(byte i)
         {
             return audioHitsFarUnit[i];
         }
 
-        public AudioClip GetElementFromAudioHitsFire(byte i)
+        public static AudioClip GetElementFromAudioHitsFire(byte i)
         {
             return audioHitsFire[i];
         }
 
-        public AudioClip GetElementFromAudioDeathsUnit(byte i)
+        public static AudioClip GetElementFromAudioDeathsUnit(byte i)
         {
             return audioDeathsUnit[i];
         }
 
-        public AudioClip GetElementFromAudioHitsCloseTurrel(byte i)
+        public static AudioClip GetElementFromAudioHitsCloseTurrel(byte i)
         {
             return audioHitsCloseTurrel[i];
         }
 
-        public AudioClip GetElementFromAudioHitsFarTurrel(byte i)
+        public static AudioClip GetElementFromAudioHitsFarTurrel(byte i)
         {
             return audioHitsFarTurrel[i];
         }
 
-        public AudioClip GetElementFromAudioShotsTurrel(byte i)
+        public static AudioClip GetElementFromAudioShotsTurrel(byte i)
         {
             return audioShotsTurrel[i];
         }
 
-        public AudioClip GetElementFromAudioDeathsTurrel(byte i)
+        public static AudioClip GetElementFromAudioDeathsTurrel(byte i)
         {
             return audioDeathsTurrel[i];
         }
 
-        public int LenghtAudioHitsCloseUnit()
+        public static int LenghtAudioHitsCloseUnit()
         {
             return audioHitsCloseUnit.Length;
         }
 
-        public int LenghtAudioHitsFarUnit()
+        public static int LenghtAudioHitsFarUnit()
         {
             return audioHitsFarUnit.Length;
         }
 
-        public int LenghtAudioHitsFire()
+        public static int LenghtAudioHitsFire()
         {
             return audioHitsFire.Length;
         }
 
-        public int LenghtAudioDeathsUnit()
+        public static int LenghtAudioDeathsUnit()
         {
             return audioDeathsUnit.Length;
         }
 
-        public int LenghtAudioHitsCloseTurrel()
+        public static int LenghtAudioHitsCloseTurrel()
         {
             return audioHitsCloseTurrel.Length;
         }
 
-        public int LenghtAudioHitsFarTurrel()
+        public static int LenghtAudioHitsFarTurrel()
         {
             return audioHitsFarTurrel.Length;
         }
 
-        public int LenghtAudioShotsTurrel()
+        public static int LenghtAudioShotsTurrel()
         {
             return audioShotsTurrel.Length;
         }
 
-        public int LenghtAudioDeathsTurrel()
+        public static int LenghtAudioDeathsTurrel()
         {
             return audioDeathsTurrel.Length;
         }

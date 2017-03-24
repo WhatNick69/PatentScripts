@@ -93,27 +93,25 @@ namespace Game
         /// v1.01
         private void Start()
         {
-            if (isServer)
-            {
-                Application.runInBackground = true;
-                _levelName = "TestLevel";
-                _isEndWave = false;
-                _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
-                _tempRespawnTime = _respawnTime;
-                _currentTime = _respawnTime;
-                GetComponent<BoxCollider>().size
-                    = new Vector3(100, 100, 1);
-                _arrayOfPathes
-                    = Resources.LoadAll<PathData>("Tracks/" + _levelName);
-                _allEnemies =
-                    Resources.LoadAll<GameObject>("PrefabsEnemy/");
-                foreach (PathData data in _arrayOfPathes)
-                {
-                    GetComponent<WaypointManager>().SetPathData(data);
-                }
+            if (!isServer) return; // Выполняет только сервер
 
-                _allEnemiesLenght = _allEnemies.Length;
+            Application.runInBackground = true;
+            _isEndWave = false;
+            _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
+            _tempRespawnTime = _respawnTime;
+            _currentTime = _respawnTime;
+            GetComponent<BoxCollider>().size
+                = new Vector3(100, 100, 1);
+            _arrayOfPathes
+                = Resources.LoadAll<PathData>("Tracks/" + _levelName);
+            _allEnemies =
+                Resources.LoadAll<GameObject>("PrefabsEnemy/");
+            foreach (PathData data in _arrayOfPathes)
+            {
+                GetComponent<WaypointManager>().SetPathData(data);
             }
+
+            _allEnemiesLenght = _allEnemies.Length;
         }
 
         /// <summary>
@@ -122,23 +120,22 @@ namespace Game
         /// v1.01
         private void Update()
         {
-            if (isServer)
+            if (!isServer) return; // Выполняет только сервер
+
+            if (!_isEndWave)
             {
-                if (!_isEndWave)
+                if (_isWave)
                 {
-                    if (_isWave)
+                    if (_coroutineRespawn)
                     {
-                        if (_coroutineRespawn)
+                        Timing.RunCoroutine(RespawnTimer(_respawnTime));
+                    }
+                    else
+                    {
+                        if (!_isMayBeInstanced)
                         {
-                            Timing.RunCoroutine(RespawnTimer(_respawnTime));
-                        }
-                        else
-                        {
-                            if (!_isMayBeInstanced)
-                            {
-                                CheckEnemyArray();
-                                PrepareToInstance(); // вызов на сервер, для инстанса
-                            }
+                            CheckEnemyArray();
+                            PrepareToInstance(); // вызов на сервер, для инстанса
                         }
                     }
                 }
@@ -172,25 +169,7 @@ namespace Game
         }
 
         /// <summary>
-        /// Просим сервер зареспаунить врага
-        /// </summary>
-        [Command]
-        private void CmdPrepareToInstance()
-        {
-            RpcPrepareToInstance();
-        }
-
-        /// <summary>
-        /// Говорим всем клиентам, чтобы те респаунили врага
-        /// </summary>
-        [ClientRpc]
-        private void RpcPrepareToInstance()
-        {
-            PrepareToInstance();
-        }
-
-        /// <summary>
-        /// подготовка к респауну врага
+        /// пПодготовка к респауну врага
         /// </summary>
         /// v1.01
         private void PrepareToInstance()
@@ -218,24 +197,6 @@ namespace Game
         }
 
         /// <summary>
-        /// Респаун врага непосредственно
-        /// </summary>
-        /// v1.01
-        private void Instansing()
-        {
-            GameObject clone = GameObject.Instantiate(_currentEnemy);
-            clone.name = "Enemy" + clone.GetComponent<EnemyAbstract>().EnemyType 
-                +"#Power" +clone.GetComponent<EnemyAbstract>().GetPower()+"#"+_numberOfEnemies;
-            clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
-            _numberOfEnemies++;
-            NetworkServer.Spawn(clone);
-
-            _enemyCountLevels[_instEnemy]--;
-            _isMayBeInstanced = false;
-            _respawnTime = (float)rnd.NextDouble() * rnd.Next(1, 4) * _tempRespawnTime;
-        }
-
-        /// <summary>
         /// Проверить массивы на нулевые элементы
         /// </summary>
         /// v1.01
@@ -251,6 +212,25 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Респаун врага непосредственно
+        /// </summary>
+        /// v1.01
+        private void Instansing()
+        {
+            GameObject clone = GameObject.Instantiate(_currentEnemy);
+            clone.name = "Enemy" + clone.GetComponent<EnemyAbstract>().EnemyType
+                + "#Power" + clone.GetComponent<EnemyAbstract>().GetPower() + "#" + _numberOfEnemies;
+            clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
+            _numberOfEnemies++;
+            NetworkServer.Spawn(clone);
+
+            _enemyCountLevels[_instEnemy]--;
+            _isMayBeInstanced = false;
+            _respawnTime = (float)rnd.NextDouble() * rnd.Next(1, 4) * _tempRespawnTime;
+        }
+
+        #region Корутины
         /// <summary>
         /// Таймер, для респауна врагов
         /// </summary>
@@ -272,5 +252,26 @@ namespace Game
             yield return Timing.WaitForSeconds(_time);
             _coroutineRespawn = true;
         }
+        #endregion
+
+        #region Мультиплеерные методы
+        /// <summary>
+        /// Просим сервер зареспаунить врага
+        /// </summary>
+        [Command]
+        private void CmdPrepareToInstance()
+        {
+            RpcPrepareToInstance();
+        }
+
+        /// <summary>
+        /// Говорим всем клиентам, чтобы те респаунили врага
+        /// </summary>
+        [ClientRpc]
+        private void RpcPrepareToInstance()
+        {
+            PrepareToInstance();
+        }
+        #endregion
     }
 }

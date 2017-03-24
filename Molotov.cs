@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System;
 using UnityEngine.Networking;
 
 namespace Game
@@ -11,6 +9,10 @@ namespace Game
     public class Molotov
         : Cluster
     {
+        #region Переменные
+        [SyncVar]
+        public bool _can;
+
         public float _burningTime;
         public int _dmgPerSec;
         public Vector3 _burningPosition;
@@ -18,8 +20,7 @@ namespace Game
         protected static System.Random rnd = new System.Random();
         public float _speed; // bullet speed
         public float _accuracy; // bullet accuracy
-        [SyncVar]
-        public bool _can;
+        #endregion
 
         /// <summary>
         /// Установить позицию
@@ -92,6 +93,7 @@ namespace Game
             }
         }
 
+        #region Мультиплеерные методы
         [Command]
         private void CmdBurner()
         {
@@ -113,5 +115,6 @@ namespace Game
             transform.GetComponent<MeshRenderer>().enabled = false;
             transform.GetChild(0).gameObject.SetActive(true);
         }
+        #endregion
     }
 }

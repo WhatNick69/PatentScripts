@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using System;
 using UnityEngine.Networking;
 
 namespace Game
@@ -59,6 +57,14 @@ namespace Game
         #endregion
 
         /// <summary>
+        /// Предзагрузка данных из сети
+        /// </summary>
+        public override void OnStartClient()
+        {
+            // Должны загружаться данные с Google-Play-Services
+        }
+
+        /// <summary>
         /// Начальный метод
         /// </summary>
         private void Start()
@@ -77,7 +83,8 @@ namespace Game
             {
                 if (Input.GetMouseButtonDown(0))
                 {
-                    СheckTap();
+                    Vector2 mouse = Input.mousePosition;
+                    CmdСheckTap(mouse);
                 }
             }
         }
@@ -85,13 +92,13 @@ namespace Game
         /// <summary>
         /// Действия, при нажатии по экрану
         /// </summary>
-        private void СheckTap()
+        private void CmdСheckTap(Vector2 mouse)
         {
             if (_isPickTurrelMode)
             {
-                Vector3 _target 
-                    = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Vector3 _target
+                    = Camera.main.ScreenToWorldPoint(mouse);
+                Ray ray = Camera.main.ScreenPointToRay(mouse);
                 RaycastHit hit;
 
                 if (_money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
@@ -167,39 +174,27 @@ namespace Game
         }
 
         /// <summary>
-        /// инстанс префаба. Запрос на сервер
+        /// Инстанс префаба. Запрос на сервер
         /// </summary>
         /// <param name="_target"></param>
         [Command]
-        private void CmdInstantiateObject(Vector3 _target)
+        private void CmdInstantiateObject(Vector3 pos)
         {
-            RpcInstantiateObject(_target);
+            RpcInstantiateObject(pos);
         }
 
-        /// <summary>
-        /// Инстанс префаба. На всех клиентах
-        /// </summary>
-        /// <param name="pos"></param>
         [Client]
-        public void RpcInstantiateObject(Vector3 pos)
+        private void RpcInstantiateObject(Vector3 pos)
         {
             pos.y = 0;
             GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
-            objectForInstantiate.name = "Player"+ objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#Cost"
+            objectForInstantiate.name = "Player" + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType + "#Cost"
                 + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
             //objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
             _numberOfUnits++;
-            if (objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType.Equals("ManualTurrel"))
-            {
-                objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
-                NetworkServer.SpawnWithClientAuthority(objectForInstantiate,connectionToClient);
-            }
-            else
-            {
-                objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
-                NetworkServer.Spawn(objectForInstantiate);
-            }
-            
+            objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+            objectForInstantiate.transform.parent = this.transform;
+            NetworkServer.Spawn(objectForInstantiate);
         }
     }
 }

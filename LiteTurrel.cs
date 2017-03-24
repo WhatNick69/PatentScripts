@@ -1,8 +1,6 @@
 ﻿using MovementEffects;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 using UnityEngine.Networking;
 
 namespace Game {
@@ -15,15 +13,20 @@ namespace Game {
     public class LiteTurrel
         : PlayerAbstract
     {
+        #region Переменные
         protected Ray ray;
         protected RaycastHit hit;
-        public float _timeToReAlive;
-        public GameObject _bullet; // bullet-prefab
-        public bool _isBurst;
+        [SerializeField, Tooltip("Время до возрождения")]
+        protected float _timeToReAlive;
+        [SerializeField, Tooltip("Префаб пули")]
+        protected GameObject _bullet; // bullet-prefab
+        [SerializeField, Tooltip("Стрельба очередью")]
+        protected bool _isBurst;
         protected bool _coroutineReload = true;
         protected bool _coroutineReAlive = true;
         [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _shootingSpeed; // speed of bullet
+        #endregion
 
         /// <summary>
         /// Действие, при столкновении
@@ -58,6 +61,9 @@ namespace Game {
             }
         }
 
+        /// <summary>
+        /// Присвоение ссылки медиа-данные
+        /// </summary>
         public override void OnStartClient()
         {
             transform.localEulerAngles = Vector3.zero;
@@ -86,7 +92,6 @@ namespace Game {
             {
                 _maxEdge *= 2;
             }
-            _timeToReAlive = 10;
 
             _isStoppingWalkFight = false;
             _isAlive = true;
@@ -107,59 +112,17 @@ namespace Game {
         }
 
         /// <summary>
-        /// Стрельба одиночными, либо очередью
+        /// Сменить врага
         /// </summary>
-        public void Bursting()
+        private new void FixedUpdate()
         {
-            if (_isAlive)
-            {
-                CmdPlayAudio(3);
-                if (!_isBurst)
-                {
-                    _bullet.transform.position = gameObject.transform.position;
-                    _bullet.transform.rotation = gameObject.transform.rotation;
-                    _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
+            if (!isServer) return; // Выполняется только на сервере
 
-                    CmdInstantiateObject(_bullet);
-                }
-                else
-                {
-                    for (int i = -10; i <= 20; i += 10)
-                    {
-                        _bullet.transform.position = gameObject.transform.position;
-                        _bullet.transform.rotation = gameObject.transform.rotation;
-                        _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
-
-                        _bullet.transform.Rotate(new Vector3(0, 0, i));
-                        CmdInstantiateObject(_bullet);
-                    }
-                }
-            }
+            if (_isAlive) ChangeEnemy();
         }
 
         /// <summary>
-        /// Инстанс снаряда. Запрос на сервер
-        /// </summary>
-        /// <param name="_bullet"></param>
-        [Command]
-        private void CmdInstantiateObject(GameObject _bullet)
-        {
-            RpcInstantiateObject(_bullet);
-        }
-
-        /// <summary>
-        /// Инстанс снаряда. Выполнение на клиентах
-        /// </summary>
-        /// <param name="_bullet"></param>
-        [Client]
-        private void RpcInstantiateObject(GameObject _bullet)
-        {
-            GameObject clone = Instantiate(_bullet);
-            NetworkServer.Spawn(clone);
-        }
-
-        /// <summary>
-        /// Update behaviour
+        /// Обновление
         /// </summary>
         /// v1.01
         void Update()
@@ -171,9 +134,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// Part of Update
+        /// Часть метода Update()
         /// </summary>
-        /// v1.01
         new void AliveUpdater()
         {
             if (_isAlive)
@@ -188,10 +150,39 @@ namespace Game {
         }
 
         /// <summary>
-        /// Implements attack-condition of Turrel
-        /// Alive behavior
+        /// Стрельба одиночными, либо очередью
         /// </summary>
-        /// v1.01
+        public void Bursting()
+        {
+            if (_isAlive)
+            {
+                CmdPlayAudio(3);
+                if (!_isBurst)
+                {
+                    _bullet.transform.position = gameObject.transform.position;
+                    _bullet.transform.rotation = gameObject.transform.rotation;
+                    _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+
+                    CmdInstantiateObject(_bullet);
+                }
+                else
+                {
+                    for (int i = -10; i <= 20; i += 10)
+                    {
+                        _bullet.transform.position = gameObject.transform.position;
+                        _bullet.transform.rotation = gameObject.transform.rotation;
+                        _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+
+                        _bullet.transform.Rotate(new Vector3(0, 0, i));
+                        CmdInstantiateObject(_bullet);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Атаковать
+        /// </summary>
         new void AttackAnim()
         {
             if (_attackedObject.transform.position.x > _startPosition.x + _maxEdge ||
@@ -210,9 +201,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// Draw way to enemy
+        /// Рисовать путь до объекта
         /// </summary>
-        /// v1.01
         new void AliveDrawerAndNuller()
         {
             if (_attackedObject != null)
@@ -230,9 +220,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// Set important variables
+        /// Часть метода Start()
         /// </summary>
-        /// v1.01
         new void StartMethod()
         {
             SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
@@ -250,10 +239,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// NEW
-        /// Null player-object
+        /// Обнулить объект
         /// </summary>
-        /// v1.01
         override public void NullAttackedObject()
         {
             _minDistance = 1000;
@@ -268,10 +255,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// NEW
-        /// Set damage to player
+        /// Установить урон объекту
         /// </summary>
-        /// v1.01
         public override void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
         {
             _hpTurrel -= _dmg;
@@ -299,6 +284,7 @@ namespace Game {
             }
         }
 
+        #region Корутины
         /// <summary>
         /// Таймер для возрождения пушки
         /// </summary>
@@ -321,50 +307,67 @@ namespace Game {
             yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineReload = true;
         }
+        #endregion
 
-        private new void FixedUpdate()
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (_isAlive) ChangeEnemy();
-        }
-
-        [ClientRpc]
+        #region Мультиплеерные методы
+        [Client]
         protected override void RpcPlayAudio(byte condition)
         {
             switch (condition)
             {
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
                     _audioSource.pitch = (float)randomer.NextDouble()/5 + 0.8f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioShotsTurrel()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioShotsTurrel()));
                     _audioSource.Play();
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble()/3 + 0.9f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsTurrel()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsTurrel()));
                     _audioSource.Play();
                     break;
             }
         }
+
+        /// <summary>
+        /// Инстанс снаряда. Запрос на сервер
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Command]
+        private void CmdInstantiateObject(GameObject _bullet)
+        {
+            RpcInstantiateObject(_bullet);
+        }
+
+        /// <summary>
+        /// Инстанс снаряда. Выполнение на клиентах
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Client]
+        private void RpcInstantiateObject(GameObject _bullet)
+        {
+            GameObject clone = Instantiate(_bullet);
+            NetworkServer.Spawn(clone);
+        }
+        #endregion
     }
 }

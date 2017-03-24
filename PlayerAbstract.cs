@@ -242,7 +242,7 @@ namespace Game {
 
             if (isServer)
             {
-                _currentAnimation = resourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
+                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
             {
@@ -250,7 +250,7 @@ namespace Game {
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfPlayer.speed = this._animationSpeed;
                 _animatorOfPlayer.runtimeAnimatorController
-                    = resourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
+                    = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
         }
 
@@ -1109,10 +1109,10 @@ namespace Game {
         /// <param name="i"></param>
         /// <param name="side"></param>
         [ClientRpc]
-        protected void RpcChangeAnimation(int i, bool side)
+        protected virtual void RpcChangeAnimation(int i, bool side)
         {
             _animatorOfPlayer.runtimeAnimatorController
-                = resourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
+                = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;
             if (isServer)
             {
@@ -1168,20 +1168,20 @@ namespace Game {
             {
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioHitsFire((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
@@ -1189,8 +1189,8 @@ namespace Game {
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() + 2f;
-                    _audioSource.clip = resourcesPlayerHelper.
-                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, resourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
                     _audioSource.Play();
                     break;
             }
