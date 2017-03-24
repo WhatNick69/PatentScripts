@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System;
 using UnityEngine.Networking;
 
 namespace Game
@@ -11,6 +9,12 @@ namespace Game
     public class Molotov
         : Cluster
     {
+        #region Переменные
+        [SyncVar]
+        public bool _can;
+        [SerializeField, Tooltip("Аудио компоненит")]
+        private AudioSource _audio;
+
         public float _burningTime;
         public int _dmgPerSec;
         public Vector3 _burningPosition;
@@ -18,8 +22,7 @@ namespace Game
         protected static System.Random rnd = new System.Random();
         public float _speed; // bullet speed
         public float _accuracy; // bullet accuracy
-        [SyncVar]
-        public bool _can;
+        #endregion
 
         /// <summary>
         /// Установить позицию
@@ -87,11 +90,12 @@ namespace Game
                 else
                 {
                     collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec);
+                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec,2);
                 }
             }
         }
 
+        #region Мультиплеерные методы
         [Command]
         private void CmdBurner()
         {
@@ -105,13 +109,18 @@ namespace Game
         public void RpcBurner()
         {
             _can = false;
+            _audio.clip = ResourcesPlayerHelper.
+                getElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
+            _audio.pitch =(float)rnd.NextDouble() / 4 + 0.75f;
+            _audio.Play();
+
             GetComponent<BulletMotionSync>().IsStopped = true;
-            Debug.Log("Бутылка лопнула!");
             Destroy(gameObject, _burningTime);
             transform.localRotation = Quaternion.identity;
             transform.GetComponent<BoxCollider>().enabled = false;
             transform.GetComponent<MeshRenderer>().enabled = false;
             transform.GetChild(0).gameObject.SetActive(true);
         }
+        #endregion
     }
 }

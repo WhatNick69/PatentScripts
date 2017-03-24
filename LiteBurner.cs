@@ -88,5 +88,43 @@ namespace Game
             CmdInstantiate(_bullet);
             _countOfAmmo--;
         }
+
+        [ClientRpc]
+        protected override void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+                    _audioSource.pitch = (float)randomer.NextDouble()  + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioThrowes((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioAudioThrowes()));
+                    _audioSource.Play();
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.Play();
+                    break;
+            }
+        }
     }
 }

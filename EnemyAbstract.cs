@@ -3,7 +3,6 @@ using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
-using System;
 
 namespace Game {
 
@@ -26,11 +25,15 @@ namespace Game {
         [SyncVar]
         protected float _animationSpeed;
 
+        // ЗАГРУЖАЕМЫЙ КОНТЕНТ
+        public ResourcesPlayerHelper resourcesPlayerHelper;
+
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
+        [SerializeField, Tooltip("Компонент Аудио")]
+        protected AudioSource _audioSource;
         protected bool[] _points; // enemy's points for player
-        protected RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
         [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfEnemy; // current animation of enemyv
         [SerializeField, Tooltip("Компонент NavMeshAgent")]
@@ -170,12 +173,12 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            _animationsOfEnemy =
-                Resources.LoadAll<RuntimeAnimatorController>("Animators");
+            resourcesPlayerHelper = 
+                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
 
             if (isServer)
             {
-                _currentAnimation = _animationsOfEnemy.Length-1;        
+                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
             {
@@ -183,7 +186,7 @@ namespace Game {
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfEnemy.speed = this._animationSpeed;
                 _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[_currentAnimation];
+                    = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
         }
 
@@ -509,14 +512,16 @@ namespace Game {
         }
 
         /// <summary>
-        /// Получить урон
+        /// Получить урон и попробовать установить противника
         /// </summary>
         public float EnemyDamage(GameObject obj, float _dmg)
         {
             _hp -= _dmg;
+            CmdPlayAudio(0); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving();
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
@@ -545,11 +550,14 @@ namespace Game {
         /// </summary>
         /// <param name="_dmg"></param>
         /// <returns></returns>
-        public float EnemyDamage(float _dmg)
+        public float EnemyDamage(float _dmg,byte condition = 1)
         {
             _hp -= _dmg;
+            CmdPlayAudio(condition); // Звук получения урона
+            Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
                 Decreaser();
@@ -726,6 +734,60 @@ namespace Game {
         }
 
         /// <summary>
+        /// Воспроизведение звука:
+        /// 0 - получить удар вблизи,
+        /// 1 - получить удар пулей,
+        /// 2 - получить удар огнем,
+        /// 3 - нанести удар,
+        /// 4 - умереть
+        /// </summary>
+        /// <param name="condition"></param>
+        [Command]
+        public void CmdPlayAudio(byte condition)
+        {
+            RpcPlayAudio(condition);
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [ClientRpc]
+        protected virtual void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.Play();
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Смерть врага. Запрос на сервере
         /// </summary>
         [Command]
@@ -764,7 +826,7 @@ namespace Game {
         private void RpcChangeAnimation(int i, bool side)
         {
             _animatorOfEnemy.runtimeAnimatorController
-                = _animationsOfEnemy[i];
+                = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;
             if (isServer)
             {

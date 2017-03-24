@@ -30,6 +30,7 @@ namespace Game {
 
             if (col.gameObject.tag == "Enemy")
             {
+                //Debug.Log("AZAZA");
                 col.GetComponent<EnemyAbstract>().EnemyDamage(
                     rnd.Next(_dmgForCluster - 
                         (_dmgForCluster / 3), _dmgForCluster + (_dmgForCluster / 3)));

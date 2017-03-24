@@ -11,7 +11,7 @@ namespace Game
         [SyncVar]
         private Vector3 syncPos;
         [SyncVar]
-        public Vector3 speedVec;
+        private Vector3 speedVec;
 
         // ОСТАЛЬНЫЕ ПЕРЕМЕННЫЕ
         [SerializeField, Tooltip("Transform компонент")]

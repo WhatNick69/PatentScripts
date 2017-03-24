@@ -4,7 +4,8 @@ using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
 
-namespace Game {
+namespace Game
+{
     /// <summary>
     /// Описывает основное поведение игрока
     /// </summary>
@@ -21,6 +22,8 @@ namespace Game {
         [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
         protected string _playerType;
         [SyncVar]
+        protected bool _isAlive; // alive condition of player
+        [SyncVar]
         protected int _currentAnimation; // Текущая анимация
         [SyncVar]
         protected bool _isFlipped;  // Перевернут ли спрайт?
@@ -28,13 +31,14 @@ namespace Game {
         protected float _animationSpeed;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
-        [SerializeField,Tooltip("Компонент Animator")]
+        [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfPlayer; // Аниматор юнита
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
+        [SerializeField, Tooltip("Компонент Аудио")]
+        protected AudioSource _audioSource;
         [SerializeField, Tooltip("Компонент-агент")]
         protected NavMeshAgent _agent;
-        protected static RuntimeAnimatorController[] _animationsOfPlayerObject; // Анимации юнита
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
@@ -78,7 +82,6 @@ namespace Game {
         protected Vector3 _enemyPoint;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ ЮНИТА
-        protected bool _isAlive; // alive condition of player
         protected bool _moveBack; // for cannable to move back!
         protected bool _canToNull; // for just one null
         protected bool _isFighting; // isFighting condition of player
@@ -232,11 +235,9 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            _animationsOfPlayerObject
-                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
             if (isServer)
             {
-                _currentAnimation = _animationsOfPlayerObject.Length-1;
+                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
             {
@@ -244,7 +245,7 @@ namespace Game {
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfPlayer.speed = this._animationSpeed;
                 _animatorOfPlayer.runtimeAnimatorController
-                    = _animationsOfPlayerObject[_currentAnimation];
+                    = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
         }
 
@@ -442,8 +443,8 @@ namespace Game {
                     {
                         try
                         {
-                            _tempDistance = 
-                                Vector3.Distance(gameObject.transform.position, 
+                            _tempDistance =
+                                Vector3.Distance(gameObject.transform.position,
                                     _enemyList[i].transform.position);
                             if (_tempDistance < _minDistance)
                             {
@@ -529,12 +530,14 @@ namespace Game {
         /// <summary>
         /// Получить урон
         /// </summary>
-        public virtual void PlayerDamage(GameObject obj, float _dmg)
+        public virtual void PlayerDamage(GameObject obj, float _dmg, byte condition = 0)
         {
             _hpTurrel -= _dmg;
+            CmdPlayAudio(condition);
             Timing.RunCoroutine(DamageAnimation());
             if (_hpTurrel <= 0)
             {
+                CmdPlayAudio(4);
                 _agent.enabled = false;
                 _isAlive = false;
                 Decreaser();
@@ -633,13 +636,13 @@ namespace Game {
                 if (_speed.x >= _cofForChangeAnim
                     && _animFlag1)
                 {
-                    RpcChangeAnimation(4,false);
+                    RpcChangeAnimation(4, false);
                     ChangeValues(false, true, true, true);
                 }
                 else if (_speed.x <= -_cofForChangeAnim
                   && _animFlag2)
                 {
-                    RpcChangeAnimation(4,true);
+                    RpcChangeAnimation(4, true);
                     ChangeValues(true, false, true, true);
                 }
                 else if (_speed.z >= _cofForChangeAnim
@@ -672,7 +675,7 @@ namespace Game {
                 _startPosition) <= 0.1f)
             {
                 RpcChangeAnimation(5, false);
-                _moveBack = false; 
+                _moveBack = false;
                 NullAttackedObject();
                 _isReturning = false;
             }
@@ -717,7 +720,7 @@ namespace Game {
                 && !_isStoppingWalkFight)
             {
                 if (Vector3.Distance(gameObject.transform.position,
-                    (_attackedObject.transform.position+_enemyPoint)) < _sideCof)
+                    (_attackedObject.transform.position + _enemyPoint)) < _sideCof)
                 {
                     _cofForChangeAnim = _cofForRest;
                     _isStoppingWalkFight = true;
@@ -823,11 +826,11 @@ namespace Game {
         {
             _timer += Time.deltaTime;
             if (_timer < _restartTimer - 1f)
-            {   
-                if (Vector3.Distance(transform.position,_randomPosition) <0.05f)
+            {
+                if (Vector3.Distance(transform.position, _randomPosition) < 0.05f)
                 {
                     RpcChangeAnimation(5, false);
-                }    
+                }
                 else
                 {
                     Mover();
@@ -908,7 +911,7 @@ namespace Game {
         {
             if (!_points[0])
             {
-                return new Vector3(gameObject.transform.position.x + 0.5f,0,
+                return new Vector3(gameObject.transform.position.x + 0.5f, 0,
                     gameObject.transform.position.z);
             }
             else if (!_points[1])
@@ -1101,10 +1104,10 @@ namespace Game {
         /// <param name="i"></param>
         /// <param name="side"></param>
         [ClientRpc]
-        protected void RpcChangeAnimation(int i, bool side)
+        protected virtual void RpcChangeAnimation(int i, bool side)
         {
             _animatorOfPlayer.runtimeAnimatorController
-                = _animationsOfPlayerObject[i];
+                = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;
             if (isServer)
             {
@@ -1132,6 +1135,63 @@ namespace Game {
         private void RpcSyncAnimationSpeed(float speedAnim)
         {
             _animatorOfPlayer.speed = speedAnim;
+        }
+
+        /// <summary>
+        /// Воспроизведение звука:
+        /// 0 - получить удар вблизи,
+        /// 1 - получить удар пулей,
+        /// 2 - получить удар огнем,
+        /// 3 - нанести удар,
+        /// 4 - умереть
+        /// </summary>
+        /// <param name="condition"></param>
+        [Command]
+        public void CmdPlayAudio(byte condition)
+        {
+            RpcPlayAudio(condition);
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [ClientRpc]
+        protected virtual void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 5 + 0.8f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioShotsTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.Play();
+                    break;
+            }
         }
         #endregion
     }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -7,33 +8,52 @@ namespace Game
     /// </summary>
     /// v1.03
     public class ClusteredMine
-        : MonoBehaviour
+        : NetworkBehaviour
     {
-        public byte _countOfClusterings;
-        public float _speed;
+        [SerializeField, Tooltip("Количество дробления")]
+        protected byte _countOfClusterings;
+        [SerializeField, Tooltip("Скорость разлета осколков")]
+        protected float _speed;
+        [SerializeField, Tooltip("Время жизни осколка")]
+        public float _timerToDestroy;
+        [SerializeField, Tooltip("Осколок")]
+        protected GameObject _cluster;
+
         protected Vector3 _speedVector;
         protected float _angle;
-        protected GameObject _clustering;
-        public float _timerToDestroy;
 
         /// <summary>
         /// Старт
         /// </summary>
         void Start()
         {
+            if (!isServer) return;
+
             _speedVector = new Vector3(0, 0, _speed);
-            _clustering = gameObject.transform.GetChild(0).gameObject;
-            _clustering.transform.position = transform.position;
+
             _angle = 360 / _countOfClusterings;
 
-            for (int i = 1; i < _countOfClusterings; i++)
+            for (int i = 0; i < _countOfClusterings; i++)
             {
-                GameObject _newClustering = 
-                    Instantiate(_clustering, transform.position, Quaternion.identity) as GameObject;
-                _newClustering.transform.Rotate(0, _angle * i,0 );
-                _newClustering.transform.parent = gameObject.transform;
-                Destroy(gameObject, _timerToDestroy);
+                CmdInstantiate(i);
             }
+            Destroy(gameObject, _timerToDestroy);
+        }
+
+        [Command]
+        protected void CmdInstantiate(float i)
+        {
+            RpcInstanntiate(i);
+        }
+
+        [Client]
+        private void RpcInstanntiate(float i)
+        {
+            GameObject _newClustering =
+                Instantiate(_cluster, transform.position, Quaternion.identity) as GameObject;
+            _newClustering.transform.Rotate(0, _angle * i, 0);
+            _newClustering.transform.parent = transform;
+            NetworkServer.Spawn(_newClustering);
         }
 
         /// <summary>
@@ -41,10 +61,15 @@ namespace Game
         /// </summary>
         void Update()
         {
+            if (!isServer)
+            {
+                return;
+            }
+
             _countOfClusterings = (byte)gameObject.transform.childCount;
             for (int i = 0; i < _countOfClusterings; i++)
             {
-                    gameObject.transform.GetChild(i).gameObject.transform.Translate(_speedVector * Time.deltaTime);
+                gameObject.transform.GetChild(i).gameObject.transform.Translate(_speedVector * Time.deltaTime);
             }
         }
     }
