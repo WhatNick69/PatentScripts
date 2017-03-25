@@ -1,7 +1,7 @@
 ﻿using MovementEffects;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game {
 
@@ -13,13 +13,22 @@ namespace Game {
     public class LiteTurrel
         : PlayerAbstract
     {
+        #region Переменные
         protected Ray ray;
         protected RaycastHit hit;
-        public float _timeToReAlive;
-        public GameObject _bullet; // bullet-prefab
-        public bool _isBurst;
+        [SerializeField, Tooltip("Время до возрождения")]
+        protected float _timeToReAlive;
+        [SerializeField, Tooltip("Подвижная часть туррели")]
+        protected Transform _childRotatingTurrel;
+        [SerializeField, Tooltip("Префаб пули")]
+        protected GameObject _bullet; // bullet-prefab
+        [SerializeField, Tooltip("Стрельба очередью")]
+        protected bool _isBurst;
         protected bool _coroutineReload = true;
         protected bool _coroutineReAlive = true;
+        [SerializeField, Tooltip("Скорость стрельбы")]
+        protected float _shootingSpeed; // speed of bullet
+        #endregion
 
         /// <summary>
         /// Действие, при столкновении
@@ -27,6 +36,8 @@ namespace Game {
         /// <param name="col"></param>
         public new void OnCollisionEnter(Collision col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
@@ -53,12 +64,25 @@ namespace Game {
         }
 
         /// <summary>
+        /// Присвоение ссылки медиа-данные
+        /// </summary>
+        public override void OnStartClient()
+        {
+            transform.localEulerAngles = Vector3.zero;
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
+            }
+        }
+
+        /// <summary>
         /// Initialising variables
         /// </summary>
         /// v1.01
         new void Start()
         {
-            transform.localEulerAngles = Vector3.zero;
+            if (!isServer) return; // Выполняется только на сервере
+   
             Application.runInBackground = true;
             _points = new bool[4];
             _minDistance = 1000;
@@ -72,7 +96,6 @@ namespace Game {
             {
                 _maxEdge *= 2;
             }
-            _timeToReAlive = 10;
 
             _isStoppingWalkFight = false;
             _isAlive = true;
@@ -93,47 +116,30 @@ namespace Game {
         }
 
         /// <summary>
-        /// Стрельба одиночными, либо очередью
+        /// Сменить врага
         /// </summary>
-        public void Bursting()
+        private new void FixedUpdate()
         {
-            if (IsAlive)
-            {
-                if (!_isBurst)
-                {
-                    _bullet.transform.position = gameObject.transform.position;
-                    _bullet.transform.rotation = gameObject.transform.rotation;
-                    _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
-                    Instantiate(_bullet);
-                }
-                else
-                {
-                    for (int i = -5; i <= 5; i += 5)
-                    {
-                        _bullet.transform.position = gameObject.transform.position;
-                        _bullet.transform.rotation = gameObject.transform.rotation;
-                        _bullet.GetComponent<Bullet>().setAttackedObject(gameObject,_attackedObject);
-                        _bullet.transform.Rotate(new Vector3(i, 0, 0));
-                        Instantiate(_bullet);
-                    }
-                }
-            }
+            if (!isServer) return; // Выполняется только на сервере
+
+            if (_isAlive) ChangeEnemy();
         }
 
         /// <summary>
-        /// Update behaviour
+        /// Обновление
         /// </summary>
         /// v1.01
         void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             AliveUpdater();
             AliveDrawerAndNuller();
         }
 
         /// <summary>
-        /// Part of Update
+        /// Часть метода Update()
         /// </summary>
-        /// v1.01
         new void AliveUpdater()
         {
             if (_isAlive)
@@ -145,17 +151,47 @@ namespace Game {
                     AttackAnim();
                 }
             }
-            else
+        }
+
+        /// <summary>
+        /// Стрельба одиночными, либо очередью
+        /// </summary>
+        public void Bursting()
+        {
+            if (_isAlive)
             {
-                Timing.RunCoroutine(ReAliveTimer());
+                CmdPlayAudio(3);
+
+                // Работа с дочерним объектм
+                if (!_isBurst)
+                {
+                    _bullet.transform.position = _childRotatingTurrel.position;
+                    _bullet.transform.rotation = _childRotatingTurrel.rotation;
+                    _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+                    _bullet.transform.localEulerAngles 
+                        = new Vector2(0, _bullet.transform.localEulerAngles.y+90);
+                    CmdInstantiateObject(_bullet);
+                }
+                else
+                {
+                    for (int i = -10; i <= 10; i += 10)
+                    {
+                        _bullet.transform.position = _childRotatingTurrel.position;
+                        _bullet.transform.rotation = _childRotatingTurrel.rotation;
+                        _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+                        _bullet.transform.localEulerAngles 
+                            = new Vector2(0, _bullet.transform.localEulerAngles.y + 90);
+
+                        _bullet.transform.Rotate(new Vector2(0, i));
+                        CmdInstantiateObject(_bullet);
+                    }
+                }
             }
         }
 
         /// <summary>
-        /// Implements attack-condition of Turrel
-        /// Alive behavior
+        /// Атаковать
         /// </summary>
-        /// v1.01
         new void AttackAnim()
         {
             if (_attackedObject.transform.position.x > _startPosition.x + _maxEdge ||
@@ -174,9 +210,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// Draw way to enemy
+        /// Рисовать путь до объекта
         /// </summary>
-        /// v1.01
         new void AliveDrawerAndNuller()
         {
             if (_attackedObject != null)
@@ -185,7 +220,11 @@ namespace Game {
                     _attackedObject.transform.position, Color.blue);
                 _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x, 
                     0, _attackedObject.transform.position.z);
-                transform.LookAt(_attackedObject.transform.position);
+
+                // Поворот дочернего объекта
+                _childRotatingTurrel.LookAt(_attackedObject.transform.position);
+                _childRotatingTurrel.localEulerAngles = new Vector3(90, _childRotatingTurrel.localEulerAngles.y - 90);
+
                 if (!_attackedObject.GetComponent<EnemyAbstract>().IsAlive)
                 {
                     NullAttackedObject();
@@ -194,18 +233,14 @@ namespace Game {
         }
 
         /// <summary>
-        /// Set important variables
+        /// Часть метода Start()
         /// </summary>
-        /// v1.01
         new void StartMethod()
         {
             SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
             _hpTurrelTemp = _hpTurrel;
             Debug.Log(gameObject.name + " загружен!");
-            _animatorOfPlayer =
-                gameObject.transform.GetChild(0).GetComponent<Animator>();
-            _animationsOfPlayerObject
-                = Resources.LoadAll<RuntimeAnimatorController>("Animators");
+
             if (_isTurrel)
             {
                 _maxCountOfAttackers = 3;
@@ -217,10 +252,8 @@ namespace Game {
         }
 
         /// <summary>
-        /// NEW
-        /// Null player-object
+        /// Обнулить объект
         /// </summary>
-        /// v1.01
         override public void NullAttackedObject()
         {
             _minDistance = 1000;
@@ -231,18 +264,21 @@ namespace Game {
             _isFighting = false;
             _animatorOfPlayer.speed = 1;
             ChangeValues(true, true, true, true);
+            RestartValues();
         }
 
         /// <summary>
-        /// NEW
-        /// Set damage to player
+        /// Установить урон объекту
         /// </summary>
-        /// v1.01
-        override public void PlayerDamage(GameObject obj, float _dmg)
+        public override void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
         {
             _hpTurrel -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(_hpTurrel);
+            CmdPlayAudio(condition);
             if (_hpTurrel <= 0)
             {
+                Timing.RunCoroutine(ReAliveTimer());
+                CmdPlayAudio(4);
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
@@ -262,6 +298,7 @@ namespace Game {
             }
         }
 
+        #region Корутины
         /// <summary>
         /// Таймер для возрождения пушки
         /// </summary>
@@ -271,6 +308,7 @@ namespace Game {
             yield return Timing.WaitForSeconds(_timeToReAlive);
             _hpTurrel = _hpTurrelTemp;
             _isAlive = true;
+            _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
         }
 
         /// <summary>
@@ -280,14 +318,71 @@ namespace Game {
         protected IEnumerator<float> ReloadTimer()
         {
             _coroutineReload = false;
-            yield return Timing.WaitForSeconds(_restartTimer);
             Bursting();
+            yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineReload = true;
         }
+        #endregion
 
-        private new void FixedUpdate()
+        #region Мультиплеерные методы
+        [Client]
+        protected override void RpcPlayAudio(byte condition)
         {
-            if (_isAlive) ChangeEnemy();
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+                    _audioSource.pitch = (float)randomer.NextDouble()/5 + 0.8f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioShotsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioShotsTurrel()));
+                    _audioSource.Play();
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble()/3 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsTurrel()));
+                    _audioSource.Play();
+                    break;
+            }
         }
+
+        /// <summary>
+        /// Инстанс снаряда. Запрос на сервер
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Command]
+        private void CmdInstantiateObject(GameObject _bullet)
+        {
+            RpcInstantiateObject(_bullet);
+        }
+
+        /// <summary>
+        /// Инстанс снаряда. Выполнение на клиентах
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Client]
+        private void RpcInstantiateObject(GameObject _bullet)
+        {
+            GameObject clone = Instantiate(_bullet);
+            NetworkServer.Spawn(clone);
+        }
+        #endregion
     }
 }

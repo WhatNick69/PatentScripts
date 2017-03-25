@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using MovementEffects;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -13,51 +13,69 @@ namespace Game
         protected Vector2 mouse;
 
         /// <summary>
+        /// Предзагрузка на клиенте
+        /// </summary>
+        public override void OnStartClient()
+        {
+            SetCamera();
+            transform.localEulerAngles = Vector3.zero;
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
+            }
+        }
+
+        private new void OnCollisionEnter(Collision collision)
+        {
+            return;
+        }
+
+        /// <summary>
         /// Обновление
         /// </summary>
         void Update()
         {
-            LookAter();
-            AliveUpdater();
-            AliveDrawerAndNuller();
+            if (isClient)
+            {
+                Vector2 mouse = Input.mousePosition;
+                CmdLookAter(mouse);
+                if (Input.GetMouseButton(1))
+                {
+                    CmdAliveUpdater();
+                }
+            }
         }
 
         /// <summary>
         /// Смотреть на тап
         /// </summary>
-        void LookAter()
+        [Command]
+        void CmdLookAter(Vector2 mouse)
         {
-            if (!_isAlive) return;
-            mouse = Input.mousePosition;
-            if (_mainCamera == null)
+            RpcLookAter(mouse);
+        }
+
+        [Client]
+        void RpcLookAter(Vector2 mouse)
+        {
+            if (IsAlive)
             {
-                SetCamera();
+                Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
+                target.y = 0;
+                _childRotatingTurrel.LookAt(target);
+                _childRotatingTurrel.localEulerAngles = 
+                    new Vector2(90, _childRotatingTurrel.localEulerAngles.y-90);
             }
-            Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
-            target.y = 0;
-            transform.LookAt(target);
         }
 
         /// <summary>
         /// Part of Update
         /// </summary>
         /// v1.01
-        new void AliveUpdater()
+        [Command]
+        void CmdAliveUpdater()
         {
-            if (_isAlive)
-            {
-                if (_coroutineReload)
-                {
-                    if (Input.GetMouseButton(1))
-                    {
-                        AttackAnim();
-                    }
-                }
-            }
-            else
-            {
-                Timing.RunCoroutine(ReAliveTimer());
-            }
+            RpcAttackAnim();
         }
 
         /// <summary>
@@ -65,9 +83,16 @@ namespace Game
         /// Alive behavior
         /// </summary>
         /// v1.01
-        new void AttackAnim()
+        [Client]
+        void RpcAttackAnim()
         {
-            Timing.RunCoroutine(ReloadTimer());
+            if (_isAlive)
+            {
+                if (_coroutineReload)
+                {
+                    Timing.RunCoroutine(ReloadTimer());
+                }
+            }   
         }
     }
 }

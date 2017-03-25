@@ -1,17 +1,28 @@
-﻿using UnityEngine;
+﻿using MovementEffects;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
     /// <summary>
     /// Описывает поведение мины
-    /// Наследует Cluster
+    /// +синхронизирует позицию 
     /// </summary>
-    /// v1.01
     public class Mine 
         : Cluster {
 
-        public int _damage; // damage
-        public float _speedOfPlanting; // speed of planting a mine
+        #region Переменные
+        [SyncVar]
+        private Vector3 syncPos;
+        [SyncVar]
+        private bool _toSync;
+        private Vector3 lastPos;
+
+        [SerializeField, Tooltip("Урон от кластера")]
+        protected int _damage; // damage
+        [SerializeField, Tooltip("Скорость движения мины")]
+        protected float _speedOfPlanting; // speed of planting a mine
 
         protected Vector3 _startPosition; // startPosition
         protected Vector3 _speedVec; // speed-Vector
@@ -21,6 +32,7 @@ namespace Game
         private int _angle;
         private double _smooth;
         private Quaternion _quar;
+        #endregion
 
         /// <summary>
         /// Sets startPosition and SpeedVector3
@@ -28,6 +40,9 @@ namespace Game
         /// v1.01
         void Start()
         {
+            if (!isServer) return;
+
+            _toSync = true;
             _angle = rnd.Next(720, 1480);
             _smooth = rnd.NextDouble() * 10;
             _quar = Quaternion.Euler(0, _angle, 0);
@@ -36,25 +51,34 @@ namespace Game
         }
 
         /// <summary>
-        /// Checks if Col.tag is Enemy and if Col.tag is RoadCollider
+        /// Установить сетевую позицию объекта
         /// </summary>
-        /// v1.01
-        void OnTriggerEnter(Collider col)
+        public override void OnStartClient()
         {
+            syncPos = transform.position;
+        }
+
+        /// <summary>
+        /// Остановиться, если есть дорога
+        /// </summary>
+        protected override void OnTriggerEnter(Collider col)
+        {
+            if (!isServer) return;
+
             if (col.gameObject.tag == "Enemy")
             {
                 col.GetComponent<EnemyAbstract>().EnemyDamage(
                     rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)));
                 if (_isClustered)
                 {
-                    _cluster.transform.position = transform.position;
-                    Instantiate(_cluster);
                     Destroy(gameObject);
+                    CmdInstantiate();
                 }
                 else
                 {
                     Destroy(gameObject);
                 }
+
             }
             if (col.gameObject.tag == "RoadCollider")
             {
@@ -63,11 +87,17 @@ namespace Game
         }
 
         /// <summary>
-        /// Moving of a mine
+        /// Движение мины
         /// </summary>
-        /// v1.01
         void Update()
         {
+            if (!isServer
+                && _toSync)
+            {
+                LerpTransform();
+                return;
+            }
+
             if (Vector3.Distance(transform.position, _startPosition) < _distance)
             {
                 transform.GetChild(0).gameObject.transform.rotation 
@@ -77,6 +107,7 @@ namespace Game
             }
             else
             {
+                Timing.RunCoroutine(StopSync());
                 if (!_isPlaced)
                 {
                     _distance *= 1.2f;
@@ -85,12 +116,70 @@ namespace Game
         }
 
         /// <summary>
-        /// Set a distance
+        /// Остановить синхронизацию после 3 секунд
         /// </summary>
-        /// v1.01
+        /// <returns></returns>
+        protected IEnumerator<float> StopSync()
+        {
+            yield return Timing.WaitForSeconds(3);
+            _toSync = false;
+        }
+
+        /// <summary>
+        /// Установить дистанцию
+        /// </summary>
         public void setDistance(float _dis)
         {
             _distance = _dis;
         }
+
+        /// <summary>
+        /// Синхронизировать переменные позиции
+        /// </summary>
+        private void FixedUpdate()
+        {
+            if (isServer)
+            {
+                lastPos = transform.position;
+                syncPos = transform.position;
+            }
+        }
+
+        /// <summary>
+        /// Синхронизация мины
+        /// </summary>
+        private void LerpTransform()
+        {
+            if (!isServer)
+            {
+                transform.position
+                    = Vector3.Lerp(transform.position, syncPos, Time.deltaTime * 10);
+                transform.GetChild(0).gameObject.transform.rotation
+                    = Quaternion.Lerp(transform.GetChild(0).gameObject.transform.rotation, _quar,
+                        Time.deltaTime * (float)_smooth);
+            }
+        }
+
+        #region Мультиплеерные методы
+        /// <summary>
+        /// Инстанс объекта. Запрос на сервер
+        /// </summary>
+        [Command]
+        protected void CmdInstantiate()
+        {
+            RpcInstantiate();
+        }
+
+        /// <summary>
+        /// Инстанс объекта. Выполнение на клиентах
+        /// </summary>
+        [Client]
+        protected void RpcInstantiate()
+        {
+            GameObject clone = Instantiate(_cluster);
+            clone.transform.position = transform.position;
+            NetworkServer.Spawn(clone);
+        }
+        #endregion
     }
 }

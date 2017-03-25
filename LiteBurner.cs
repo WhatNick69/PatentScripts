@@ -1,5 +1,6 @@
 ﻿using MovementEffects;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -84,68 +85,45 @@ namespace Game
             _bullet.transform.position = _instantier.transform.position;
             _bullet.transform.rotation = _instantier.transform.rotation;
 
-            Instantiate(_bullet);
+            CmdInstantiate(_bullet);
             _countOfAmmo--;
         }
 
-        /// <summary>
-        /// Анимация атаки
-        /// </summary>
-        public override void AttackAnim()
+        [ClientRpc]
+        protected override void RpcPlayAudio(byte condition)
         {
-            _distance =
-                Vector3.Distance(gameObject.transform.position,
-                    _attackedObject.transform.position);
-            if (gameObject.transform.position.x > _startPosition.x + _maxEdge ||
-                     gameObject.transform.position.x < _startPosition.x - _maxEdge ||
-                         gameObject.transform.position.z > _startPosition.z + _maxEdge ||
-                             gameObject.transform.position.z < _startPosition.z - _maxEdge)
+            switch (condition)
             {
-                RemoveFromList(_attackedObject);
-                _isReturning = true;
-                Decreaser();
-                NullAttackedObject();
-            }
-
-            else if (_coroutineShoot &&
-                _attackedObject != null
-                && !_isStoppingWalkFight &&
-                    (_distance <= _maxEdge && _distance > _maxEdge / 4 && _countOfAmmo > 0))
-            {
-                _coroutineShoot = false;
-                Timing.RunCoroutine(BurstingTimer()); // ЗАПУСК КОРУТИНА
-            }
-            else if (_attackedObject != null
-                && !_isStoppingWalkFight 
-                    && (_distance <= _maxEdge / 4 || _countOfAmmo <= 0))
-            {
-                if (Vector3.Distance(gameObject.transform.position,
-                    _attackedObject.transform.position + _enemyPoint) < _sideCof)
-                {
-                    _cofForChangeAnim = _cofForRest;
-                    _isStoppingWalkFight = true;
-                }
-                else
-                {
-                    _agent.SetDestination(_enemyPoint + AttackedObject.transform.position);
-                }
-            }
-            else
-            {
-                if (Vector3.Distance(gameObject.transform.position,
-                            _attackedObject.transform.position
-                                + _enemyPoint) < _sideCof * 2)
-                {
-                    _animatorOfPlayer.runtimeAnimatorController
-                        = _animationsOfPlayerObject[0];
-                }
-                else
-                {
-                    RemoveFromList(_attackedObject);
-                    Decreaser();
-                    NullAttackedObject();
-                    _isStoppingWalkFight = false;
-                }
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+                    _audioSource.pitch = (float)randomer.NextDouble()  + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioThrowes((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioAudioThrowes()));
+                    _audioSource.Play();
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.Play();
+                    break;
             }
         }
     }

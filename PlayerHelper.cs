@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using System;
 using UnityEngine.Networking;
 
 namespace Game
@@ -12,18 +10,26 @@ namespace Game
     public class PlayerHelper 
         : NetworkBehaviour
     {
-        public int _money; // количество денег
-        public List<GameObject> units; // лист с юнитами
-        public int currentUnit; // выбранный юнит для инстанса
-        public bool isPickTurrelMode;
-        private LayerMask _roadLayer;
-        private LayerMask _outroadLayer;
-        private LayerMask _playerLayer;
-        public bool _isRadiusVisible;
-        public GameObject _tempRadiusGameObject;
-        private static int _numberOfUnits;
+        #region Переменные
+        [SerializeField,Tooltip("Количество денег")]
+        private int _money; // количество денег
+        [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
+        private List<GameObject> _units; // лист с юнитами
+        [SerializeField, Tooltip("Текущий номер юнита для покупки")]
+        private int _currentUnit; // выбранный юнит для инстанса
+        [SerializeField, Tooltip("Режим осмотра юнитов")]
+        private bool _isPickTurrelMode;
+        private static LayerMask _roadLayer;
+        private static LayerMask _outroadLayer;
+        private static LayerMask _playerLayer;
+        [SerializeField, Tooltip("Видимость радиусов")]
+        private bool _isRadiusVisible;
+        private GameObject _tempRadiusGameObject;
+        private int _numberOfUnits;
+        #endregion
 
-        public static int NumberOfUnits
+        #region Геттеры и сеттеры
+        public int NumberOfUnits
         {
             get
             {
@@ -36,6 +42,28 @@ namespace Game
             }
         }
 
+        public bool IsPickTurrelMode
+        {
+            get
+            {
+                return _isPickTurrelMode;
+            }
+
+            set
+            {
+                _isPickTurrelMode = value;
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// Предзагрузка данных из сети
+        /// </summary>
+        public override void OnStartClient()
+        {
+            // Должны загружаться данные с Google-Play-Services
+        }
+
         /// <summary>
         /// Начальный метод
         /// </summary>
@@ -44,36 +72,50 @@ namespace Game
             _roadLayer = 1 << 8;
             _outroadLayer = 1 << 10;
             _playerLayer = 1 << 11;
-            _isRadiusVisible = false;
+        }
+
+        /// <summary>
+        /// Селф-обновление
+        /// </summary>
+        private void Update()
+        {        
+            if (isLocalPlayer)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Vector2 mouse = Input.mousePosition;
+                    CmdСheckTap(mouse);
+                }
+            }
         }
 
         /// <summary>
         /// Действия, при нажатии по экрану
         /// </summary>
-        private void checkTap()
+        private void CmdСheckTap(Vector2 mouse)
         {
-            if (isPickTurrelMode)
+            if (_isPickTurrelMode)
             {
-                Vector3 _target 
-                    = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Vector3 _target
+                    = Camera.main.ScreenToWorldPoint(mouse);
+                Ray ray = Camera.main.ScreenPointToRay(mouse);
                 RaycastHit hit;
 
-                if (_money - units[currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
+                if (_money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
                 {
-                    if (units[currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
+                    if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _roadLayer))
                     {
                         Debug.Log("Создали динамику");
-                        instantiateObject(_target); // запрос на сервер на инстанс юнита
-                        _money -= units[currentUnit].GetComponent<PlayerAbstract>().Cost;
+                        CmdInstantiateObject(_target); // запрос на сервер на инстанс юнита
+                        _money -= _units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
                     }
-                    else if (!units[currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
+                    else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _outroadLayer))
                     {
                         Debug.Log("Создали статику");
-                        instantiateObject(_target); // запрос на сервер на инстанс юнита
-                        _money -= units[currentUnit].GetComponent<PlayerAbstract>().Cost;
+                        CmdInstantiateObject(_target); // запрос на сервер на инстанс юнита
+                        _money -= _units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
                     }
                     else
                     {
@@ -132,31 +174,26 @@ namespace Game
         }
 
         /// <summary>
-        /// Просто апдейт
+        /// Инстанс префаба. Запрос на сервер
         /// </summary>
-        private void Update()
+        /// <param name="_target"></param>
+        [Command]
+        private void CmdInstantiateObject(Vector3 pos)
         {
-            if (!isLocalPlayer)
-            {
-                return;
-            }
-            if (Input.GetMouseButtonDown(0))
-            {
-                checkTap();
-            }
+            RpcInstantiateObject(pos);
         }
 
-        /// <summary>
-        /// Сервер, покажи всем, что я разместил юнита
-        /// </summary>
-        /// <param name="pos"></param>
-        public void instantiateObject(Vector3 pos)
+        [Client]
+        private void RpcInstantiateObject(Vector3 pos)
         {
             pos.y = 0;
-            GameObject objectForInstantiate = Instantiate(units[currentUnit],pos,Quaternion.Euler(90,0,0));
-            objectForInstantiate.name = "Player#Cost"+
-                objectForInstantiate.GetComponent<PlayerAbstract>().Cost+"#"+_numberOfUnits;
+            GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
+            objectForInstantiate.name = "Player" + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType + "#Cost"
+                + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
+            //objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
             _numberOfUnits++;
+            objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+            objectForInstantiate.transform.parent = this.transform;
             NetworkServer.Spawn(objectForInstantiate);
         }
     }

@@ -15,12 +15,13 @@ namespace Game
         public Vector2 _tempVec;
         public GameObject _targetSpot;
 
-
         /// <summary>
         /// Обновление
         /// </summary>
         void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             CheckTarget();
             AliveUpdater();
         }
@@ -105,21 +106,6 @@ namespace Game
                     Timing.RunCoroutine(ReloadTimer());
                 }
             }
-            else
-            {
-                Timing.RunCoroutine(ReAliveTimer());
-            }
-        }
-
-        /// <summary>
-        /// таймер для возрождения пушки
-        /// </summary>
-        /// <returns></returns>
-        new protected IEnumerator<float> ReAliveTimer()
-        {
-            yield return Timing.WaitForSeconds(_timeToReAlive);
-            _hpTurrel = _hpTurrelTemp;
-            _isAlive = true;
         }
 
         /// <summary>

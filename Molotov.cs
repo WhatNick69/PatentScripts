@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -9,14 +9,25 @@ namespace Game
     public class Molotov
         : Cluster
     {
+        #region Переменные
+        [SyncVar]
+        public bool _can;
+        [SerializeField, Tooltip("Аудио компонент")]
+        private AudioSource _audio;
+        [SerializeField, Tooltip("Бутылка")]
+        private Transform _bottle;
+
+        private int _angle;
         public float _burningTime;
-        public int _dmgPerSec;
+        public float _dmgPerSec;
         public Vector3 _burningPosition;
         protected Vector3 _speedVec;
         protected static System.Random rnd = new System.Random();
         public float _speed; // bullet speed
         public float _accuracy; // bullet accuracy
-        public bool _can;
+        [SyncVar]
+        private Quaternion _quar;
+        #endregion
 
         /// <summary>
         /// Установить позицию
@@ -32,9 +43,13 @@ namespace Game
         /// </summary>
         void Start()
         {
-            _can = true;
+            if (!isServer) return; // Выполняется только на сервере
+
+            _angle = rnd.Next(180, 720);
+            _quar = Quaternion.Euler(90, _angle, 0);
             _speedVec = new Vector3((float)rnd.NextDouble()
                 * rnd.Next(-1, 2) * _accuracy,0, _speed);
+            GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 
         /// <summary>
@@ -42,17 +57,34 @@ namespace Game
         /// </summary>
         public virtual void Update()
         {
+            if (!isServer
+                    && _can)
+            {
+                LerpTransform();
+                return; // Выполняется только на сервере
+            }
+               
             if (_can)
             {
                 if (Vector3.Distance(gameObject.transform.position, _burningPosition) > 0.1f)
                 {
+                    _bottle.rotation = Quaternion.Slerp(_bottle.rotation, _quar,
+                        Time.deltaTime);
                     gameObject.transform.Translate(_speedVec * Time.deltaTime);
                 }
                 else
                 {
-                    burner();
+                    CmdBurner();
                 }
             }
+        }
+
+        /// <summary>
+        /// Пустая реализация
+        /// </summary>
+        protected override void OnTriggerEnter(Collider col)
+        {
+            return;
         }
 
         /// <summary>
@@ -61,39 +93,68 @@ namespace Game
         /// <param name="collision"></param>
         public void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.tag == "Enemy")
+            if (!isServer) return; // Выполняется только на сервере
+
+            if (collision.gameObject.tag.Equals("Enemy"))
             {
                 if (_can)
                 {
-                    burner();
+                    CmdBurner();
                 }
                 else
                 {
                     collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec);
+                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec, 2);
                 }
             }
         }
 
-        /// <summary>
-        /// Пустая реализация
-        /// </summary>
-        public void OnTriggerEnter()
+        public void OnCollisionStay(Collision collision)
         {
+            if (!_can
+                    && collision.gameObject.tag.Equals("Enemy"))
+            {
+                collision.gameObject.transform.
+                    GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec, 2);
+            }
+        }
 
+        private void LerpTransform()
+        {
+            if (!isServer)
+            {
+                _bottle.rotation = Quaternion.Slerp(_bottle.rotation, _quar,
+                    Time.deltaTime);
+            }
+        }
+
+        #region Мультиплеерные методы
+        [Command]
+        private void CmdBurner()
+        {
+            RpcBurner();
         }
 
         /// <summary>
         /// Создать пламя, вместо бутылки
         /// </summary>
-        public void burner()
+        [ClientRpc]
+        public void RpcBurner()
         {
+            _can = false;
+            _audio.clip = ResourcesPlayerHelper.
+                getElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
+            _audio.pitch =(float)rnd.NextDouble() / 4 + 0.75f;
+            _audio.Play();
+
+            GetComponent<BulletMotionSync>().IsStopped = true;
             Destroy(gameObject, _burningTime);
             transform.localRotation = Quaternion.identity;
             transform.GetComponent<BoxCollider>().enabled = false;
-            transform.GetComponent<MeshRenderer>().enabled = false;
+            transform.GetComponent<SphereCollider>().enabled = true;
             transform.GetChild(0).gameObject.SetActive(true);
-            _can = false;
+            transform.GetChild(1).gameObject.SetActive(false);
         }
+        #endregion
     }
 }

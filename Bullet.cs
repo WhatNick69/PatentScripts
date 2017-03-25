@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game
 {
@@ -22,16 +24,28 @@ namespace Game
         protected float _lifeTime; // bullet life
         [SerializeField, Tooltip("Скорость снаряда")]
         protected float _speed; // bullet speed
+        [SyncVar]
         protected Vector3 _speedVec;
 
-        /// <summary>
-        /// Initialising DestroyByTimer and Moving
-        /// </summary>
-        /// v1.01
-        virtual public void Start()
+        public GameObject AttackedObject
         {
-            Destroy(gameObject, _lifeTime);
-            _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy,0 , _speed);
+            get
+            {
+                return _attackedObject;
+            }
+        }
+
+        /// <summary>
+        /// Запуск на клиентах
+        /// </summary>
+        public override void OnStartClient()
+        {
+            if (isServer)
+            {
+                Destroy(gameObject, _lifeTime);
+                _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+            }
+            GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }
 
         public void setAttackedObject(GameObject parent,GameObject aO)
@@ -46,6 +60,8 @@ namespace Game
         /// v1.01
         protected new void OnTriggerEnter(Collider col)
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             if (col.gameObject.tag == "Enemy" 
                 && col.gameObject.GetComponent<EnemyAbstract>().IsAlive)
             {
@@ -81,6 +97,8 @@ namespace Game
         /// v1.01
         public virtual void Update()
         {
+            if (!isServer) return; // Выполняется только на сервере
+
             gameObject.transform.Translate(_speedVec * Time.deltaTime);
         }
     }

@@ -14,69 +14,85 @@ namespace Game {
     public abstract class EnemyAbstract
         : NetworkBehaviour
     {
-        // list of player object's animations
+        #region Переменные
+        // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
+        [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
+        protected string _enemyType;
+        [SyncVar]
+        private int _currentAnimation; // Текущая анимация
+        [SyncVar]
+        protected bool _isFlipped; // Перевернут ли спрайт?
+        [SyncVar]
+        protected float _animationSpeed;
+
+        // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
+        [SerializeField, Tooltip("Компонент Аудио")]
+        protected AudioSource _audioSource;
         protected bool[] _points; // enemy's points for player
-        public string _path; // track path
-        protected static RuntimeAnimatorController[] _animationsOfEnemy; // array of enemy animations
         [SerializeField, Tooltip("Компонент Animator")]
-        protected Animator _animatorOfEnemy; // current animation of enemy
+        protected Animator _animatorOfEnemy; // current animation of enemyv
+        [SerializeField, Tooltip("Компонент NavMeshAgent")]
+        private NavMeshAgent _agent;
+        [SerializeField, Tooltip("Компонент бар-здоровья")]
+        protected HealthBarUnit _healthBarUnit;
 
-        // main variables of enemy
-        [SerializeField]
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
+        public string _path; // track path
+        [SerializeField, Tooltip("Вознаграждение за убийство")]
+        protected int _enemyBonus;
+        [SerializeField, Tooltip("Здоровье врага")]
         protected float _hp; // hp of player
-        [SerializeField]
+        [SerializeField, Tooltip("Урон, который враг наносит")]
         protected int _dmg; // dmg of player
-        [SerializeField]
+        [SerializeField, Tooltip("Префаб пули врага")]
         protected GameObject _bullet; // bullet-prefab
-        [SerializeField]
+        [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
         private float _agentSpeed;
-        [SerializeField]
-        private NavMeshAgent _agent;
-        [SerializeField]
+        [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
-
-        [SerializeField]
+        [SerializeField, Tooltip("Количество атакующих")]
         protected byte _countOfAttackers; // count attackers of enemy
-        [SerializeField]
+        [SerializeField, Tooltip("Максимальное количество атакующих")]
         protected byte _maxCountOfAttackers; // max count attackers of enemy
         protected bool _mayDamagedByFire;
         protected float _power;
 
-        // points values
+        // ЗНАЧЕНИЯ ДЛЯ АТАКУЕМОЙ ПОЗИЦИИ
         protected byte _point; // bool-point of player
         protected const float _sideCof = 0.25f; // point side coefficient
         protected float _multiple; // multiplier for moving of enemy
         protected Vector3 _playerPoint; // point, which should be placed by enemy
 
-        // main behaviors of enemy
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ ЮНИТА
         protected bool _isAlive;
         protected bool _attackFlag;
         protected bool _isStopingOnWay;
         protected bool _isStoppingWalkFight;
 
-        // moving variables
+        // ПЕРЕМЕННЫЕ ДЛЯ СМЕНЫ АНИМАЦИИ ПРИ ДВИЖЕНИИ
         protected bool _animFlag1;
         protected bool _animFlag2;
         protected bool _animFlag3;
         protected bool _animFlag4;
         protected bool _coroutineAnimation = true;
 
-        // speed, new and old positions and cof of changing anim vector
+        // СКОРОСТЬ, ПОЗИЦИЯ, ВРЕМЯ
         protected float _cofForChangeAnim;
         protected Vector3 _oldPosition;
         protected Vector3 _newPosition;
         protected Vector3 _speed;
         private Color _startColor;
 
-        // random walking and dmg/speed
+        // ОТДЫХ
         private int _startDmg;
-        protected System.Random randomer 
+        protected static System.Random randomer 
             = new System.Random(); // Рандомная переменная
+        #endregion
 
-        #region Переменные
+        #region Геттеры и сеттеры
         public bool IsAlive
         {
             get
@@ -128,37 +144,88 @@ namespace Game {
                 _attackedObject = value;
             }
         }
+
+        public string EnemyType
+        {
+            get
+            {
+                return _enemyType;
+            }
+
+            set
+            {
+                _enemyType = value;
+            }
+        }
+
+        public int EnemyBonus
+        {
+            get
+            {
+                return _enemyBonus;
+            }
+        }
+
+        protected float Hp
+        {
+            get
+            {
+                return _hp;
+            }
+
+            set
+            {
+                _hp = value;
+            }
+        }
         #endregion
+
+        /// <summary>
+        /// Каждый клиент загружает анимации
+        /// </summary>
+        public override void OnStartClient()
+        {
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = Hp; // Задаем значение бара
+                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
+            }
+            else if (!isServer)
+            {
+                gameObject.name = _enemyType;
+                _spriteRenderer.flipX = _isFlipped;
+                _animatorOfEnemy.speed = this._animationSpeed;
+                _animatorOfEnemy.runtimeAnimatorController
+                    = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
+            }
+        }
 
         /// <summary>
         /// Стартовый метод
         /// </summary>
         public void Starter()
         {
-            if (isServer)
+            _points = new bool[4];
+            for (byte i = 0; i < _points.Length; i++)
             {
-                _points = new bool[4];
-                for (byte i = 0; i < _points.Length; i++)
-                {
-                    _points[i] = false;
-                }
-
-                _mayDamagedByFire = true;
-                _isStoppingWalkFight = false;
-                _isStopingOnWay = false;
-                _isAlive = true;
-                _oldPosition = transform.position;
-                _attackFlag = false;
-                _animFlag1 = true;
-                _animFlag2 = true;
-                _animFlag3 = true;
-                _animFlag4 = true;
-                _startDmg = _dmg;
-                _startColor = _spriteRenderer.color;
-                _power = _hp * _dmg;
-                StartMethod();
-                transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
+                _points[i] = false;
             }
+
+            _mayDamagedByFire = true;
+            _isStoppingWalkFight = false;
+            _isStopingOnWay = false;
+            _isAlive = true;
+            _oldPosition = transform.position;
+            _attackFlag = false;
+            _animFlag1 = true;
+            _animFlag2 = true;
+            _animFlag3 = true;
+            _animFlag4 = true;
+            _startDmg = _dmg;
+            _startColor = _spriteRenderer.color;
+            _power = _hp * _dmg;
+            StartMethod();
+            transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
 
         /// <summary>
@@ -169,10 +236,8 @@ namespace Game {
         {
             _walkSpeed = (float)randomer.NextDouble() + 0.5f;
             _agent.speed = _walkSpeed;
-            _animatorOfEnemy.speed = _walkSpeed * 2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
-            _animationsOfEnemy =
-                Resources.LoadAll<RuntimeAnimatorController>("Animators");
         }
 
         /// <summary>
@@ -181,6 +246,8 @@ namespace Game {
         /// v1.01
         public void Start()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             Starter();
         }
 
@@ -189,17 +256,18 @@ namespace Game {
         /// </summary>
         public void Update()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive)
             {
-                CmdAttackShell();
+                AttackShell();
             }
             else
             {
                 if (_walkSpeed != 0)
                 {
                     transform.StopFollowing();
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[2];
+                    RpcChangeAnimation(2, false);
                 }
             }
         }
@@ -209,6 +277,8 @@ namespace Game {
         /// </summary>
         private void FixedUpdate()
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive)
             {
                 Mover();
@@ -220,12 +290,13 @@ namespace Game {
         /// </summary>
         public void OnTriggerEnter(Collider col)
         {
+            if (!isServer) return; // Метод выполняется только на сервере!
+
             if (_isAlive &&
                 (col.tag == "Player" || col.tag == "Turrel")
                 && col.gameObject.GetComponent<PlayerAbstract>().IsAlive
                     && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition()
-                        && _attackedObject == null
-                            && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition())
+                        && _attackedObject == null)
             {
                 _agent.enabled = true;
                 _multiple = 0.01f;
@@ -236,26 +307,6 @@ namespace Game {
                 _attackedObject.GetComponent<PlayerAbstract>().IncreaseCountOfTurrelFighters(gameObject);
                 //Debug.Log(_attackedObject.name + " => " + gameObject.name);
             }
-        }
-
-        /// <summary>
-        /// Смерть врага. Запрос на сервере
-        /// </summary>
-        [Command]
-        public void CmdDead()
-        {
-            RpcClientDeath();
-        }
-
-        /// <summary>
-        /// Смерть врага. На всех клиентах
-        /// </summary>
-        /// 
-        [Client]
-        public void RpcClientDeath()
-        {
-            //Debug.Log(gameObject.name + " погиб");
-            Destroy(gameObject);
         }
 
         /// <summary>
@@ -309,31 +360,25 @@ namespace Game {
                 if (_speed.x >= _cofForChangeAnim
                     && _animFlag1)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[4];
-                    _spriteRenderer.flipX = false;
+                    RpcChangeAnimation(4,false);
                     ChangeValues(false, true, true, true);
                 }
                 else if (_speed.x <= -_cofForChangeAnim
                     && _animFlag2)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[4];
-                    _spriteRenderer.flipX = true;
+                    RpcChangeAnimation(4,true); 
                     ChangeValues(true, false, true, true);
                 }
                 else if (_speed.z >= _cofForChangeAnim
                     && _animFlag3)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[1];
+                    RpcChangeAnimation(1,false);
                     ChangeValues(true, true, false, true);
                 }
                 else if (_speed.z <= -_cofForChangeAnim
                     && _animFlag4)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[3];
+                    RpcChangeAnimation(3, false);
                     ChangeValues(true, true, true, false);
                 }
                 Timing.RunCoroutine(AnimationTime());
@@ -341,49 +386,34 @@ namespace Game {
         }
 
         /// <summary>
-        /// Промежуток времени между сменами анимации
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerator<float> AnimationTime()
-        {
-            _coroutineAnimation = false;
-            yield return Timing.WaitForSeconds(0.25f);
-            _coroutineAnimation = true;
-        }
-
-        /// <summary>
         /// Оболочка для атаки игрока
         /// </summary>
-        [Command]
-        public void CmdAttackShell()
+        public void AttackShell()
         {
-            if (isServer)
+            if (_attackFlag)
             {
-                if (_attackFlag)
+                if (!_isStopingOnWay || _walkSpeed != 0)
                 {
-                    if (!_isStopingOnWay || _walkSpeed != 0)
+                    _agentSpeed = _walkSpeed;
+                    transform.StopFollowing();
+                    _isStopingOnWay = true;
+                }
+                if (_attackedObject != null)
+                {
+                    if (_attackedObject.GetComponent<PlayerAbstract>().IsAlive)
                     {
-                        _agentSpeed = _walkSpeed;
-                        transform.StopFollowing();
-                        _isStopingOnWay = true;
+                        AttackAnim();
                     }
-                    if (_attackedObject != null)
+                    else
                     {
-                        if (_attackedObject.GetComponent<PlayerAbstract>().IsAlive)
-                        {
-                            AttackAnim();
-                        }
-                        else
-                        {
-                            NullAttackedObject();
-                        }
+                        NullAttackedObject();
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Зов к драке игроку
+        /// Призыв игрока драться
         /// </summary>
         public void CallToFight()
         {
@@ -396,6 +426,7 @@ namespace Game {
                             && _attackedObject.GetComponent<PlayerAbstract>().
                                 AttackedObject.transform.GetComponent<EnemyAbstract>().AttackedObject == null)
                 {
+                    Debug.Log("Подозвал драться");
                     _attackedObject.GetComponent<PlayerAbstract>().SetEnemyOfPlayer(gameObject);
                 }
             }
@@ -437,8 +468,7 @@ namespace Game {
                 if (Vector3.Distance(gameObject.transform.position,
                             _attackedObject.transform.position + _playerPoint) < _sideCof * 2)
                 {
-                    _animatorOfEnemy.runtimeAnimatorController
-                        = _animationsOfEnemy[0];
+                    RpcChangeAnimation(0, false);
                 }
                 else
                 {
@@ -476,9 +506,12 @@ namespace Game {
         /// </summary>
         public void Attack()
         {
+            if (!isServer) return; // Выполняем только на сервере
+
             if (_attackedObject != null
                 && _attackedObject.GetComponent<PlayerAbstract>().IsAlive)
             {
+                CallToFight();
                 RandomHit();
                 _attackedObject.GetComponent<PlayerAbstract>().PlayerDamage(gameObject, _dmg);
             }
@@ -489,21 +522,23 @@ namespace Game {
         }
 
         /// <summary>
-        /// Получить урон
+        /// Получить урон и попробовать установить противника
         /// </summary>
         public float EnemyDamage(GameObject obj, float _dmg)
         {
             _hp -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(Hp);
+            CmdPlayAudio(0); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving();
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
-                _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[2];
+                RpcChangeAnimation(2, false);
                 return Mathf.Abs(_hp);
             }
             else
@@ -526,17 +561,20 @@ namespace Game {
         /// </summary>
         /// <param name="_dmg"></param>
         /// <returns></returns>
-        public float EnemyDamage(float _dmg)
+        public float EnemyDamage(float _dmg,byte condition = 1)
         {
             _hp -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(Hp);
+            CmdPlayAudio(condition); // Звук получения урона
+            Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;
                 Decreaser();
                 NullAttackedObject();
-                _animatorOfEnemy.runtimeAnimatorController
-                    = _animationsOfEnemy[2];
+                RpcChangeAnimation(2, false);
                 return Mathf.Abs(_hp);
             }
             else
@@ -553,15 +591,14 @@ namespace Game {
             _agent.enabled = false;
             _isStoppingWalkFight = false;
             _multiple = 0.01f;
-            _animatorOfEnemy.runtimeAnimatorController
-                = _animationsOfEnemy[5];
+            CmdChangeAnimation(5);
             if (_attackedObject != null)
             {
                 _attackedObject.GetComponent<PlayerAbstract>().RemoveFromList(gameObject);
             }
             _attackedObject = null;
             _attackFlag = false;
-            _animatorOfEnemy.speed = 1;
+            CmdSyncAnimationSpeed(1);
             _isStopingOnWay = false;
             ChangeValues(true, true, true, true);
             GoEnemyMoving();
@@ -589,7 +626,7 @@ namespace Game {
         /// </summary>
         public void ToGo()
         {
-            _animatorOfEnemy.speed = _walkSpeed*2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
@@ -599,7 +636,7 @@ namespace Game {
         /// </summary>
         public void RandomHit()
         {
-            _animatorOfEnemy.speed = (float)randomer.NextDouble() / 4 + 1;
+            CmdSyncAnimationSpeed((float)randomer.NextDouble() / 4 + 1);
             _dmg =
                 randomer.Next(_startDmg - (_startDmg / 3), _startDmg + (_startDmg / 3));
         }
@@ -671,21 +708,11 @@ namespace Game {
         }
 
         /// <summary>
-        /// Совершает действие раз в указанное количество секунд
-        /// Не используется, потому что количество обновляемых кадров для физики мало
-        /// </summary>
-        public IEnumerator<float> Waiter()
-        {
-            yield return 0.5f;
-            _mayDamagedByFire = true;
-        }
-
-        /// <summary>
         /// Останавливаем либо возобновляем движение врага
         /// </summary>
         public void GoEnemyMoving()
         {
-            _animatorOfEnemy.speed = _walkSpeed*2;
+            CmdSyncAnimationSpeed(_walkSpeed * 2);
             _cofForChangeAnim = 0.3f;
             transform.FollowPath(_path, _walkSpeed, Mr1.FollowType.Loop);
         }
@@ -698,24 +725,189 @@ namespace Game {
             transform.StopFollowing();
         }
 
+        #region Мультиплеерные функции
+        /// <summary>
+        /// Сменить цвет при ударе. Запрос на сервер
+        /// </summary>
+        [Command]
+        public void CmdChangeColor(Color color)
+        {
+            RpcChangeColor(color);
+        }
+
+        /// <summary>
+        /// Сменить цвет при ударе. На всех клиентах
+        /// </summary>
+        /// <param name="color"></param>
+        [ClientRpc]
+        public void RpcChangeColor(Color color)
+        {
+            _spriteRenderer.color = color;
+        }
+
+        /// <summary>
+        /// Воспроизведение звука:
+        /// 0 - получить удар вблизи,
+        /// 1 - получить удар пулей,
+        /// 2 - получить удар огнем,
+        /// 3 - нанести удар,
+        /// 4 - умереть
+        /// </summary>
+        /// <param name="condition"></param>
+        [Command]
+        public void CmdPlayAudio(byte condition)
+        {
+            RpcPlayAudio(condition);
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [ClientRpc]
+        protected virtual void RpcPlayAudio(byte condition)
+        {
+            switch (condition)
+            {
+                case 0:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsCloseUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseUnit()));
+                    _audioSource.Play();
+                    break;
+                case 1:
+                    _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFarUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarUnit()));
+                    _audioSource.Play();
+                    break;
+                case 2:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 1f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                    _audioSource.Play();
+                    break;
+                case 3:
+
+                    break;
+                case 4:
+                    _audioSource.pitch = (float)randomer.NextDouble() + 2f;
+                    _audioSource.clip = ResourcesPlayerHelper.
+                        GetElementFromAudioDeathsUnit((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsUnit()));
+                    _audioSource.Play();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Смерть врага. Запрос на сервере
+        /// </summary>
+        [Command]
+        public void CmdDead()
+        {
+            if (!isServer) return; // Выполняем только на сервере
+
+            RpcClientDeath();
+        }
+
+        /// <summary>
+        /// Смерть врага. На всех клиентах
+        /// </summary>
+        [ClientRpc]
+        public void RpcClientDeath()
+        {
+            Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Смена анимации. Запрос на сервер
+        /// </summary>
+        /// <param name="i"></param>
+        [Command]
+        private void CmdChangeAnimation(int i)
+        {
+            RpcChangeAnimation(i, false);
+        }
+
+        /// <summary>
+        /// Смена анимации. Выполнение на всех клиентах
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="side"></param>
+        [ClientRpc]
+        private void RpcChangeAnimation(int i, bool side)
+        {
+            _animatorOfEnemy.runtimeAnimatorController
+                = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
+            _spriteRenderer.flipX = side;
+            if (isServer)
+            {
+                _isFlipped = side;
+                _currentAnimation = i;
+            }
+        }
+
+        /// <summary>
+        /// Синхронизация анимации. Запрос на сервер
+        /// </summary>
+        /// <param name="speedAnim"></param>
+        [Command]
+        protected void CmdSyncAnimationSpeed(float speedAnim)
+        {
+            _animationSpeed = speedAnim;
+            RpcSyncAnimationSpeed(speedAnim);
+        }
+
+        /// <summary>
+        /// Синхронизация анимации. Выполнение на клиентах
+        /// </summary>
+        /// <param name="speedAnim"></param>
+        [ClientRpc]
+        private void RpcSyncAnimationSpeed(float speedAnim)
+        {
+            _animatorOfEnemy.speed = speedAnim;
+        }
+        #endregion
+
+        #region Корутины
+        /// <summary>
+        /// Промежуток времени между сменами анимации
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator<float> AnimationTime()
+        {
+            _coroutineAnimation = false;
+            yield return Timing.WaitForSeconds(0.25f);
+            _coroutineAnimation = true;
+        }
+
+        /// <summary>
+        /// Совершает действие раз в указанное количество секунд
+        /// Не используется, потому что количество обновляемых кадров для физики мало
+        /// </summary>
+        public IEnumerator<float> Waiter()
+        {
+            yield return 0.5f;
+            _mayDamagedByFire = true;
+        }
+
         /// <summary>
         /// Таймер анимации получения урона
         /// </summary>
         /// <returns></returns>
         public IEnumerator<float> DamageAnimation()
         {
-            ChangeColor(Color.red);
+            CmdChangeColor(Color.red);
             yield return Timing.WaitForSeconds(0.2f);
-            ChangeColor(_startColor);
+            try
+            {
+                CmdChangeColor(_startColor);
+            }
+            catch
+            {
+                //Debug.LogError("Object has been destroyed!");
+            }
         }
-
-        /// <summary>
-        /// Сменить цвет
-        /// </summary>
-        /// <param name="color"></param>
-        public void ChangeColor(Color color)
-        {
-            _spriteRenderer.color = color;
-        }
+        #endregion
     }
 }
