@@ -19,6 +19,10 @@ namespace Game
         {
             SetCamera();
             transform.localEulerAngles = Vector3.zero;
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
+            }
         }
 
         private new void OnCollisionEnter(Collision collision)
@@ -54,9 +58,14 @@ namespace Game
         [Client]
         void RpcLookAter(Vector2 mouse)
         {
-            Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
-            target.y = 0;
-            transform.LookAt(target);
+            if (IsAlive)
+            {
+                Vector3 target = _mainCamera.ScreenToWorldPoint(mouse);
+                target.y = 0;
+                _childRotatingTurrel.LookAt(target);
+                _childRotatingTurrel.localEulerAngles = 
+                    new Vector2(90, _childRotatingTurrel.localEulerAngles.y-90);
+            }
         }
 
         /// <summary>

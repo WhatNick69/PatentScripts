@@ -14,6 +14,7 @@ namespace Game
     [RequireComponent(typeof(SphereCollider))]
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(NavMeshAgent))]
+    [RequireComponent(typeof(HealthBarUnit))]
     public abstract class PlayerAbstract
         : NetworkBehaviour
     {
@@ -39,6 +40,8 @@ namespace Game
         protected AudioSource _audioSource;
         [SerializeField, Tooltip("Компонент-агент")]
         protected NavMeshAgent _agent;
+        [SerializeField, Tooltip("Компонент бар-здоровья")]
+        protected HealthBarUnit _healthBarUnit;
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
@@ -212,6 +215,19 @@ namespace Game
                 _playerType = value;
             }
         }
+
+        public float HpTurrel
+        {
+            get
+            {
+                return _hpTurrel;
+            }
+
+            set
+            {
+                _hpTurrel = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -238,6 +254,7 @@ namespace Game
             if (isServer)
             {
                 _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
             }
             else if (!isServer)
             {
@@ -533,6 +550,8 @@ namespace Game
         public virtual void PlayerDamage(GameObject obj, float _dmg, byte condition = 0)
         {
             _hpTurrel -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(_hpTurrel);
+
             CmdPlayAudio(condition);
             Timing.RunCoroutine(DamageAnimation());
             if (_hpTurrel <= 0)

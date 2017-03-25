@@ -18,6 +18,8 @@ namespace Game {
         protected RaycastHit hit;
         [SerializeField, Tooltip("Время до возрождения")]
         protected float _timeToReAlive;
+        [SerializeField, Tooltip("Подвижная часть туррели")]
+        protected Transform _childRotatingTurrel;
         [SerializeField, Tooltip("Префаб пули")]
         protected GameObject _bullet; // bullet-prefab
         [SerializeField, Tooltip("Стрельба очередью")]
@@ -67,6 +69,10 @@ namespace Game {
         public override void OnStartClient()
         {
             transform.localEulerAngles = Vector3.zero;
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
+            }
         }
 
         /// <summary>
@@ -155,23 +161,28 @@ namespace Game {
             if (_isAlive)
             {
                 CmdPlayAudio(3);
+
+                // Работа с дочерним объектм
                 if (!_isBurst)
                 {
-                    _bullet.transform.position = gameObject.transform.position;
-                    _bullet.transform.rotation = gameObject.transform.rotation;
+                    _bullet.transform.position = _childRotatingTurrel.position;
+                    _bullet.transform.rotation = _childRotatingTurrel.rotation;
                     _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
-
+                    _bullet.transform.localEulerAngles 
+                        = new Vector2(0, _bullet.transform.localEulerAngles.y+90);
                     CmdInstantiateObject(_bullet);
                 }
                 else
                 {
-                    for (int i = -10; i <= 20; i += 10)
+                    for (int i = -10; i <= 10; i += 10)
                     {
-                        _bullet.transform.position = gameObject.transform.position;
-                        _bullet.transform.rotation = gameObject.transform.rotation;
+                        _bullet.transform.position = _childRotatingTurrel.position;
+                        _bullet.transform.rotation = _childRotatingTurrel.rotation;
                         _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
+                        _bullet.transform.localEulerAngles 
+                            = new Vector2(0, _bullet.transform.localEulerAngles.y + 90);
 
-                        _bullet.transform.Rotate(new Vector3(0, 0, i));
+                        _bullet.transform.Rotate(new Vector2(0, i));
                         CmdInstantiateObject(_bullet);
                     }
                 }
@@ -209,7 +220,11 @@ namespace Game {
                     _attackedObject.transform.position, Color.blue);
                 _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x, 
                     0, _attackedObject.transform.position.z);
-                transform.LookAt(_attackedObject.transform.position);
+
+                // Поворот дочернего объекта
+                _childRotatingTurrel.LookAt(_attackedObject.transform.position);
+                _childRotatingTurrel.localEulerAngles = new Vector3(90, _childRotatingTurrel.localEulerAngles.y - 90);
+
                 if (!_attackedObject.GetComponent<EnemyAbstract>().IsAlive)
                 {
                     NullAttackedObject();
@@ -258,6 +273,7 @@ namespace Game {
         public override void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
         {
             _hpTurrel -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(_hpTurrel);
             CmdPlayAudio(condition);
             if (_hpTurrel <= 0)
             {
@@ -292,6 +308,7 @@ namespace Game {
             yield return Timing.WaitForSeconds(_timeToReAlive);
             _hpTurrel = _hpTurrelTemp;
             _isAlive = true;
+            _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
         }
 
         /// <summary>

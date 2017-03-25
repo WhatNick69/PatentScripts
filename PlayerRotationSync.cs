@@ -64,7 +64,7 @@ namespace Game
         {
             myTransform.rotation
                 = Quaternion.Lerp(myTransform.rotation, syncRot, Time.deltaTime * lerpRate);
-            myTransform.localEulerAngles = new Vector3(0, myTransform.localEulerAngles.y, 0);
+            myTransform.localEulerAngles = new Vector3(90, myTransform.localEulerAngles.y, 0);
         }
     }
 }

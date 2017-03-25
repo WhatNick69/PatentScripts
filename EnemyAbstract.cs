@@ -25,9 +25,6 @@ namespace Game {
         [SyncVar]
         protected float _animationSpeed;
 
-        // ЗАГРУЖАЕМЫЙ КОНТЕНТ
-        public ResourcesPlayerHelper resourcesPlayerHelper;
-
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
         [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
@@ -38,6 +35,8 @@ namespace Game {
         protected Animator _animatorOfEnemy; // current animation of enemyv
         [SerializeField, Tooltip("Компонент NavMeshAgent")]
         private NavMeshAgent _agent;
+        [SerializeField, Tooltip("Компонент бар-здоровья")]
+        protected HealthBarUnit _healthBarUnit;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
         public string _path; // track path
@@ -166,6 +165,19 @@ namespace Game {
                 return _enemyBonus;
             }
         }
+
+        protected float Hp
+        {
+            get
+            {
+                return _hp;
+            }
+
+            set
+            {
+                _hp = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -173,11 +185,9 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
-            resourcesPlayerHelper = 
-                GameObject.FindGameObjectWithTag("Core").GetComponent<ResourcesPlayerHelper>();
-
             if (isServer)
             {
+                _healthBarUnit.HealthUnit = Hp; // Задаем значение бара
                 _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
             }
             else if (!isServer)
@@ -517,6 +527,7 @@ namespace Game {
         public float EnemyDamage(GameObject obj, float _dmg)
         {
             _hp -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(Hp);
             CmdPlayAudio(0); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
@@ -553,6 +564,7 @@ namespace Game {
         public float EnemyDamage(float _dmg,byte condition = 1)
         {
             _hp -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(Hp);
             CmdPlayAudio(condition); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
@@ -887,7 +899,14 @@ namespace Game {
         {
             CmdChangeColor(Color.red);
             yield return Timing.WaitForSeconds(0.2f);
-            CmdChangeColor(_startColor);
+            try
+            {
+                CmdChangeColor(_startColor);
+            }
+            catch
+            {
+                //Debug.LogError("Object has been destroyed!");
+            }
         }
         #endregion
     }

@@ -14,7 +14,9 @@ namespace Game
     {
         #region Переменные
         [SyncVar]
-        private Quaternion _quar;
+        private Vector3 _quar;
+        [SerializeField, Tooltip("Подвижная часть туррели")]
+        protected Transform _childRotatingTurrel;
 
         protected bool _coroutineReload = true;
         public int debI = 1;
@@ -78,6 +80,10 @@ namespace Game
         /// </summary>
         public override void OnStartClient()
         {
+            if (isServer)
+            {
+                _healthBarUnit.HealthUnit = HpTurrel; // Задаем значение бара
+            }
             transform.localEulerAngles = Vector3.zero;
         }
 
@@ -109,9 +115,10 @@ namespace Game
                     {
                         GameObject clone = _mine;
                         _currrentSide = _euler[randomer.Next(0, _euler.Count)]; // random element from list
-                        transform.localEulerAngles = new Vector3(0, _currrentSide, 0); // rotates the gameObject
-                        _quar = transform.rotation;
-                        clone.transform.rotation = gameObject.transform.rotation; // set rotate from GO to the mine
+                        _childRotatingTurrel.localEulerAngles = new Vector2(90, _currrentSide); // rotates the gameObject
+                        _quar = _childRotatingTurrel.localEulerAngles;
+                        _quar.x = 0;
+                        clone.transform.localEulerAngles = _quar; // set rotate from GO to the mine
                         clone.transform.position = transform.position;
                         clone.GetComponent<Mine>().setDistance(_distance - (float)randomer.NextDouble()); // set distance
                         CmdPlantMine(clone);
@@ -137,7 +144,7 @@ namespace Game
                         _euler.Add(debI);
                     }
                 }
-                transform.Rotate(new Vector3(0, 1, 0));
+                transform.Rotate(new Vector2(0, 1));
 
                 debI++;
             }
@@ -151,6 +158,7 @@ namespace Game
         override public void PlayerDamage(GameObject obj, float _dmg, byte condition = 1)
         {
             _hpTurrel -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(_hpTurrel);
             CmdPlayAudio(condition);
             if (_hpTurrel <= 0)
             {
@@ -168,7 +176,8 @@ namespace Game
         /// </summary>
         private void SyncRotation()
         {
-            transform.rotation = _quar;
+            _quar.x = 90;
+            _childRotatingTurrel.localEulerAngles = _quar;
         }
 
         #region Корутины
@@ -181,6 +190,7 @@ namespace Game
             yield return Timing.WaitForSeconds(_timeToReAlive);
             _hpTurrel = _hpTurrelTemp;
             _isAlive = true;
+            _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
         }
 
         /// <summary>
@@ -229,19 +239,22 @@ namespace Game
                 case 0:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
                     _audioSource.clip = ResourcesPlayerHelper.
-                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
+                        GetElementFromAudioHitsCloseTurrel((byte)randomer.Next(0, 
+                            ResourcesPlayerHelper.LenghtAudioHitsCloseTurrel()));
                     _audioSource.Play();
                     break;
                 case 1:
                     _audioSource.pitch = (float)randomer.NextDouble() / 2 + 0.9f;
                     _audioSource.clip = ResourcesPlayerHelper.
-                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
+                        GetElementFromAudioHitsFarTurrel((byte)randomer.Next(0, 
+                            ResourcesPlayerHelper.LenghtAudioHitsFarTurrel()));
                     _audioSource.Play();
                     break;
                 case 2:
                     _audioSource.pitch = (float)randomer.NextDouble() + 1f;
                     _audioSource.clip = ResourcesPlayerHelper.
-                        GetElementFromAudioHitsFire((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioHitsFire()));
+                        GetElementFromAudioHitsFire((byte)randomer.Next(0, 
+                            ResourcesPlayerHelper.LenghtAudioHitsFire()));
                     _audioSource.Play();
                     break;
                 case 3:
@@ -250,7 +263,8 @@ namespace Game
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() / 3 + 0.9f;
                     _audioSource.clip = ResourcesPlayerHelper.
-                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsTurrel()));
+                        GetElementFromAudioDeathsTurrel((byte)randomer.Next(0, 
+                            ResourcesPlayerHelper.LenghtAudioDeathsTurrel()));
                     _audioSource.Play();
                     break;
             }

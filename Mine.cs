@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using MovementEffects;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game
@@ -105,12 +107,22 @@ namespace Game
             }
             else
             {
-                _toSync = false;
+                Timing.RunCoroutine(StopSync());
                 if (!_isPlaced)
                 {
                     _distance *= 1.2f;
                 }
             }
+        }
+
+        /// <summary>
+        /// Остановить синхронизацию после 3 секунд
+        /// </summary>
+        /// <returns></returns>
+        protected IEnumerator<float> StopSync()
+        {
+            yield return Timing.WaitForSeconds(3);
+            _toSync = false;
         }
 
         /// <summary>
