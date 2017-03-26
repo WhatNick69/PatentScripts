@@ -11,15 +11,13 @@ namespace Game
         : NetworkBehaviour
     {
         #region Переменные
-        [SyncVar]
+            [SyncVar]
         private Quaternion syncRot;
         private Quaternion lastRot;
 
-        [SerializeField, Tooltip("Скорость интерполяции")]
+            [SerializeField, Tooltip("Скорость интерполяции")]
         private float lerpRate = 10;
-        [SerializeField, Tooltip("Частота обновления позиции")]
-        private float posTreshold = 0.01f;
-        [SerializeField, Tooltip("Transform пользовательского юнита")]
+            [SerializeField, Tooltip("Transform пользовательского юнита")]
         private Transform myTransform;
         #endregion
 

@@ -20,58 +20,63 @@ namespace Game
     {
         #region Переменные
         // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
-        [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
+            [Header("Ссылки и компоненты")]
+            [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
         protected string _playerType;
-        [SyncVar]
+            [SyncVar]
         protected bool _isAlive; // alive condition of player
-        [SyncVar]
+            [SyncVar]
         protected int _currentAnimation; // Текущая анимация
-        [SyncVar]
+            [SyncVar]
         protected bool _isFlipped;  // Перевернут ли спрайт?
-        [SyncVar]
+            [SyncVar]
         protected float _animationSpeed;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
-        [SerializeField, Tooltip("Компонент Animator")]
+            [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfPlayer; // Аниматор юнита
-        [SerializeField, Tooltip("Компонент SpriteRenderer")]
+            [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
-        [SerializeField, Tooltip("Компонент Аудио")]
+            [SerializeField, Tooltip("Компонент Аудио")]
         protected AudioSource _audioSource;
-        [SerializeField, Tooltip("Компонент-агент")]
+            [SerializeField, Tooltip("Компонент-агент")]
         protected NavMeshAgent _agent;
-        [SerializeField, Tooltip("Компонент бар-здоровья")]
+            [SerializeField, Tooltip("Компонент бар-здоровья")]
         protected HealthBarUnit _healthBarUnit;
+            [SerializeField, Tooltip("Объект-радиус")]
+        protected GameObject _radiusOfAttackVisual;
         protected static Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
 
-        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
-        [SerializeField, Tooltip("Этот юнит является туррелью?")]
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ. BOOL
+            [Header("Бинарные опции")]
+            [SerializeField, Tooltip("Этот юнит является туррелью?")]
         protected bool _isTurrel; // isTurrel condition of player
-        [SerializeField, Tooltip("Юнит ищет самого мощного противника")]
+            [SerializeField, Tooltip("Юнит ищет самого мощного противника")]
         protected bool _firstPower;
-        [SerializeField, Tooltip("Юнит ищет самого быстрого противника")]
+            [SerializeField, Tooltip("Юнит ищет самого быстрого противника")]
         protected bool _firstFast;
-        [SerializeField, Tooltip("Юнит ищет самого близкого противника")]
+            [SerializeField, Tooltip("Юнит ищет самого близкого противника")]
         protected bool _firstStandart;
-        [SerializeField, Tooltip("Цель юнита для атаки")]
+            [SerializeField, Tooltip("Это динамический юнит?")]
+        protected bool isDynamic;
+
+            [Space]
+            [Header("Главные переменные")]
+        // ГЛАВНЫЕ ПЕРЕМЕННЫЕ. ВСЕ ОСТАЛЬНОЕ
+            [SerializeField, Tooltip("Цель юнита для атаки")]
         protected GameObject _attackedObject; // Цель юнита для атаки
-        [SerializeField, Tooltip("Количество противников, которые одновременно атакуют юнита")]
+            [SerializeField, Tooltip("Количество противников, которые одновременно атакуют юнита")]
         protected byte _countOfAttackers; // count of active fighters for turrel/player's fighter 
         protected byte _maxCountOfAttackers;
-        [SerializeField, Tooltip("Урон, который наносит юнит")]
+            [SerializeField, Tooltip("Урон, который наносит юнит")]
         protected int _playerDmg; // dmg of player's object
-        [SerializeField, Tooltip("Стоимость юнита в денежном эквиваленте")]
+            [SerializeField, Tooltip("Стоимость юнита в денежном эквиваленте")]
         protected int _cost; // стоимость юнита
-        [SerializeField, Tooltip("Количество жизней юнита")]
+            [SerializeField, Tooltip("Количество жизней юнита")]
         protected float _hpTurrel; // Жизни юнита
-        [SerializeField, Tooltip("Это динамический юнит?")]
-        protected bool isDynamic;
-        [SerializeField, Tooltip("Объект-радиус")]
-        protected GameObject _radiusOfAttackVisual;
-        [SerializeField, Tooltip("Может ли анимация удара проигрываться?")]
         protected bool _canPlayAnimAttack;
 
         protected bool[] _points; // Позиции для атакующих врагов

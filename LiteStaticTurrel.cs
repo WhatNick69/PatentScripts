@@ -13,23 +13,29 @@ namespace Game
         : PlayerAbstract
     {
         #region Переменные
-        [SyncVar]
+            [SyncVar]
         private Vector3 _quar;
-        [SerializeField, Tooltip("Подвижная часть туррели")]
+            [Space]
+            [Header("Возможности минной туррели")]
+            [SerializeField, Tooltip("Подвижная часть туррели")]
         protected Transform _childRotatingTurrel;
 
-        protected bool _coroutineReload = true;
-        public int debI = 1;
-        public int _minesPerTick;
-        public List<int> _euler;
-        public float _reloadTime;
+        protected bool _coroutineReload;
+        protected int debI;
+            [SerializeField, Tooltip("Количество производимых мин за тик")]
+        protected int _minesPerTick;
+        protected List<int> _euler;
+            [SerializeField, Tooltip("Темп производства мин")]
+        protected float _reloadTime;
         protected float _currrentSide;
         protected float _distance;
-        public float _timeToReAlive;
+            [SerializeField, Tooltip("Время возрождения")]
+        protected float _timeToReAlive;
         protected Ray ray;
         protected RaycastHit hit;
         protected LayerMask mask = new LayerMask();
-        public GameObject _mine;
+            [SerializeField, Tooltip("Префаб мины")]
+        protected GameObject _mine;
         #endregion
 
         /// <summary>
@@ -39,6 +45,9 @@ namespace Game
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            _euler = new List<int>();
+            debI = 1;
+            _coroutineReload = true;
             _points = new bool[4];
             for (int i = 0; i < _points.Length; i++)
             {

@@ -8,22 +8,19 @@ namespace Game
     {
         #region Переменные
         // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
-        [SyncVar]
-        private Vector3 syncPos;
-        [SyncVar]
+
+            [SyncVar]
         private Vector3 speedVec;
 
         // ОСТАЛЬНЫЕ ПЕРЕМЕННЫЕ
         [SerializeField, Tooltip("Transform компонент")]
         private Transform myTransform;
-        [SerializeField, Tooltip("Цель")]
+            [SerializeField, Tooltip("Цель")]
         private GameObject _enemy;
-        [SerializeField, Tooltip("Включить самонаводку?")]
-
+            [SerializeField, Tooltip("Включить самонаводку?")]
         private bool _isAutoAim;
+            [SyncVar]
         private bool _isStopped;
-        private bool _hasStopped;
-        private Vector3 lastPos;
 
         public Vector3 SpeedVec
         {
@@ -53,7 +50,6 @@ namespace Game
         /// </summary>
         public override void OnStartClient()
         {
-            syncPos = myTransform.position;
             if (_isAutoAim)
             {
                 _enemy = GetComponent<Bullet>().AttackedObject;
@@ -66,23 +62,6 @@ namespace Game
         private void Update()
         {
             if (!isServer) LerpTransform();
-        }
-
-        /// <summary>
-        /// Обновление позиции на сервере
-        /// </summary>
-        private void FixedUpdate()
-        {
-            if (isServer) TransmitTransform();
-        }
-
-        /// <summary>
-        /// Обновление позиции
-        /// </summary>
-        private void TransmitTransform()
-        {
-            lastPos = myTransform.position;
-            syncPos = myTransform.position;
         }
 
         /// <summary>

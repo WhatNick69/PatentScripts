@@ -16,46 +16,47 @@ namespace Game {
     {
         #region Переменные
         // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
-        [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
+            [Header("Ссылки и компоненты")]
+            [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
         protected string _enemyType;
-        [SyncVar]
+            [SyncVar]
         private int _currentAnimation; // Текущая анимация
-        [SyncVar]
+            [SyncVar]
         protected bool _isFlipped; // Перевернут ли спрайт?
-        [SyncVar]
+            [SyncVar]
         protected float _animationSpeed;
 
         // ОБЪЕКТНЫЕ ПЕРЕМЕННЫЕ И ССЫЛКИ
-        [SerializeField, Tooltip("Компонент SpriteRenderer")]
+            [SerializeField, Tooltip("Компонент SpriteRenderer")]
         protected SpriteRenderer _spriteRenderer;
-        [SerializeField, Tooltip("Компонент Аудио")]
+            [SerializeField, Tooltip("Компонент Аудио")]
         protected AudioSource _audioSource;
         protected bool[] _points; // enemy's points for player
-        [SerializeField, Tooltip("Компонент Animator")]
+            [SerializeField, Tooltip("Компонент Animator")]
         protected Animator _animatorOfEnemy; // current animation of enemyv
-        [SerializeField, Tooltip("Компонент NavMeshAgent")]
+            [SerializeField, Tooltip("Компонент NavMeshAgent")]
         private NavMeshAgent _agent;
-        [SerializeField, Tooltip("Компонент бар-здоровья")]
+            [SerializeField, Tooltip("Компонент бар-здоровья")]
         protected HealthBarUnit _healthBarUnit;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
         public string _path; // track path
-        [SerializeField, Tooltip("Вознаграждение за убийство")]
+            [Header("Главные переменные")]
+            [SerializeField, Tooltip("Вознаграждение за убийство")]
         protected int _enemyBonus;
-        [SerializeField, Tooltip("Здоровье врага")]
+            [SerializeField, Tooltip("Здоровье врага")]
         protected float _hp; // hp of player
-        [SerializeField, Tooltip("Урон, который враг наносит")]
+            [SerializeField, Tooltip("Урон, который враг наносит")]
         protected int _dmg; // dmg of player
-        [SerializeField, Tooltip("Префаб пули врага")]
+            [SerializeField, Tooltip("Префаб пули врага")]
         protected GameObject _bullet; // bullet-prefab
-        [SerializeField, Tooltip("Скорость передвижения врага")]
+            [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
         private float _agentSpeed;
-        [SerializeField, Tooltip("Цель атаки для юнита")]
+            [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
-        [SerializeField, Tooltip("Количество атакующих")]
         protected byte _countOfAttackers; // count attackers of enemy
-        [SerializeField, Tooltip("Максимальное количество атакующих")]
+            [SerializeField, Tooltip("Максимальное количество атакующих")]
         protected byte _maxCountOfAttackers; // max count attackers of enemy
         protected bool _mayDamagedByFire;
         protected float _power;

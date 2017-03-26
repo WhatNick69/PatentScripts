@@ -19,20 +19,23 @@ namespace Game
         #region Переменные
         // pathes, enemies, respawns and count of enemiesLvL
         private PathData[] _arrayOfPathes; // Массив путей
-        [SerializeField, Tooltip("Аудио компонент")]
+            [Header("Основные ссылки")]
+            [SerializeField, Tooltip("Название текущего уровня")]
+        private string _levelName; // Название уровня
+            [SerializeField, Tooltip("Аудио компонент")]
         private AudioSource _generalSounder;
-        [SerializeField, Tooltip("Префабы всех врагов")]
+            [Header("Работа с врагами")]
+            [SerializeField, Tooltip("Префабы всех врагов")]
         private GameObject[] _allEnemies; // Массив врагов
+            [SerializeField, Tooltip("Время респауна врага")]
+        private float _respawnTime; // time for respawn an enemy
         private GameObject[] _respawnPoints; // Массив респаунов
-        [SerializeField, Tooltip("Массив количества активных врагов")]
+            [SerializeField, Tooltip("Массив количества активных врагов")]
         private double[] _enemyCountLevels; // Массив количества активных врагов
-        [SerializeField, Tooltip("Массив-память количества активных врагов")]
         private double[] _tempEnemyCountLevels; // Массив-память количества активных врагов
 
         // lenght of enemy-array, path-name and count of null-elements
         private int _allEnemiesLenght; // Длина массивов всех врагов
-        [SerializeField, Tooltip("Название текущего уровня")]
-        private string _levelName; // Название уровня
         private int _nullElem; // Количество пустых элементов в массиваз
 
         // instanting
@@ -42,20 +45,18 @@ namespace Game
         private bool _coroutineRespawn = true; // Корутина на респаун
 
         // waves
-        [SerializeField, Tooltip("Количество волн")]
+            [Header("Работа с волнами")]
+            [SerializeField, Tooltip("Количество волн")]
         private byte _waves; // Количество волн
-        [SerializeField, Tooltip("Идет ли волна?")]
         private bool _isWave; // Состояние о текущей волне
         private bool _isMayBeInstanced; // Может ли враг быть инстантирован
-        [SerializeField, Tooltip("Закончилась ли волна?")]
+            [SerializeField, Tooltip("Закончилась ли волна?")]
         private bool _isEndWave; // Состояние об окончании волны
 
         // timers and random
         private float _currentTime; // tik-tak timer for respawn
-        [SerializeField, Tooltip("Время респауна врага")]
-        private float _respawnTime; // time for respawn an enemy
         private float _tempRespawnTime;
-        [SerializeField, Tooltip("Время между последующими волнами")]
+            [SerializeField, Tooltip("Время между последующими волнами")]
         private float _waveTime; // time for respawn an enemy
         private static int _numberOfEnemies;
         private static System.Random rnd = new System.Random(); // random
@@ -99,6 +100,7 @@ namespace Game
             if (!isServer) return; // Выполняет только сервер
 
             Application.runInBackground = true;
+            _isWave = true;
             _isEndWave = false;
             _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
             _tempRespawnTime = _respawnTime;
@@ -112,6 +114,11 @@ namespace Game
             foreach (PathData data in _arrayOfPathes)
             {
                 GetComponent<WaypointManager>().SetPathData(data);
+            }
+            _tempEnemyCountLevels = new double[_enemyCountLevels.Length];
+            for (byte i = 0;i<_enemyCountLevels.Length;i++)
+            {
+                _tempEnemyCountLevels[i] = _enemyCountLevels[i];
             }
             _allEnemiesLenght = _allEnemies.Length;
         }

@@ -11,18 +11,18 @@ namespace Game
         : NetworkBehaviour
     {
         #region Переменные
-        [SerializeField,Tooltip("Количество денег")]
+            [SerializeField,Tooltip("Количество денег")]
         private int _money; // количество денег
-        [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
+            [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
         private List<GameObject> _units; // лист с юнитами
-        [SerializeField, Tooltip("Текущий номер юнита для покупки")]
+            [SerializeField, Tooltip("Текущий номер юнита для покупки")]
         private int _currentUnit; // выбранный юнит для инстанса
-        [SerializeField, Tooltip("Режим осмотра юнитов")]
+            [SerializeField, Tooltip("Режим осмотра юнитов")]
         private bool _isPickTurrelMode;
         private static LayerMask _roadLayer;
         private static LayerMask _outroadLayer;
         private static LayerMask _playerLayer;
-        [SerializeField, Tooltip("Видимость радиусов")]
+            [SerializeField, Tooltip("Видимость радиусов")]
         private bool _isRadiusVisible;
         private GameObject _tempRadiusGameObject;
         private int _numberOfUnits;

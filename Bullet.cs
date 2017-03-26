@@ -12,19 +12,20 @@ namespace Game
     public class Bullet
         : Cluster
     {
-        [SerializeField, Tooltip("Атакуемый объект")]
+            [Header("Переменные снаряда")]
+            [SerializeField, Tooltip("Атакуемый объект")]
         protected GameObject _attackedObject;
-        [SerializeField, Tooltip("Пушка-родитель")]
+            [SerializeField, Tooltip("Пушка-родитель")]
         protected GameObject _parentObject;
-        [SerializeField, Tooltip("Урон он снаряда")]
+            [SerializeField, Tooltip("Урон он снаряда")]
         protected float _dmgBullet; // bullet damage
-        [SerializeField, Tooltip("Аккуратность полета снаряда")]
+            [SerializeField, Tooltip("Аккуратность полета снаряда")]
         protected float _accuracy; // bullet accuracy
-        [SerializeField, Tooltip("Время жизни снаряда")]
+            [SerializeField, Tooltip("Время жизни снаряда")]
         protected float _lifeTime; // bullet life
-        [SerializeField, Tooltip("Скорость снаряда")]
+            [SerializeField, Tooltip("Скорость снаряда")]
         protected float _speed; // bullet speed
-        [SyncVar]
+            [SyncVar]
         protected Vector3 _speedVec;
 
         public GameObject AttackedObject
@@ -78,7 +79,8 @@ namespace Game
                     if (_isClustered)
                     {
                         _cluster.transform.position = transform.position;
-                        Instantiate(_cluster);
+                        CmdInstantiate(_cluster);
+
                         Destroy(gameObject);
                         _parentObject.GetComponent<PlayerAbstract>().RestartValues();
                     }
@@ -89,6 +91,23 @@ namespace Game
                     }
                 }
             }
+        }
+
+        [Command]
+        protected virtual void CmdInstantiate(GameObject _bullet)
+        {
+            RpcInstantiate(_bullet);
+        }
+
+        /// <summary>
+        /// Инстанс снаряда. Выполнение на клиентах
+        /// </summary>
+        /// <param name="_bullet"></param>
+        [Client]
+        protected virtual void RpcInstantiate(GameObject _bullet)
+        {
+            GameObject clone = GameObject.Instantiate(_bullet);
+            NetworkServer.Spawn(clone);
         }
 
         /// <summary>

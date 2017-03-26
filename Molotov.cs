@@ -10,23 +10,30 @@ namespace Game
         : Cluster
     {
         #region Переменные
-        [SyncVar]
-        public bool _can;
-        [SerializeField, Tooltip("Аудио компонент")]
+            [Header("Переменные молотова")]
+            [SerializeField, Tooltip("Аудио компонент")]
         private AudioSource _audio;
-        [SerializeField, Tooltip("Бутылка")]
+            [SerializeField, Tooltip("Бутылка")]
         private Transform _bottle;
+            [SyncVar]
+        protected bool _can = true;
 
         private int _angle;
-        public float _burningTime;
-        public float _dmgPerSec;
-        public Vector3 _burningPosition;
+            [SerializeField, Tooltip("Продолжительность горения")]
+        protected float _burningTime;
+            [SerializeField, Tooltip("Урон каждые 0.1 секунды от огня")]
+        protected float _dmgPerSec;
+        protected Vector3 _burningPosition;
+            [SyncVar]
         protected Vector3 _speedVec;
-        protected static System.Random rnd = new System.Random();
+            [SerializeField, Tooltip("Скорость молотова")]
         public float _speed; // bullet speed
+            [SerializeField, Tooltip("Аккуратность полета молотова")]
         public float _accuracy; // bullet accuracy
-        [SyncVar]
+            [SyncVar]
         private Quaternion _quar;
+
+        private bool oneCheckClient = true;
         #endregion
 
         /// <summary>
@@ -43,13 +50,35 @@ namespace Game
         /// </summary>
         void Start()
         {
-            if (!isServer) return; // Выполняется только на сервере
+            if (!isServer) return;
 
+            // Выполняется только на сервере
             _angle = rnd.Next(180, 720);
             _quar = Quaternion.Euler(90, _angle, 0);
             _speedVec = new Vector3((float)rnd.NextDouble()
-                * rnd.Next(-1, 2) * _accuracy,0, _speed);
+                    * rnd.Next(-1, 2) * _accuracy, 0, _speed);
             GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
+        }
+
+        /// <summary>
+        /// Проверка исключительно для клиента
+        /// </summary>
+        void CheckForClient()
+        {
+            if (_can)
+            {
+                SlerpBottleRotation();
+            }
+            else
+            {
+                if (oneCheckClient)
+                {
+                    transform.GetChild(0).localEulerAngles = Vector3.zero;
+                    transform.GetChild(0).gameObject.SetActive(true);
+                    transform.GetChild(1).gameObject.SetActive(false);
+                    oneCheckClient = false;
+                }
+            }
         }
 
         /// <summary>
@@ -57,13 +86,14 @@ namespace Game
         /// </summary>
         public virtual void Update()
         {
-            if (!isServer
-                    && _can)
+            // Выполняется только на клиенте
+            if (!isServer)
             {
-                LerpTransform();
-                return; // Выполняется только на сервере
+                CheckForClient();
+                return;
             }
-               
+
+            // Выполняется только на сервере
             if (_can)
             {
                 if (Vector3.Distance(gameObject.transform.position, _burningPosition) > 0.1f)
@@ -109,6 +139,10 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Наносить урон, когда это возможно
+        /// </summary>
+        /// <param name="collision"></param>
         public void OnCollisionStay(Collision collision)
         {
             if (!_can
@@ -119,7 +153,10 @@ namespace Game
             }
         }
 
-        private void LerpTransform()
+        /// <summary>
+        /// Синхронизация вращения бутылки
+        /// </summary>
+        private void SlerpBottleRotation()
         {
             if (!isServer)
             {
@@ -129,6 +166,9 @@ namespace Game
         }
 
         #region Мультиплеерные методы
+        /// <summary>
+        /// Взорвать бутылку. Запрос на сервер
+        /// </summary>
         [Command]
         private void CmdBurner()
         {
@@ -136,7 +176,7 @@ namespace Game
         }
 
         /// <summary>
-        /// Создать пламя, вместо бутылки
+        /// Взорвать бутылку. На клиентах
         /// </summary>
         [ClientRpc]
         public void RpcBurner()
@@ -148,12 +188,12 @@ namespace Game
             _audio.Play();
 
             GetComponent<BulletMotionSync>().IsStopped = true;
-            Destroy(gameObject, _burningTime);
-            transform.localRotation = Quaternion.identity;
+            transform.GetChild(0).localEulerAngles = Vector3.zero;
             transform.GetComponent<BoxCollider>().enabled = false;
             transform.GetComponent<SphereCollider>().enabled = true;
             transform.GetChild(0).gameObject.SetActive(true);
             transform.GetChild(1).gameObject.SetActive(false);
+            Destroy(gameObject, _burningTime);
         }
         #endregion
     }

@@ -14,20 +14,35 @@ namespace Game {
         : PlayerAbstract
     {
         #region Переменные
-        protected Ray ray;
-        protected RaycastHit hit;
-        [SerializeField, Tooltip("Время до возрождения")]
-        protected float _timeToReAlive;
-        [SerializeField, Tooltip("Подвижная часть туррели")]
+            [Space]
+            [Header("Основные возможности туррели")]
+            [SerializeField, Tooltip("Подвижная часть туррели")]
         protected Transform _childRotatingTurrel;
-        [SerializeField, Tooltip("Префаб пули")]
+            [SerializeField, Tooltip("Префаб пули")]
         protected GameObject _bullet; // bullet-prefab
-        [SerializeField, Tooltip("Стрельба очередью")]
+            [SerializeField, Tooltip("Время до возрождения")]
+        protected float _timeToReAlive;
+            [SerializeField, Tooltip("Стрельба очередью")]
         protected bool _isBurst;
         protected bool _coroutineReload = true;
         protected bool _coroutineReAlive = true;
-        [SerializeField, Tooltip("Скорость стрельбы")]
+            [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _shootingSpeed; // speed of bullet
+        protected Ray ray;
+        protected RaycastHit hit;
+
+            [Header("Умная стрельба")]
+            [SerializeField, Tooltip("Использовать умную стрельбу?")]
+        protected bool _cleverShooting;
+            [SerializeField, Tooltip("Множитель расстояния предугадывания выстрела")]
+        protected float _multiplier;
+        protected byte _dir;
+        protected float _speedEnemy;
+        protected float _difX;
+        protected float _difZ;
+        protected float _oldX;
+        protected float _oldZ;
+        protected Vector3 _plusPos;
         #endregion
 
         /// <summary>
@@ -122,7 +137,15 @@ namespace Game {
         {
             if (!isServer) return; // Выполняется только на сервере
 
-            if (_isAlive) ChangeEnemy();
+            if (_isAlive)
+            {
+                ChangeEnemy();
+
+                if (_cleverShooting && _attackedObject != null)
+                {
+                    _dir = CheckDirection(_attackedObject.transform.position);
+                }
+            }
         }
 
         /// <summary>
@@ -160,6 +183,7 @@ namespace Game {
         {
             if (_isAlive)
             {
+                if (_cleverShooting) CleverShoot();
                 CmdPlayAudio(3);
 
                 // Работа с дочерним объектм
@@ -187,6 +211,77 @@ namespace Game {
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Задать вектор отступа для выстрела
+        /// </summary>
+        protected void CleverShoot()
+        {
+            _speedEnemy = _attackedObject.GetComponent<EnemyAbstract>().WalkSpeed;
+            _speedEnemy *= _multiplier;
+            if (_speedEnemy >= 2) _speedEnemy = 2;
+            switch (_dir)
+            {
+                case 1:
+                    _plusPos = new Vector3(_speedEnemy, 0, 0);
+                    break;
+                case 2:
+                    _plusPos = new Vector3(-_speedEnemy, 0, 0);
+                    break;
+                case 3:
+                    _plusPos = new Vector3(0, 0, _speedEnemy);
+                    break;
+                case 4:
+                    _plusPos = new Vector3(0, 0, -_speedEnemy);
+                    break;
+                case 0:
+                    _plusPos = Vector3.zero;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Проверить направление
+        /// </summary>
+        /// <param name="_curPosAO"></param>
+        /// <returns></returns>
+        protected byte CheckDirection(Vector3 _curPosAO)
+        {
+            byte number = 0;
+            _difX = _curPosAO.x - _oldX;
+            _difZ = _curPosAO.z - _oldZ;
+            _oldX = _curPosAO.x;
+            _oldZ = _curPosAO.z;
+
+            if (Mathf.Abs(_difX) > Mathf.Abs(_difZ))
+            {
+                if (_difX > 0)
+                {
+                    //Debug.Log("Идет направо");
+                    number = 1;
+                }
+                else if (_difX < 0)
+                {
+                    //Debug.Log("Идет налево");
+                    number = 2;
+                }
+            }
+            else
+            {
+                if (_difZ > 0)
+                {
+                    //Debug.Log("Идет вверх");
+                    number = 3;
+                }
+                else if (_difZ < 0)
+                {
+                    //Debug.Log("Идет вниз");
+                    number = 4;
+                }
+            }
+
+            return number;
         }
 
         /// <summary>

@@ -1,24 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace Game {
     /// <summary>
     /// Описывает поведение шкалы здоровья
     /// </summary>
     public class HealthBarUnit
-        : NetworkBehaviour {
-
-        [SerializeField, Tooltip("Шкала здоровья")]
+        : NetworkBehaviour
+    {
+            [SerializeField, Tooltip("Шкала здоровья")]
         public RectTransform healthBar;
-
-        [SyncVar]
+            [SyncVar]
         private float healthUnit;
-        [SyncVar]
+            [SyncVar]
         private float multiplier;
 
+        /// <summary>
+        /// Установить здоровье и множитель для шкалы здоровья
+        /// </summary>
         public float HealthUnit
         {
             set
@@ -28,6 +27,9 @@ namespace Game {
             }
         }
 
+        /// <summary>
+        /// Запускается на клиентах и устанавливает текущую величину бара
+        /// </summary>
         public override void OnStartClient()
         {
             if (isServer) return;
@@ -35,7 +37,7 @@ namespace Game {
         }
 
         /// <summary>
-        /// Снизить шкалу здоровья
+        /// Снизить шкалу здоровья. Запрос на сервер
         /// </summary>
         /// <param name="healthUnit"></param>
         [Command]
@@ -47,6 +49,10 @@ namespace Game {
             RpcDecreaseHealthBar(healthUnit);
         }
 
+        /// <summary>
+        /// Снизить шкалу здоровья. На клиентах
+        /// </summary>
+        /// <param name="healthUnit"></param>
         [ClientRpc]
         public void RpcDecreaseHealthBar(float healthUnit)
         {
@@ -54,7 +60,7 @@ namespace Game {
         }
 
         /// <summary>
-        /// Обнулить шкалу здоровья
+        /// Обнулить шкалу здоровья. Запрос на сервер
         /// </summary>
         [Command]
         public void CmdResetHealthBar(float resetHealth)
@@ -63,6 +69,9 @@ namespace Game {
             RpcResetHealthBar();
         }
 
+        /// <summary>
+        /// Обнулить шкалу здоровья. На клиентах
+        /// </summary>
         [ClientRpc]
         public void RpcResetHealthBar()
         {
