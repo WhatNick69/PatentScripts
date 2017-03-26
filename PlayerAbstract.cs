@@ -132,6 +132,12 @@ namespace Game
         protected float _tempSpeed; // Промежуточная скорость противника
         protected System.Random randomer = new System.Random(); // Рандомная переменная
         protected static Vector3 _up = new Vector3(0, 0, 0.3f);
+
+        // ДЛЯ ОПРЕДЕЛЕНИЯ ИГРОКА, КОТОРЫЙ УСТАНОВИЛ ЭТОТ ЮНИТ
+        private PlayerHelper instantedPlayerReference;
+            [Header("Сетевое взаимодействие")]
+            [SyncVar,SerializeField,Tooltip("Номер игрока, который установил этот юнит")]
+        private int netID;
         #endregion
 
         #region Геттеры и сеттеры переменных
@@ -231,6 +237,28 @@ namespace Game
             set
             {
                 _hpTurrel = value;
+            }
+        }
+
+        public PlayerHelper InstantedPlayerReference
+        {
+            get
+            {
+                return instantedPlayerReference;
+            }
+
+            set
+            {
+                instantedPlayerReference = value;
+                this.netID = (int)instantedPlayerReference.GetComponent<NetworkIdentity>().netId.Value;
+            }
+        }
+
+        public int NetID
+        {
+            get
+            {
+                return netID;
             }
         }
         #endregion
@@ -1098,7 +1126,7 @@ namespace Game
         public void CmdDead()
         {
             if (!isServer) return; // Выполняем только на сервере
-
+            instantedPlayerReference.NumberOfUnits--;
             RpcClientDeath();
         }
 
