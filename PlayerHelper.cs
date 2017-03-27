@@ -192,59 +192,6 @@ namespace Game
         }
 
         /// <summary>
-        /// Предзагрузка данных из сети
-        /// </summary>
-        public override void OnStartLocalPlayer()
-        {
-            // Должны загружаться данные с Google-Play-Services
-            GetNetIdentity();
-            SetIdentity();
-        }
-
-        /// <summary>
-        /// Получить сетевой идентификатор
-        /// </summary>
-        private void GetNetIdentity()
-        {
-            playerNetID = (int)GetComponent<NetworkIdentity>().netId.Value;
-            CmdTellServerMyIdentity(MakeUniqueName());
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        private void CmdTellServerMyIdentity(string name)
-        {
-            playerUniqueName = name;
-        }
-
-        /// <summary>
-        /// Установить имя
-        /// </summary>
-        /// <returns></returns>
-        private string MakeUniqueName()
-        {
-            string uniqueName = "Player" + playerNetID;
-            return uniqueName;
-        }
-
-        /// <summary>
-        /// Установить идентификацию
-        /// </summary>
-        private void SetIdentity()
-        {
-            if (!isLocalPlayer)
-            {
-                transform.name = playerUniqueName;
-            }
-            else
-            {
-                transform.name = MakeUniqueName();
-            }
-        }
-
-        /// <summary>
         /// Инстанс префаба. Запрос на сервер
         /// </summary>
         /// <param name="_target"></param>
@@ -254,10 +201,6 @@ namespace Game
             RpcInstantiateObject(pos);
         }
 
-        /// <summary>
-        /// Инстанс префаба. Выполнение на клиентах
-        /// </summary>
-        /// <param name="pos"></param>
         [Client]
         private void RpcInstantiateObject(Vector3 pos)
         {
@@ -267,12 +210,50 @@ namespace Game
                 + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
             //objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
             objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
-
             objectForInstantiate.transform.parent = this.transform;
-            objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference
+            objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference 
                 = GetComponent<PlayerHelper>();
             NetworkServer.Spawn(objectForInstantiate);
             _numberOfUnits++;
+        }
+
+        /// <summary>
+        /// Предзагрузка данных из сети
+        /// </summary>
+        public override void OnStartLocalPlayer()
+        {
+            // Должны загружаться данные с Google-Play-Services
+            GetNetIdentity();
+            SetIdentity();
+        }
+
+        void GetNetIdentity()
+        {
+            playerNetID = (int)GetComponent<NetworkIdentity>().netId.Value;
+            CmdTellServerMyIdentity(MakeUniqueName());
+        }
+
+        private void CmdTellServerMyIdentity(string name)
+        {
+            playerUniqueName = name;
+        }
+
+        private string MakeUniqueName()
+        {
+            string uniqueName = "Player" + playerNetID;
+            return uniqueName;
+        }
+
+        void SetIdentity()
+        {
+            if (!isLocalPlayer)
+            {
+                transform.name = playerUniqueName;
+            }
+            else
+            {
+                transform.name = MakeUniqueName();
+            }
         }
     }
 }

@@ -130,7 +130,6 @@ namespace Game
                         clone.transform.localEulerAngles = _quar; // set rotate from GO to the mine
                         clone.transform.position = transform.position;
                         clone.GetComponent<Mine>().setDistance(_distance - (float)randomer.NextDouble()); // set distance
-                        CmdPlayAudio(3);
                         CmdPlantMine(clone);
                     }
                 }
@@ -268,11 +267,7 @@ namespace Game
                     _audioSource.Play();
                     break;
                 case 3:
-                    _audioSource.pitch = (float)randomer.NextDouble()/4 + 0.9f;
-                    _audioSource.clip = ResourcesPlayerHelper.
-                        GetElementfromAudioPlants((byte)randomer.Next(0,
-                            ResourcesPlayerHelper.LenghtAudioPlants()));
-                    _audioSource.Play();
+
                     break;
                 case 4:
                     _audioSource.pitch = (float)randomer.NextDouble() / 3 + 0.9f;

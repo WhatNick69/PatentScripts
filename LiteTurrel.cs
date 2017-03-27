@@ -30,7 +30,6 @@ namespace Game {
         protected float _shootingSpeed; // speed of bullet
         protected Ray ray;
         protected RaycastHit hit;
-        protected bool mayToCheckForEnemy;
 
             [Header("Умная стрельба")]
             [SerializeField, Tooltip("Использовать умную стрельбу?")]
@@ -58,9 +57,8 @@ namespace Game {
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
                             && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && mayToCheckForEnemy)
+                                && !_isReturning)
             {
-                Debug.Log("Детектим врага");
                 if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
                 {
                     _attackedObject = col.gameObject;
@@ -72,40 +70,6 @@ namespace Game {
                     _minPower = _attackedObject.GetComponent<EnemyAbstract>().GetPower();
                 }
                 else if (Vector2.Distance(gameObject.transform.position,col.gameObject.transform.position) < _minDistance && _firstStandart)
-                {
-                    _attackedObject = col.gameObject;
-                    _minDistance = Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position);
-                }
-                _isFighting = true;
-            }
-        }
-
-        /// <summary>
-        /// Действие, при столкновении
-        /// </summary>
-        /// <param name="col"></param>
-        public void OnCollisionStay(Collision col)
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (_isAlive &&
-                col.gameObject.tag == "Enemy"
-                    && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && mayToCheckForEnemy)
-            {
-                Debug.Log("Детектим врага");
-                if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
-                {
-                    _attackedObject = col.gameObject;
-                    _minSpeed = _attackedObject.GetComponent<EnemyAbstract>().WalkSpeed;
-                }
-                else if (col.gameObject.GetComponent<EnemyAbstract>().GetPower() > _minPower && _firstPower)
-                {
-                    _attackedObject = col.gameObject;
-                    _minPower = _attackedObject.GetComponent<EnemyAbstract>().GetPower();
-                }
-                else if (Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position) < _minDistance && _firstStandart)
                 {
                     _attackedObject = col.gameObject;
                     _minDistance = Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position);
@@ -147,7 +111,7 @@ namespace Game {
             {
                 _maxEdge *= 2;
             }
-            mayToCheckForEnemy = true;
+
             _isStoppingWalkFight = false;
             _isAlive = true;
             _moveBack = false;
@@ -175,7 +139,7 @@ namespace Game {
 
             if (_isAlive)
             {
-                if (mayToCheckForEnemy) ChangeEnemy();
+                ChangeEnemy();
 
                 if (_cleverShooting && _attackedObject != null)
                 {
@@ -353,7 +317,7 @@ namespace Game {
                     0, _attackedObject.transform.position.z);
 
                 // Поворот дочернего объекта
-                _childRotatingTurrel.LookAt(_attackedObject.transform.position + _plusPos);
+                _childRotatingTurrel.LookAt(_attackedObject.transform.position);
                 _childRotatingTurrel.localEulerAngles = new Vector3(90, _childRotatingTurrel.localEulerAngles.y - 90);
 
                 if (!_attackedObject.GetComponent<EnemyAbstract>().IsAlive)
@@ -391,7 +355,6 @@ namespace Game {
             _minPower = 0;
             _minSpeed = -1;
 
-            _newAttackedObject = null;
             _attackedObject = null;
             _isFighting = false;
             _animatorOfPlayer.speed = 1;
@@ -449,12 +412,10 @@ namespace Game {
         /// <returns></returns>
         protected IEnumerator<float> ReloadTimer()
         {
-            mayToCheckForEnemy = false;
             _coroutineReload = false;
             Bursting();
             yield return Timing.WaitForSeconds(_shootingSpeed);
             _coroutineReload = true;
-            mayToCheckForEnemy = true;
         }
         #endregion
 

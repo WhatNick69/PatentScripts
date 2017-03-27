@@ -485,7 +485,7 @@ namespace Game
                         }
                     }
                 }
-                else if (_firstStandart)
+                else
                 {
                     _tempDistance = 0;
                     _minDistance = 1000;
@@ -528,6 +528,7 @@ namespace Game
                     _changeEnemyFlag = false;
                 }
             }
+
             return _changeEnemyFlag;
         }
 
