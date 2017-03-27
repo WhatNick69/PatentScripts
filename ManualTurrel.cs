@@ -25,7 +25,28 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Пустая реализация
+        /// </summary>
+        /// <param name="collision"></param>
         private new void OnCollisionEnter(Collision collision)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// Пустая реализация
+        /// </summary>
+        /// <param name="collision"></param>
+        private new void OnCollisionStay(Collision collision)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// Пустая реализация
+        /// </summary>
+        private new void FixedUpdate()
         {
             return;
         }
