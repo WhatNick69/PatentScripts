@@ -24,6 +24,8 @@ namespace Game
         private static AudioClip[] audioDeathsTurrel;
 
         private static AudioClip[] audioDeathsObjects;
+        private static AudioClip[] audioBangs;
+        private static AudioClip[] audioPlants;
 
         private static AudioClip[] generalSounds;
         #endregion
@@ -84,9 +86,19 @@ namespace Game
             return audioDeathsTurrel[i];
         }
 
-        public static AudioClip getElementFromAudioDeathsObjects(byte i)
+        public static AudioClip GetElementFromAudioDeathsObjects(byte i)
         {
             return audioDeathsObjects[i];
+        }
+
+        public static AudioClip GetElementFromAudioBangs(byte i)
+        {
+            return audioBangs[i]; 
+        }
+
+        public static AudioClip GetElementfromAudioPlants(byte i)
+        {
+            return audioPlants[i];
         }
 
         public static AudioClip GetElementFromGeneralSounds(byte i)
@@ -144,6 +156,16 @@ namespace Game
             return audioDeathsObjects.Length;
         }
 
+        public static int LenghtAudioBangs()
+        {
+            return audioBangs.Length;
+        }
+
+        public static int LenghtAudioPlants()
+        {
+            return audioPlants.Length;
+        }
+
         public static int LenghtGeneralSounds()
         {
             return generalSounds.Length;
@@ -167,6 +189,8 @@ namespace Game
             audioShotsTurrel = Resources.LoadAll<AudioClip>("Sounds/ShotsTurrel");
             audioDeathsTurrel = Resources.LoadAll<AudioClip>("Sounds/DeathTurrel");
             audioDeathsObjects = Resources.LoadAll<AudioClip>("Sounds/DeathObjects");
+            audioBangs = Resources.LoadAll<AudioClip>("Sounds/Bangs");
+            audioPlants = Resources.LoadAll<AudioClip>("Sounds/Plants");
 
             generalSounds = Resources.LoadAll<AudioClip>("Sounds/GeneralSounds");
         }

@@ -13,16 +13,19 @@ namespace Game
         : Cluster {
 
         #region Переменные
-        [SyncVar]
+            [SyncVar]
         private Vector3 syncPos;
-        [SyncVar]
+            [SyncVar]
         private bool _toSync;
         private Vector3 lastPos;
 
-        [SerializeField, Tooltip("Урон от кластера")]
+            [Header("Переменные мины")]
+            [SerializeField, Tooltip("Урон от кластера")]
         protected int _damage; // damage
-        [SerializeField, Tooltip("Скорость движения мины")]
+            [SerializeField, Tooltip("Скорость движения мины")]
         protected float _speedOfPlanting; // speed of planting a mine
+            [SerializeField, Tooltip("Каркас мины")]
+        private Transform _mineChild;
 
         protected Vector3 _startPosition; // startPosition
         protected Vector3 _speedVec; // speed-Vector
@@ -30,7 +33,8 @@ namespace Game
         protected bool _isPlaced; // is placed the mine on the field?
         private static System.Random rnd = new System.Random(); // random
         private int _angle;
-        private double _smooth;
+        private float _smooth;
+            [SyncVar]
         private Quaternion _quar;
         #endregion
 
@@ -44,7 +48,7 @@ namespace Game
 
             _toSync = true;
             _angle = rnd.Next(720, 1480);
-            _smooth = rnd.NextDouble() * 10;
+            _smooth = (float)rnd.NextDouble() * 10;
             _quar = Quaternion.Euler(0, _angle, 0);
             _startPosition = transform.position;
             _speedVec = new Vector3(0, 0, _speedOfPlanting);
@@ -100,10 +104,10 @@ namespace Game
 
             if (Vector3.Distance(transform.position, _startPosition) < _distance)
             {
-                transform.GetChild(0).gameObject.transform.rotation 
-                    = Quaternion.Lerp(transform.GetChild(0).gameObject.transform.rotation, _quar, 
-                        Time.deltaTime * (float)_smooth);
-                gameObject.transform.Translate(_speedVec * Time.deltaTime);
+                _mineChild.rotation 
+                    = Quaternion.Lerp(_mineChild.rotation, _quar, 
+                        Time.deltaTime * _smooth);
+                transform.Translate(_speedVec * Time.deltaTime);
             }
             else
             {
@@ -154,9 +158,8 @@ namespace Game
             {
                 transform.position
                     = Vector3.Lerp(transform.position, syncPos, Time.deltaTime * 10);
-                transform.GetChild(0).gameObject.transform.rotation
-                    = Quaternion.Lerp(transform.GetChild(0).gameObject.transform.rotation, _quar,
-                        Time.deltaTime * (float)_smooth);
+                _mineChild.rotation = Quaternion.Lerp(_mineChild.rotation, _quar,
+                    Time.deltaTime * _smooth);
             }
         }
 
