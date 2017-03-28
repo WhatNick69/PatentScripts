@@ -17,7 +17,6 @@ namespace Game
         private Vector3 syncPos;
             [SyncVar]
         private bool _toSync;
-        private Vector3 lastPos;
 
             [Header("Переменные мины")]
             [SerializeField, Tooltip("Урон от кластера")]
@@ -31,7 +30,6 @@ namespace Game
         protected Vector3 _speedVec; // speed-Vector
         public float _distance; // distance between startPosition and destinationPosition
         protected bool _isPlaced; // is placed the mine on the field?
-        private static System.Random rnd = new System.Random(); // random
         private int _angle;
         private float _smooth;
             [SyncVar]
@@ -104,9 +102,8 @@ namespace Game
 
             if (Vector3.Distance(transform.position, _startPosition) < _distance)
             {
-                _mineChild.rotation 
-                    = Quaternion.Lerp(_mineChild.rotation, _quar, 
-                        Time.deltaTime * _smooth);
+                _mineChild.rotation
+                    = Quaternion.Lerp(_mineChild.rotation, _quar, Time.deltaTime * _smooth);
                 transform.Translate(_speedVec * Time.deltaTime);
             }
             else
@@ -144,7 +141,6 @@ namespace Game
         {
             if (isServer)
             {
-                lastPos = transform.position;
                 syncPos = transform.position;
             }
         }
@@ -159,7 +155,7 @@ namespace Game
                 transform.position
                     = Vector3.Lerp(transform.position, syncPos, Time.deltaTime * 10);
                 _mineChild.rotation = Quaternion.Lerp(_mineChild.rotation, _quar,
-                    Time.deltaTime * _smooth);
+                    Time.deltaTime * 5);
             }
         }
 

@@ -17,8 +17,10 @@ namespace Game
 
             [SerializeField, Tooltip("Скорость интерполяции")]
         private float lerpRate = 10;
-            [SerializeField, Tooltip("Transform пользовательского юнита")]
-        private Transform myTransform;
+            [SerializeField, Tooltip("Transform спрайта туррели")]
+        private Transform spriteChildTransform;
+
+        private Vector3 _localEulerVector3;
         #endregion
 
         /// <summary>
@@ -27,7 +29,8 @@ namespace Game
         /// </summary>
         public override void OnStartClient()
         {
-            syncRot = myTransform.rotation;
+            syncRot = spriteChildTransform.rotation;
+            _localEulerVector3 = new Vector3(90, 0, 0);
         }
 
         /// <summary>
@@ -51,8 +54,8 @@ namespace Game
         /// </summary>
         private void TransmitTransform()
         {
-            lastRot = myTransform.rotation;
-            syncRot = myTransform.rotation;
+            lastRot = spriteChildTransform.rotation;
+            syncRot = spriteChildTransform.rotation;
         }
 
         /// <summary>
@@ -60,9 +63,10 @@ namespace Game
         /// </summary>
         private void LerpTransform()
         {
-            myTransform.rotation
-                = Quaternion.Lerp(myTransform.rotation, syncRot, Time.deltaTime * lerpRate);
-            myTransform.localEulerAngles = new Vector3(90, myTransform.localEulerAngles.y, 0);
+            spriteChildTransform.rotation
+                = Quaternion.Lerp(spriteChildTransform.rotation, syncRot, Time.deltaTime * lerpRate);
+            _localEulerVector3.y = spriteChildTransform.localEulerAngles.y;
+            spriteChildTransform.localEulerAngles = _localEulerVector3;
         }
     }
 }

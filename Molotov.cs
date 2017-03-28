@@ -183,7 +183,7 @@ namespace Game
         {
             _can = false;
             _audio.clip = ResourcesPlayerHelper.
-                getElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
+                GetElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
             _audio.pitch =(float)rnd.NextDouble() / 4 + 0.75f;
             _audio.Play();
 

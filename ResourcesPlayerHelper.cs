@@ -95,7 +95,7 @@ namespace Game
         {
             return audioBangs[i]; 
         }
-
+ 
         public static AudioClip GetElementfromAudioPlants(byte i)
         {
             return audioPlants[i];
@@ -160,12 +160,12 @@ namespace Game
         {
             return audioBangs.Length;
         }
-
+ 
         public static int LenghtAudioPlants()
         {
             return audioPlants.Length;
         }
-
+ 
         public static int LenghtGeneralSounds()
         {
             return generalSounds.Length;

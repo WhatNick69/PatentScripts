@@ -10,17 +10,21 @@ namespace Game
     public class ClusteredMine
         : NetworkBehaviour
     {
-        [SerializeField, Tooltip("Количество дробления")]
+            [Header("Кластерная мина")]
+            [SerializeField, Tooltip("Количество дробления")]
         protected byte _countOfClusterings;
-        [SerializeField, Tooltip("Скорость разлета осколков")]
+            [SerializeField, Tooltip("Скорость разлета осколков")]
         protected float _speed;
-        [SerializeField, Tooltip("Время жизни осколка")]
+            [SerializeField, Tooltip("Время жизни осколка")]
         public float _timerToDestroy;
-        [SerializeField, Tooltip("Осколок")]
+            [SerializeField, Tooltip("Осколок")]
         protected GameObject _cluster;
+            [SerializeField, Tooltip("Аудио компонент")]
+        protected AudioSource _audioSource;
 
         protected Vector3 _speedVector;
         protected float _angle;
+        private System.Random rnd = new System.Random();
 
         /// <summary>
         /// Старт
@@ -29,6 +33,7 @@ namespace Game
         {
             if (!isServer) return;
 
+            CmdBangAudio();
             _speedVector = new Vector3(0, 0, _speed);
 
             _angle = 360 / _countOfClusterings;
@@ -37,8 +42,15 @@ namespace Game
             {
                 CmdInstantiate(i);
             }
+
             Destroy(gameObject, _timerToDestroy);
         }
+
+        private Vector3 SetRandomLocalEulerAngle()
+        {
+            return new Vector3(0, rnd.Next(0, 360), 0);
+        }
+
 
         [Command]
         protected void CmdInstantiate(float i)
@@ -51,8 +63,9 @@ namespace Game
         {
             GameObject _newClustering =
                 Instantiate(_cluster, transform.position, Quaternion.identity) as GameObject;
-            _newClustering.transform.Rotate(0, _angle * i, 0);
+            _newClustering.transform.localEulerAngles = SetRandomLocalEulerAngle();
             _newClustering.transform.parent = transform;
+            _newClustering.GetComponent<BulletMotionSync>().SpeedVec = _speedVector;
             NetworkServer.Spawn(_newClustering);
         }
 
@@ -61,16 +74,33 @@ namespace Game
         /// </summary>
         void Update()
         {
-            if (!isServer)
-            {
-                return;
-            }
+            if (!isServer) return;
 
             _countOfClusterings = (byte)gameObject.transform.childCount;
             for (int i = 0; i < _countOfClusterings; i++)
             {
-                gameObject.transform.GetChild(i).gameObject.transform.Translate(_speedVector * Time.deltaTime);
+                gameObject.transform.GetChild(i).gameObject
+                    .transform.Translate(_speedVector * Time.deltaTime);
             }
+        }
+
+        [Command]
+        public void CmdBangAudio()
+        {
+            RpcBangAudio();
+        }
+
+        /// <summary>
+        /// Воспроизведение звука. Вызов на клиентах
+        /// </summary>
+        /// <param name="condition"></param>
+        [Client]
+        protected void RpcBangAudio()
+        {
+            _audioSource.pitch = (float)rnd.NextDouble() / 4 + 0.9f;
+            _audioSource.clip = ResourcesPlayerHelper.
+                GetElementFromAudioBangs((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioBangs()));
+            _audioSource.Play();
         }
     }
 }
