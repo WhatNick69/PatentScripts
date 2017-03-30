@@ -56,7 +56,7 @@ namespace Game
         /// </summary>
         void Update()
         {
-            if (isClient)
+            if (isServer)
             {
                 Vector2 mouse = Input.mousePosition;
                 CmdLookAter(mouse);

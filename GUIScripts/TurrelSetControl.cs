@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Game;
+using UnityEngine;
 
 namespace GameGUI
 {
@@ -7,7 +8,16 @@ namespace GameGUI
     {
             [SerializeField, Tooltip("Кнопки с туррелями")]
         private TurrelNumber[] arrayObjects;
+            [SerializeField, Tooltip("Аудио компонент")]
+        private AudioSource audio;
         private int page;
+
+        public void PlayAudio(byte i)
+        {
+            audio.clip = ResourcesPlayerHelper.
+                GetElementFromAudioTaps(i);
+            audio.Play();
+        }
 
         public void CheckArray()
         {
@@ -35,20 +45,30 @@ namespace GameGUI
 
         public void UpperListButton()
         {
-            if (page >= 1) return;
+            if (page >= 1)
+            {
+                PlayAudio(0);
+                return;
+            }
 
             ClearPage();
             page++;
             RefreshPage();
+            PlayAudio(1);
         }
 
         public void DownerListButton()
         {
-            if (page <= 0) return;
+            if (page <= 0)
+            {
+                PlayAudio(0);
+                return;
+            }
 
             ClearPage();
             page--;
             RefreshPage();
+            PlayAudio(1);
         }
     }
 }

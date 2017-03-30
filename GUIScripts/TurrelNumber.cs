@@ -46,6 +46,7 @@ namespace GameGUI {
             GetComponent<Image>().color = Color.green;
             _player.GetComponent<PlayerHelper>().IsPickTurrelMode = true;
             _isChecked = true;
+            _player.GetComponent<TurrelSetControl>().PlayAudio(2);
         }
 
 
@@ -53,6 +54,7 @@ namespace GameGUI {
         {
             GetComponent<Image>().color = Color.white;
             _isChecked = false;
+            _player.GetComponent<TurrelSetControl>().PlayAudio(0);
         }
 
         public void ChangeTurrel()

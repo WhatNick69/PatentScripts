@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Game;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -6,8 +7,16 @@ using UnityEngine.UI;
 public class NetworkManagerCustom 
     : NetworkManager {
 
+    private AudioSource audio;
+
+    private void PlayAudio()
+    {
+        audio.Play();
+    }
+
     private void Start()
     {
+        audio = GetComponent<AudioSource>();
         GameObject.Find("InputFieldIPAdress").
             transform.FindChild("Text").GetComponent<Text>().text = "localhost";
     }
@@ -15,7 +24,8 @@ public class NetworkManagerCustom
     public void Startuphost()
     {
         SetPort();
-        singleton.StartHost(); 
+        singleton.StartHost();
+        PlayAudio();
     }
 
     private void SetPort()
@@ -28,6 +38,7 @@ public class NetworkManagerCustom
         SetIPAdress();
         SetPort();
         singleton.StartClient();
+        PlayAudio();
     }
 
     private void SetIPAdress()
@@ -35,6 +46,7 @@ public class NetworkManagerCustom
         string ipAdress = GameObject.Find("InputFieldIPAdress").
             transform.FindChild("Text").GetComponent<Text>().text;
         singleton.networkAddress = ipAdress;
+        PlayAudio();
     }
 
     public void OnLevelWasLoaded(int level)
@@ -53,7 +65,7 @@ public class NetworkManagerCustom
     private void SetupOtherSceneButton()
     {
         GameObject.Find("ButtonDisconnect").GetComponent<Button>().onClick.RemoveAllListeners();
-        GameObject.Find("ButtonDisconnect").GetComponent<Button>().onClick.AddListener(NetworkManager.singleton.StopHost);
+        GameObject.Find("ButtonDisconnect").GetComponent<Button>().onClick.AddListener(singleton.StopHost);
     }
 
     IEnumerator SetupMenuSceneButton()
@@ -68,6 +80,8 @@ public class NetworkManagerCustom
 
     public void CloseApplication()
     {
+        PlayAudio();
+        Application.Unload();
         Application.Quit();
     }
 }

@@ -4,6 +4,7 @@ using Mr1;
 using MovementEffects;
 using System.Collections.Generic;
 using UnityEngine.Networking;
+using GameGUI;
 
 namespace Game
 {
@@ -24,6 +25,8 @@ namespace Game
         private string _levelName; // Название уровня
             [SerializeField, Tooltip("Аудио компонент")]
         private AudioSource _generalSounder;
+            [SerializeField, Tooltip("UIWaveController компонент канваса")]
+        private UIWaveController uIWaveController;
             [Header("Работа с врагами")]
             [SerializeField, Tooltip("Префабы всех врагов")]
         private GameObject[] _allEnemies; // Массив врагов
@@ -50,7 +53,7 @@ namespace Game
         private byte _waves; // Количество волн
         private bool _isWave; // Состояние о текущей волне
         private bool _isMayBeInstanced; // Может ли враг быть инстантирован
-            [SerializeField, Tooltip("Закончилась ли волна?")]
+            [SyncVar,SerializeField, Tooltip("Закончилась ли волна?")]
         private bool _isEndWave; // Состояние об окончании волны
 
         // timers and random
@@ -58,12 +61,12 @@ namespace Game
         private float _tempRespawnTime;
             [SerializeField, Tooltip("Время между последующими волнами")]
         private float _waveTime; // time for respawn an enemy
-        private static int _numberOfEnemies;
+        private int _numberOfEnemies;
         private static System.Random rnd = new System.Random(); // random
         #endregion
 
         #region Геттеры и сеттеры
-        public static int NumberOfEnemies
+        public int NumberOfEnemies
         {
             get
             {
@@ -73,6 +76,10 @@ namespace Game
             set
             {
                 _numberOfEnemies = value;
+                if (_numberOfEnemies == 0)
+                {
+                    uIWaveController.CmdVisibleButton();
+                }
             }
         }
 
@@ -88,6 +95,19 @@ namespace Game
                 _levelName = value;
             }
         }
+
+        public bool IsEndWave
+        {
+            get
+            {
+                return _isEndWave;
+            }
+
+            set
+            {
+                _isEndWave = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -97,14 +117,14 @@ namespace Game
         private void Start()
         {
             if (!isServer) return; // Выполняет только сервер
-            _generalSounder.volume = 0.5f;
+            _generalSounder.volume = 0.25f;
             _generalSounder.clip = ResourcesPlayerHelper.
                 GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
             _generalSounder.Play();
 
             Application.runInBackground = true;
             _isWave = true;
-            _isEndWave = false;
+            _isEndWave = true;
             _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
             _tempRespawnTime = _respawnTime;
             _currentTime = _respawnTime;
@@ -188,7 +208,6 @@ namespace Game
         {
             if (_nullElem == _enemyCountLevels.Length)
             {
-                Debug.Log("The wave " + _waves + " is ended");
                 ToIncrementTheWave();
                 _isWave = true;
                 _isEndWave = true;

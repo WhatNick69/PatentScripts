@@ -539,14 +539,16 @@ namespace Game {
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
-                RpcRM(playerInstance.gameObject);
+                // Понизить количество активных игроков
+                GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--; 
+                RpcRM(playerInstance.gameObject); // Дать бонус игроку, который убил
                 CmdPlayAudio(4); // Звук смерти
-                StopEnemyMoving();
-                GetComponent<BoxCollider>().enabled = false;
-                _isAlive = false;
-                Decreaser();
-                NullAttackedObject();
-                RpcChangeAnimation(2, false);
+                StopEnemyMoving(); // Прекратить движение
+                GetComponent<BoxCollider>().enabled = false; // Выключить коллизии
+                _isAlive = false; // Убиться
+                Decreaser(); // Выйти из атакующих в атакуемом объекте
+                NullAttackedObject(); // Обнулиться
+                RpcChangeAnimation(2, false); // Сменить анимацию на смерть
                 return Mathf.Abs(_hp);
             }
             else
@@ -578,6 +580,7 @@ namespace Game {
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--;
                 RpcRM(playerInstance.gameObject);
                 CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;

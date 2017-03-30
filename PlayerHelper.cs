@@ -16,6 +16,8 @@ namespace Game
             [Header("Переменные пользователя")]
             [SerializeField, Tooltip("Камера")]
         private Camera _cam;
+            [SerializeField, Tooltip("Text лэйбл")]
+        private GameObject _textLabel;
             [SyncVar, SerializeField, Tooltip("Счетчик денег")]
         private GameObject _moneyfield;
             [SyncVar,SerializeField,Tooltip("Количество денег")]
@@ -43,7 +45,11 @@ namespace Game
             [SyncVar]
         private bool _moneyFlag;
 
+        Vector2 mouse;
+        Vector3 _target;
+        Ray ray;
         RaycastHit hit;
+        private static System.Random randomer = new System.Random();
         #endregion
 
         #region Геттеры и сеттеры
@@ -104,6 +110,7 @@ namespace Game
             set
             {
                 _money = value;
+                //if (_money < 0) _money = 0;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
             }
         }
@@ -191,35 +198,60 @@ namespace Game
             }
         }
 
+        private void LabelSet(bool condition,int cost=0)
+        {
+            _textLabel.GetComponent<RectTransform>().position = mouse;
+            _textLabel.SetActive(false);
+
+            if (condition)
+            {
+                _textLabel.GetComponent<Text>().color = Color.green;
+                _textLabel.GetComponent<Text>().text = "-" + cost + "$";
+            }
+            else
+            {
+                _textLabel.GetComponent<Text>().color = Color.red;
+                _textLabel.GetComponent<Text>().text = "Not enough money!";
+            }
+
+            _textLabel.SetActive(true);
+        }
+
         /// <summary>
         /// Действия, при нажатии по экрану
         /// </summary>
         private void CheckTap()
         {
-            Vector2 mouse = Input.mousePosition;
-            Vector3 _target = _cam.ScreenToWorldPoint(mouse);
-            Ray ray = _cam.ScreenPointToRay(mouse);
+            mouse = Input.mousePosition;
+            _target = _cam.ScreenToWorldPoint(mouse);
+            ray = _cam.ScreenPointToRay(mouse);
 
             if (_isPickTurrelMode)
             {
-                CmdCheckMoney(_currentUnit, _money, gameObject);
-                if (_moneyFlag)
+                //CmdCheckMoney(_currentUnit, _money, gameObject);
+                if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
                 {
                     if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _roadLayer))
                     {
                         Debug.Log("Создали динамику");
+                        LabelSet(true, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита\
                     }
                     else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _groundLayer))
                     {
                         Debug.Log("Создали статику");
+                        LabelSet(true, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита
                     }
                     else Debug.Log("Невозможно");
                 }
-                else  Debug.Log("Недостаточно денег!");
+                else if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost < 0 &&
+                    (Physics.Raycast(ray, out hit, 100, _roadLayer) || Physics.Raycast(ray, out hit, 100, _groundLayer)))
+                {
+                    LabelSet(false);
+                }
             }
             else
             {
@@ -232,12 +264,14 @@ namespace Game
                         {
                             _tempRadiusGameObject = null;
                             _isRadiusVisible = false;
+                            PlayAudioForRadius(false);
                         }
                         if (!_isRadiusVisible)
                         {
                             hit.collider.transform.parent.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(true);
                             _isRadiusVisible = true;
                             _tempRadiusGameObject = hit.collider.gameObject;
+                            PlayAudioForRadius(true);
                         }
                         else if (_isRadiusVisible)
                         {
@@ -252,6 +286,7 @@ namespace Game
                                 hit.collider.transform.parent.gameObject.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
                                 _isRadiusVisible = false;
                                 _tempRadiusGameObject = hit.collider.gameObject;
+                                PlayAudioForRadius(false);
                             }
                         }
                     }
@@ -294,7 +329,8 @@ namespace Game
         {
             bool flag;
 
-            flag = _money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
+            flag = Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
+            Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
             gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
         }
 
@@ -306,6 +342,7 @@ namespace Game
         private void CmdInstantiateObject(Vector3 pos, int _currentUnit, int _money)
         {
             pos.y = 0;
+            RpcPlayAudio();
             RpcRefreshMoney(_currentUnit); // вызов метода, для покупки юнита
             GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
             objectForInstantiate.name = "Player" + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType + "#Cost"
@@ -315,8 +352,34 @@ namespace Game
             objectForInstantiate.transform.parent = this.transform;
             objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference
                 = GetComponent<PlayerHelper>();
+            //NetworkServer.SpawnWithClientAuthority(objectForInstantiate, connectionToClient);
             NetworkServer.Spawn(objectForInstantiate);
             _numberOfUnits++;
+        }
+
+        [ClientRpc]
+        private void RpcPlayAudio()
+        {
+            gameObject.GetComponent<AudioSource>().clip = ResourcesPlayerHelper.
+                GetElementfromAudioUnitPlanted((byte)randomer.Next(0, ResourcesPlayerHelper.LenghtAudioUnitPlanted()));
+            gameObject.GetComponent<AudioSource>().Play();
+        }
+
+        private void PlayAudioForRadius(bool condition)
+        {
+            if (condition)
+            {
+                gameObject.GetComponent<AudioSource>().clip = ResourcesPlayerHelper.
+                    GetElementFromAudioTaps(2);
+                gameObject.GetComponent<AudioSource>().Play();
+            }
+            else
+            {
+                gameObject.GetComponent<AudioSource>().clip = ResourcesPlayerHelper.
+                    GetElementFromAudioTaps(0);
+                gameObject.GetComponent<AudioSource>().Play();
+            }
+
         }
 
         /// <summary>
@@ -329,5 +392,7 @@ namespace Game
             Money -= _units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
         }
         #endregion
+
+
     }
 }
