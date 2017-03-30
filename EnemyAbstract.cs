@@ -522,10 +522,16 @@ namespace Game {
             }
         }
 
+        [ClientRpc]
+        private void RpcRM(GameObject gO)
+        {
+            gO.GetComponent<PlayerHelper>().Money += EnemyBonus; // Плата за убийство
+        }
+
         /// <summary>
         /// Получить урон и попробовать установить противника
         /// </summary>
-        public float EnemyDamage(GameObject obj, float _dmg)
+        public float EnemyDamage(PlayerHelper playerInstance,GameObject obj, float _dmg)
         {
             _hp -= _dmg;
             _healthBarUnit.CmdDecreaseHealthBar(Hp);
@@ -533,6 +539,7 @@ namespace Game {
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                RpcRM(playerInstance.gameObject);
                 CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving();
                 GetComponent<BoxCollider>().enabled = false;
@@ -562,14 +569,16 @@ namespace Game {
         /// </summary>
         /// <param name="_dmg"></param>
         /// <returns></returns>
-        public float EnemyDamage(float _dmg,byte condition = 1)
+        public float EnemyDamage(PlayerHelper playerInstance,float _dmg,byte condition = 1)
         {
+
             _hp -= _dmg;
             _healthBarUnit.CmdDecreaseHealthBar(Hp);
             CmdPlayAudio(condition); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
+                RpcRM(playerInstance.gameObject);
                 CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;

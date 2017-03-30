@@ -60,7 +60,7 @@ namespace Game {
                             && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
                                 && mayToCheckForEnemy)
             {
-                Debug.Log("Детектим врага");
+                //Debug.Log("Детектим врага");
                 if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
                 {
                     _attackedObject = col.gameObject;
@@ -94,7 +94,6 @@ namespace Game {
                             && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
                                 && mayToCheckForEnemy)
             {
-                Debug.Log("Детектим врага");
                 if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
                 {
                     _attackedObject = col.gameObject;
@@ -368,7 +367,7 @@ namespace Game {
         /// </summary>
         new void StartMethod()
         {
-            SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
+            RpcSetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
             _hpTurrelTemp = _hpTurrel;
             Debug.Log(gameObject.name + " загружен!");
 

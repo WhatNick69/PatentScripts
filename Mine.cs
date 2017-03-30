@@ -69,7 +69,7 @@ namespace Game
 
             if (col.gameObject.tag == "Enemy")
             {
-                col.GetComponent<EnemyAbstract>().EnemyDamage(
+                col.GetComponent<EnemyAbstract>().EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference,
                     rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)));
                 if (_isClustered)
                 {
@@ -177,6 +177,7 @@ namespace Game
         {
             GameObject clone = Instantiate(_cluster);
             clone.transform.position = transform.position;
+            clone.GetComponent<ClusteredMine>().SetParent(_parentObject);
             NetworkServer.Spawn(clone);
         }
         #endregion

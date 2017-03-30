@@ -41,6 +41,7 @@ namespace Game
             clone.transform.position = _instantier.transform.position;
             clone.transform.localEulerAngles = _instantier.transform.localEulerAngles;
             clone.GetComponent<Molotov>().setPosition(_attackedObject.transform.position + _plusPos);
+            clone.GetComponent<Molotov>().setInstantedPlayer(gameObject.GetComponent<PlayerAbstract>());
             NetworkServer.Spawn(clone);
         }
 

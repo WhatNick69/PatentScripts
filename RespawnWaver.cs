@@ -96,8 +96,11 @@ namespace Game
         /// v1.01
         private void Start()
         {
-            CmdPlayGeneralSounds(0);
             if (!isServer) return; // Выполняет только сервер
+            _generalSounder.volume = 0.5f;
+            _generalSounder.clip = ResourcesPlayerHelper.
+                GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
+            _generalSounder.Play();
 
             Application.runInBackground = true;
             _isWave = true;

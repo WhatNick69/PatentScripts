@@ -45,7 +45,8 @@ namespace Game
         protected HealthBarUnit _healthBarUnit;
             [SerializeField, Tooltip("Объект-радиус")]
         protected GameObject _radiusOfAttackVisual;
-        protected static Camera _mainCamera; // Главная камера
+        [SerializeField]
+        protected  Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
@@ -268,7 +269,7 @@ namespace Game
         /// </summary>
         public void StartMethod()
         {
-            SetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
+            RpcSetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
             if (_isTurrel)
             {
                 _maxCountOfAttackers = 3;
@@ -440,6 +441,7 @@ namespace Game
         public void SetCamera()
         {
             _mainCamera = Camera.main;
+            Debug.Log("Камера установлена");
         }
 
         /// <summary>
@@ -665,7 +667,7 @@ namespace Game
                 && _attackedObject.GetComponent<EnemyAbstract>().IsAlive)
             {
                 RandomHit();
-                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(gameObject, _playerDmg);
+                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(InstantedPlayerReference,gameObject, _playerDmg);
             }
             else
             {
@@ -1045,7 +1047,8 @@ namespace Game
         /// Устанавливает размер визуализированного радиуса
         /// </summary>
         /// <param name="_side"></param>
-        public void SetSizeOfUnitVisibleRadius(float _side)
+        [ClientRpc]
+        public void RpcSetSizeOfUnitVisibleRadius(float _side)
         {
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
             float temp = _side / 4;

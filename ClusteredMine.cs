@@ -13,7 +13,9 @@ namespace Game
             [Header("Кластерная мина")]
             [SerializeField, Tooltip("Количество дробления")]
         protected byte _countOfClusterings;
-            [SerializeField, Tooltip("Скорость разлета осколков")]
+            [SerializeField, Tooltip("Пушка-родитель")]
+        protected GameObject _parentObject;
+        [SerializeField, Tooltip("Скорость разлета осколков")]
         protected float _speed;
             [SerializeField, Tooltip("Время жизни осколка")]
         public float _timerToDestroy;
@@ -25,6 +27,11 @@ namespace Game
         protected Vector3 _speedVector;
         protected float _angle;
         private System.Random rnd = new System.Random();
+
+        public void SetParent(GameObject gO)
+        {
+            _parentObject = gO;
+        }
 
         /// <summary>
         /// Старт
@@ -65,6 +72,7 @@ namespace Game
                 Instantiate(_cluster, transform.position, Quaternion.identity) as GameObject;
             _newClustering.transform.localEulerAngles = SetRandomLocalEulerAngle();
             _newClustering.transform.parent = transform;
+            _newClustering.GetComponent<Cluster>().SetParent(_parentObject);
             _newClustering.GetComponent<BulletMotionSync>().SpeedVec = _speedVector;
             NetworkServer.Spawn(_newClustering);
         }

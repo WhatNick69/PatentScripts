@@ -33,6 +33,7 @@ namespace Game
                 if (_attackedObject != null)
                     _enemyAbstract = _attackedObject.GetComponent<EnemyAbstract>();
                 _speedVec = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+                GetComponent<BulletMotionSync>().Enemy = AttackedObject;
             }
             GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
         }

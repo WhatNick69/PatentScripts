@@ -97,6 +97,7 @@ namespace Game
             {
                 if (Input.GetMouseButtonDown(1))
                 {
+
                     _target = Input.mousePosition;
                     _target = _mainCamera.ScreenToWorldPoint(_target);
                     _target.y = 0.1f;
@@ -132,6 +133,7 @@ namespace Game
                     if (!Physics.Raycast(ray, out hit, 1000, _maskCursor)
                         || hit.collider.gameObject != _childRotatingTurrel.gameObject)
                     {
+                        Debug.Log("Нажали");
                         CountActiveMortires--;
                         _targetSpot.SetActive(false);
                     }
@@ -198,6 +200,7 @@ namespace Game
         protected virtual void RpcInstantiate(GameObject _bullet)
         {
             GameObject clone = Instantiate(_bullet);
+            clone.GetComponent<ClusteredMine>().SetParent(gameObject);
             NetworkServer.Spawn(clone);
         }
 

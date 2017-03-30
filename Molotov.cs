@@ -34,6 +34,8 @@ namespace Game
         private Quaternion _quar;
 
         private bool oneCheckClient = true;
+
+        private PlayerAbstract instantedPlayer;
         #endregion
 
         /// <summary>
@@ -43,6 +45,11 @@ namespace Game
         public void setPosition(Vector3 _position)
         {
             _burningPosition = _position;
+        }
+
+        public void setInstantedPlayer(PlayerAbstract playerHelper)
+        {
+            instantedPlayer = playerHelper;
         }
 
         /// <summary>
@@ -134,7 +141,7 @@ namespace Game
                 else
                 {
                     collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec, 2);
+                        GetComponent<EnemyAbstract>().EnemyDamage(instantedPlayer.InstantedPlayerReference,_dmgPerSec, 2);
                 }
             }
         }
@@ -149,7 +156,7 @@ namespace Game
                     && collision.gameObject.tag.Equals("Enemy"))
             {
                 collision.gameObject.transform.
-                    GetComponent<EnemyAbstract>().EnemyDamage(_dmgPerSec, 2);
+                    GetComponent<EnemyAbstract>().EnemyDamage(instantedPlayer.InstantedPlayerReference,_dmgPerSec, 2);
             }
         }
 

@@ -15,8 +15,6 @@ namespace Game
             [Header("Переменные снаряда")]
             [SerializeField, Tooltip("Атакуемый объект")]
         protected GameObject _attackedObject;
-            [SerializeField, Tooltip("Пушка-родитель")]
-        protected GameObject _parentObject;
             [SerializeField, Tooltip("Урон он снаряда")]
         protected float _dmgBullet; // bullet damage
             [SerializeField, Tooltip("Аккуратность полета снаряда")]
@@ -51,7 +49,7 @@ namespace Game
 
         public void setAttackedObject(GameObject parent,GameObject aO)
         {
-            _parentObject = parent;
+            this._parentObject = parent;
             _attackedObject = aO;
         }
 
@@ -66,13 +64,13 @@ namespace Game
             if (col.gameObject.tag == "Enemy" 
                 && col.gameObject.GetComponent<EnemyAbstract>().IsAlive)
             {
-                _dmgBullet = col.gameObject.GetComponent<EnemyAbstract>().EnemyDamage(_dmgBullet);
-                if (col.gameObject.GetComponent<EnemyAbstract>().EnemyDamage(_dmgBullet) != 0
+
+                if (col.gameObject.GetComponent<EnemyAbstract>().
+                    EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference, _dmgBullet) != 0
                         && _countOfPenetrations > 0)
                 {
                     Debug.Log("Снижено");
                     _countOfPenetrations--;
-  
                 }
                 else
                 {
@@ -107,6 +105,7 @@ namespace Game
         protected virtual void RpcInstantiate(GameObject _bullet)
         {
             GameObject clone = GameObject.Instantiate(_bullet);
+            clone.GetComponent<ClusteredMine>().SetParent(_parentObject);
             NetworkServer.Spawn(clone);
         }
 

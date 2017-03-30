@@ -234,6 +234,7 @@ namespace Game
         private void RpcPlantMine(GameObject clone)
         {
             GameObject newClone = Instantiate(clone);
+            newClone.GetComponent<Cluster>().SetParent(gameObject);
             NetworkServer.Spawn(newClone);
         }
 

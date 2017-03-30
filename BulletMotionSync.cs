@@ -13,9 +13,9 @@ namespace Game
         private Vector3 speedVec;
 
         // ОСТАЛЬНЫЕ ПЕРЕМЕННЫЕ
-        [SerializeField, Tooltip("Transform компонент")]
+            [SerializeField, Tooltip("Transform компонент")]
         private Transform myTransform;
-            [SerializeField, Tooltip("Цель")]
+            [SyncVar,SerializeField, Tooltip("Цель")]
         private GameObject _enemy;
             [SerializeField, Tooltip("Включить самонаводку?")]
         private bool _isAutoAim;
@@ -42,19 +42,20 @@ namespace Game
                 _isStopped = value;
             }
         }
-        #endregion
 
-        /// <summary>
-        /// Начальный метод
-        /// Вызывается исключительно на клиентской стороне
-        /// </summary>
-        public override void OnStartClient()
+        public GameObject Enemy
         {
-            if (_isAutoAim)
+            get
             {
-                _enemy = GetComponent<Bullet>().AttackedObject;
+                return _enemy;
+            }
+
+            set
+            {
+                _enemy = value;
             }
         }
+        #endregion
 
         /// <summary>
         /// Интерполяция на клиентах
