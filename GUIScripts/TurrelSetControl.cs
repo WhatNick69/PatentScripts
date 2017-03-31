@@ -9,14 +9,14 @@ namespace GameGUI
             [SerializeField, Tooltip("Кнопки с туррелями")]
         private TurrelNumber[] arrayObjects;
             [SerializeField, Tooltip("Аудио компонент")]
-        private AudioSource audio;
+        private AudioSource audioSource;
         private int page;
 
         public void PlayAudio(byte i)
         {
-            audio.clip = ResourcesPlayerHelper.
+            audioSource.clip = ResourcesPlayerHelper.
                 GetElementFromAudioTaps(i);
-            audio.Play();
+            audioSource.Play();
         }
 
         public void CheckArray()

@@ -57,7 +57,6 @@ namespace Game
         private bool _isEndWave; // Состояние об окончании волны
 
         // timers and random
-        private float _currentTime; // tik-tak timer for respawn
         private float _tempRespawnTime;
             [SerializeField, Tooltip("Время между последующими волнами")]
         private float _waveTime; // time for respawn an enemy
@@ -76,7 +75,8 @@ namespace Game
             set
             {
                 _numberOfEnemies = value;
-                if (_numberOfEnemies == 0)
+                if (_numberOfEnemies == 0
+                    && IsEndWave)
                 {
                     uIWaveController.CmdVisibleButton();
                 }
@@ -116,18 +116,18 @@ namespace Game
         /// v1.01
         private void Start()
         {
-            if (!isServer) return; // Выполняет только сервер
             _generalSounder.volume = 0.25f;
             _generalSounder.clip = ResourcesPlayerHelper.
                 GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
             _generalSounder.Play();
+
+            if (!isServer) return; // Выполняет только сервер
 
             Application.runInBackground = true;
             _isWave = true;
             _isEndWave = true;
             _respawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
             _tempRespawnTime = _respawnTime;
-            _currentTime = _respawnTime;
             GetComponent<BoxCollider>().size
                 = new Vector3(100, 100, 1);
             _arrayOfPathes
@@ -194,7 +194,7 @@ namespace Game
                         Math.Sqrt(Math.Abs(_tempEnemyCountLevels[i] - _waves / 2));
                 }
             }
-
+            if (_tempRespawnTime > 0.05f) _tempRespawnTime -= 0.05f;
             _waves++;
             Array.Copy(_tempEnemyCountLevels, _enemyCountLevels,
                 _tempEnemyCountLevels.Length);
@@ -274,7 +274,6 @@ namespace Game
             if (_isMayBeInstanced)
             {
                 Instansing();
-                _currentTime = 0;
             }
             else
             {

@@ -7,16 +7,16 @@ using UnityEngine.UI;
 public class NetworkManagerCustom 
     : NetworkManager {
 
-    private AudioSource audio;
+    private AudioSource audioSource;
 
     private void PlayAudio()
     {
-        audio.Play();
+        audioSource.Play();
     }
 
     private void Start()
     {
-        audio = GetComponent<AudioSource>();
+        audioSource = GetComponent<AudioSource>();
         GameObject.Find("InputFieldIPAdress").
             transform.FindChild("Text").GetComponent<Text>().text = "localhost";
     }

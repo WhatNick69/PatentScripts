@@ -52,7 +52,6 @@ namespace Game {
         protected GameObject _bullet; // bullet-prefab
             [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
-        private float _agentSpeed;
             [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
         protected byte _countOfAttackers; // count attackers of enemy
@@ -395,7 +394,6 @@ namespace Game {
             {
                 if (!_isStopingOnWay || _walkSpeed != 0)
                 {
-                    _agentSpeed = _walkSpeed;
                     transform.StopFollowing();
                     _isStopingOnWay = true;
                 }

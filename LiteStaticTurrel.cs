@@ -36,7 +36,22 @@ namespace Game
         protected LayerMask mask = new LayerMask();
             [SerializeField, Tooltip("Префаб мины")]
         protected GameObject _mine;
+
+        private int mineCounter; // Количество установленных мин
         #endregion
+
+        public int MineCounter
+        {
+            get
+            {
+                return mineCounter;
+            }
+
+            set
+            {
+                mineCounter = value;
+            }
+        }
 
         /// <summary>
         /// Стартовый метод
@@ -45,6 +60,7 @@ namespace Game
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            Stopping = true;
             _euler = new List<int>();
             debI = 1;
             _coroutineReload = true;
@@ -115,9 +131,11 @@ namespace Game
             if (!isServer) return;
 
             // Выполняется только на сервере
-            if (_isAlive)
+            if (_isAlive 
+                && mineCounter <= 20)
             {
-                if (_coroutineReload)
+                if (_coroutineReload 
+                    && !stopping)
                 {
                     Timing.RunCoroutine(ReloadTimer());
                     for (int i = 0; i < _minesPerTick; i++)
@@ -131,6 +149,7 @@ namespace Game
                         clone.transform.position = transform.position;
                         clone.GetComponent<Mine>().setDistance(_distance - (float)randomer.NextDouble()); // set distance
                         CmdPlayAudio(3);
+                        mineCounter++;
                         CmdPlantMine(clone);
                     }
                 }

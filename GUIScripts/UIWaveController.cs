@@ -28,6 +28,7 @@ namespace GameGUI
         [Client]
         public void RpcStart()
         {
+            ClearMinesAndStopTurrels(false);
             respawnWaver.IsEndWave = false;
             startButton.SetActive(false);
             pauseButton.SetActive(true);
@@ -57,6 +58,7 @@ namespace GameGUI
         [Command]
         public void CmdVisibleButton()
         {
+            ClearMinesAndStopTurrels(true);
             RpcVisibleButton();
         }
 
@@ -70,6 +72,28 @@ namespace GameGUI
         public void OnClickDisconnectButton()
         {
             Application.LoadLevel(0);
+        }
+
+        /// <summary>
+        /// Очищаем поле от мин и обнуляем счетчик мин у всех минных пушек.
+        /// Начало новой волны
+        /// </summary>
+        /// <param name="flag"></param>
+        public void ClearMinesAndStopTurrels(bool flag)
+        {
+            GameObject[] mines = GameObject.FindGameObjectsWithTag("Mine");
+            foreach (GameObject mine in mines)
+                Destroy(mine);
+
+            GameObject[] turrels = GameObject.FindGameObjectsWithTag("Turrel");
+            foreach (GameObject turrel in turrels)
+            {
+                turrel.GetComponent<PlayerAbstract>().Stopping = flag;
+                if (turrel.GetComponent<LiteStaticTurrel>())
+                {
+                    turrel.GetComponent<LiteStaticTurrel>().MineCounter = 0;
+                }
+            }
         }
     }
 }

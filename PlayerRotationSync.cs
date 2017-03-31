@@ -13,7 +13,6 @@ namespace Game
         #region Переменные
             [SyncVar]
         private Quaternion syncRot;
-        private Quaternion lastRot;
 
             [SerializeField, Tooltip("Скорость интерполяции")]
         private float lerpRate = 10;
@@ -54,7 +53,6 @@ namespace Game
         /// </summary>
         private void TransmitTransform()
         {
-            lastRot = spriteChildTransform.rotation;
             syncRot = spriteChildTransform.rotation;
         }
 

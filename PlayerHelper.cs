@@ -42,9 +42,6 @@ namespace Game
             [SyncVar]
         private int playerNetID;
 
-            [SyncVar]
-        private bool _moneyFlag;
-
         Vector2 mouse;
         Vector3 _target;
         Ray ray;
@@ -331,7 +328,7 @@ namespace Game
 
             flag = Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
             Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
-            gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
+            //gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
         }
 
         /// <summary>

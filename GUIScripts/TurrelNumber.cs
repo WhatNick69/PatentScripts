@@ -11,7 +11,6 @@ namespace GameGUI {
         private byte _number;
             [SerializeField, Tooltip("Игрок")]
         private GameObject _player;
-        private Color _setColor = new Color(100, 255, 100,255);
         private bool _isChecked;
 
         public byte Number

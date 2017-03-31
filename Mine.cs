@@ -80,7 +80,7 @@ namespace Game
                 {
                     Destroy(gameObject);
                 }
-
+                _parentObject.GetComponent<LiteStaticTurrel>().MineCounter--;
             }
             if (col.gameObject.tag == "RoadCollider")
             {

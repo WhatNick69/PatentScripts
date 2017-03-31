@@ -116,6 +116,7 @@ namespace Game
         protected Vector3 _speed; // speed of player
 
         // ОТДЫХ
+        protected bool stopping; // Закончилась ли волна? Если нет - то юнит активничает
         protected bool _canToChangeCofForChangeAnim; // Флаг на смену коэффициента анимации
         protected bool _canRandomWalk; // Можно ли отдыхать?
         protected int _startDmg; // Промежуточный урон юнита
@@ -260,6 +261,19 @@ namespace Game
             get
             {
                 return netID;
+            }
+        }
+
+        public bool Stopping
+        {
+            get
+            {
+                return stopping;
+            }
+
+            set
+            {
+                stopping = value;
             }
         }
         #endregion
