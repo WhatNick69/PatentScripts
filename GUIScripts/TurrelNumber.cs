@@ -1,9 +1,10 @@
 ﻿using Game;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace GameGUI {
+    /// <summary>
+    /// Номер ячейки юнита
+    /// </summary>
     public class TurrelNumber
         : MonoBehaviour {
 
@@ -11,9 +12,11 @@ namespace GameGUI {
         private byte _number;
             [SerializeField, Tooltip("Игрок")]
         private GameObject _player;
-        private Color _setColor = new Color(100, 255, 100,255);
+            [SerializeField, Tooltip("Кнопка апгрейда")]
+        private GameObject _upgradeButton;
         private bool _isChecked;
 
+        #region Геттеры и сеттеры
         public byte Number
         {
             get
@@ -40,23 +43,34 @@ namespace GameGUI {
             }
         }
 
+        #endregion
+
+        /// <summary>
+        /// Выделить ячейку юнита
+        /// </summary>
         private void SetTurrel()
         {
+            _player.GetComponent<TurrelSetControl>().UnitNumber = _number; // Говорим, какой номер юнита хотим рассмотреть
             _player.GetComponent<TurrelSetControl>().CheckArray();
-            GetComponent<Image>().color = Color.green;
+            _upgradeButton.SetActive(true);
             _player.GetComponent<PlayerHelper>().IsPickTurrelMode = true;
             _isChecked = true;
             _player.GetComponent<TurrelSetControl>().PlayAudio(2);
         }
 
-
+        /// <summary>
+        /// Убрать выделение с ячейки юнита
+        /// </summary>
         public void UnsetTurrel()
         {
-            GetComponent<Image>().color = Color.white;
+            _upgradeButton.SetActive(false);
             _isChecked = false;
             _player.GetComponent<TurrelSetControl>().PlayAudio(0);
         }
 
+        /// <summary>
+        /// Щелкать по ячейке юнита
+        /// </summary>
         public void ChangeTurrel()
         {
             if (!_isChecked)

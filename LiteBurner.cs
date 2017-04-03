@@ -11,6 +11,11 @@ namespace Game
     public class LiteBurner 
         : LiteArcher
     {
+            [Header("Переменные поджигателя")]
+            [SerializeField, Tooltip("Время горения")]
+        private float _standartBurnTime;
+            [SerializeField, Tooltip("Урон огнем")]
+        private float _standartBurnDmg;
         protected Vector3 _burningPosition;
 
         /// <summary>
@@ -42,6 +47,8 @@ namespace Game
             clone.transform.localEulerAngles = _instantier.transform.localEulerAngles;
             clone.GetComponent<Molotov>().setPosition(_attackedObject.transform.position + _plusPos);
             clone.GetComponent<Molotov>().setInstantedPlayer(gameObject.GetComponent<PlayerAbstract>());
+            clone.GetComponent<Molotov>().SetImportantVariables
+                (_standartFlySpeed,_standartAccuracy, _standartBurnDmg, _standartBurnTime);
             NetworkServer.Spawn(clone);
         }
 

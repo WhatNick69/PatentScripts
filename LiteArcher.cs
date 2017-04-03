@@ -15,18 +15,25 @@ namespace Game
             [Header("Дополнительные возможности юнита-застрельщика")]
             [SerializeField, Tooltip("Стрельба очередью")]
         protected bool _isBurst; // is burst-shooting-mode?
-        protected bool _coroutineShoot = true;
             [SerializeField, Tooltip("Количество аммуниции")]
-        protected int _countOfAmmo; // count of ammo
+        protected int _standartOfAmmo; // count of ammo
             [SerializeField, Tooltip("Скорость стрельбы")]
-        protected float _shootingSpeed; // speed of bullet
-        protected float _distance; // distance, which need to shooting
+        protected float _standartShootingSpeed; // speed of bullet
+            [SerializeField, Tooltip("Урон, который наносит юнит в дальнем бою")]
+        protected int _standartDmgFar;  // DOWNLOADABLE
+            [SerializeField, Tooltip("Аккуратность стрельбы")]
+        protected float _standartAccuracy; // DOWNLOADABLE
+            [SerializeField, Tooltip("Скорость полета снаряда")]
+        protected float _standartFlySpeed; // DOWNLOADABLE
             [SerializeField, Tooltip("Снаряд")]
         protected GameObject _bullet; // bullet-prefab
             [SerializeField, Tooltip("Позиция стрельбы")]
         protected GameObject _instantier; // place, from bullets is going to enemy
+        protected int _countOfAmmo; // DOWNLOADABLE
+        protected bool _coroutineShoot = true;
+        protected float _distance; 
 
-            [Header("Умная стрельба")]
+        [Header("Умная стрельба")]
             [SerializeField, Tooltip("Использовать умную стрельбу?")]
         protected bool _cleverShooting;
             [SerializeField, Tooltip("Множитель расстояния предугадывания выстрела")]
@@ -38,6 +45,55 @@ namespace Game
         protected float _oldX;
         protected float _oldZ;
         protected Vector3 _plusPos;
+
+        /// <summary>
+        /// Установить начальные переменные
+        /// </summary>
+        public override void Start()
+        {
+            if (!isServer) return; // Выполняется только на сервере
+
+            if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
+               && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
+
+            _points = new bool[4];
+            _maskCursor = 1 << 9;
+            for (byte i = 0; i < _points.Length; i++)
+            {
+                _points[i] = false;
+            }
+            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            if (_isTurrel)
+            {
+                _maxEdge *= 2;
+            }
+            _startColor = _spriteRenderer.color;
+            _isStoppingWalkFight = false;
+            _isAlive = true;
+            _moveBack = false;
+            _canToNull = false;
+            _isFighting = false;
+            _isReturning = false;
+            _canToChangeCofForChangeAnim = true;
+            _canRandomWalk = true;
+            _timer = _restartTimer;
+            _animFlag1 = true;
+            _animFlag2 = true;
+            _animFlag3 = true;
+            _animFlag4 = true;
+            _cofForChangeAnim = _cofForRest;
+            _startPosition = gameObject.transform.position;
+            _canPlayAnimAttack = true;
+
+            // Апгрейдовые переменные
+            _playerDmgNear = _standartDmgNear;
+            _hpTurrelTemp = _hpTurrel;
+            _agent.speed = _moveSpeed;
+            _standartRadius = GetComponent<SphereCollider>().radius;
+            _countOfAmmo = _standartOfAmmo;
+
+            StartMethod();
+        }
 
         /// <summary>
         /// Обновление
@@ -79,7 +135,6 @@ namespace Game
                 }
                 _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
                 _canRandomWalk = false;
-                _cofForChangeAnim = _cofForFight;
                 _isFighting = true;
             }
         }
@@ -193,7 +248,6 @@ namespace Game
                 _bullet.transform.position = _instantier.transform.position;
                 _bullet.transform.rotation = _instantier.transform.rotation;
                 _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
-
                 CmdInstantiate(_bullet);
                 _countOfAmmo--;
             }
@@ -234,7 +288,9 @@ namespace Game
         [Client]
         protected virtual void RpcInstantiate(GameObject _bullet)
         {
-            GameObject clone = GameObject.Instantiate(_bullet);
+            GameObject clone = Instantiate(_bullet);
+            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar
+                + (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
             NetworkServer.Spawn(clone);
         }
 
@@ -289,6 +345,7 @@ namespace Game
                             _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
                                 && _canPlayAnimAttack)
                 {
+                    RandomHit();
                     Timing.RunCoroutine(HitTime());
                 }
                 else 
@@ -317,7 +374,7 @@ namespace Game
             CmdPlayAudio(3);
             Bursting();
             _coroutineShoot = false;
-            yield return Timing.WaitForSeconds(_shootingSpeed);
+            yield return Timing.WaitForSeconds(_standartShootingSpeed);
             _coroutineShoot = true;
         }
     }

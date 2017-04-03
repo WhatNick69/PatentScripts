@@ -1,12 +1,14 @@
 ﻿using Game;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace GameGUI
 {
-    public class LocalPlayerComponentsController : NetworkBehaviour
+    /// <summary>
+    /// Включает компоненты при инициализации клиента
+    /// </summary>
+    public class LocalPlayerComponentsController 
+        : NetworkBehaviour
     {
             [Header("Компоненты игрока")]
             [SerializeField, Tooltip("Камера")]

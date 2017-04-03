@@ -11,7 +11,7 @@ namespace Game {
         : NetworkBehaviour
     {
             [Header("Переменные кластера")]
-            [SerializeField, Tooltip("Урон, наносимый кластером")]
+            [Tooltip("Урон, наносимый кластером")]
         protected int _dmgForCluster;
             [SerializeField, Tooltip("Пушка-родитель")]
         protected GameObject _parentObject;

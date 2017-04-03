@@ -19,16 +19,16 @@ namespace Game
         protected bool _can = true;
 
         private int _angle;
-            [SerializeField, Tooltip("Продолжительность горения")]
+            [Tooltip("Продолжительность горения")]
         protected float _burningTime;
-            [SerializeField, Tooltip("Урон каждые 0.1 секунды от огня")]
+            [Tooltip("Урон каждые 0.1 секунды от огня")]
         protected float _dmgPerSec;
         protected Vector3 _burningPosition;
             [SyncVar]
         protected Vector3 _speedVec;
-            [SerializeField, Tooltip("Скорость молотова")]
+            [Tooltip("Скорость молотова")]
         public float _speed; // bullet speed
-            [SerializeField, Tooltip("Аккуратность полета молотова")]
+            [Tooltip("Аккуратность полета молотова")]
         public float _accuracy; // bullet accuracy
             [SyncVar]
         private Quaternion _quar;
@@ -53,6 +53,21 @@ namespace Game
         }
 
         /// <summary>
+        /// Передать скорость полета, точность стрельбы, урон от огня и время горения 
+        /// </summary>
+        /// <param name="flySpeed"></param>
+        /// <param name="burnDmg"></param>
+        /// <param name="dmg"></param>
+        /// <param name="burnTime"></param>
+        public void SetImportantVariables(float flySpeed, float accuracy, float burnDmg,float burnTime)
+        {
+            _speed = flySpeed;
+            _dmgPerSec = burnDmg;
+            _burningTime = burnTime;
+            _accuracy = accuracy;
+        }
+
+        /// <summary>
         /// Старт
         /// </summary>
         void Start()
@@ -60,6 +75,8 @@ namespace Game
             if (!isServer) return;
 
             // Выполняется только на сервере
+            transform.position 
+                = new Vector3(transform.position.x, 0.1f, transform.position.z);
             _angle = rnd.Next(180, 720);
             _quar = Quaternion.Euler(90, _angle, 0);
             _speedVec = new Vector3((float)rnd.NextDouble()

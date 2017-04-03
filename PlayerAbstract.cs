@@ -39,13 +39,13 @@ namespace Game
         protected SpriteRenderer _spriteRenderer;
             [SerializeField, Tooltip("Компонент Аудио")]
         protected AudioSource _audioSource;
-            [SerializeField, Tooltip("Компонент-агент")]
+            [SerializeField, Tooltip("Компонент-агент")]                                                                                                                                                                                            
         protected NavMeshAgent _agent;
             [SerializeField, Tooltip("Компонент бар-здоровья")]
         protected HealthBarUnit _healthBarUnit;
             [SerializeField, Tooltip("Объект-радиус")]
         protected GameObject _radiusOfAttackVisual;
-        [SerializeField]
+            [SerializeField]
         protected  Camera _mainCamera; // Главная камера
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
@@ -72,16 +72,23 @@ namespace Game
             [SerializeField, Tooltip("Количество противников, которые одновременно атакуют юнита")]
         protected byte _countOfAttackers; // count of active fighters for turrel/player's fighter 
         protected byte _maxCountOfAttackers;
-            [SerializeField, Tooltip("Урон, который наносит юнит")]
-        protected int _playerDmg; // dmg of player's object
+            [SerializeField, Tooltip("Урон, который наносит юнит в ближнем бою")]
+        protected int _standartDmgNear;  // DOWNLOADABLE
+        protected int _playerDmgNear; 
             [SerializeField, Tooltip("Стоимость юнита в денежном эквиваленте")]
-        protected int _cost; // стоимость юнита
+        protected int _cost; // DOWNLOADABLE
             [SerializeField, Tooltip("Количество жизней юнита")]
-        protected float _hpTurrel; // Жизни юнита
-        protected bool _canPlayAnimAttack;
+        protected float _hpTurrel; 
+        protected float _hpTurrelTemp;  // DOWNLOADABLE
+            [SerializeField, Tooltip("Скорость удара")]
+        protected float _attackSpeed;  // DOWNLOADABLE
+            [SerializeField, Tooltip("Скорость движения")]
+        protected float _moveSpeed;  // DOWNLOADABLE
+            [SerializeField, Tooltip("Скорость движения")]
+        protected float _standartRadius;  // DOWNLOADABLE
 
+        protected bool _canPlayAnimAttack;
         protected bool[] _points; // Позиции для атакующих врагов
-        protected float _hpTurrelTemp; // Жизни юнита для статической туррели
         protected float _maxEdge;
         protected Color _startColor;
 
@@ -108,17 +115,16 @@ namespace Game
         // СКОРОСТЬ, ПОЗИЦИЯ, ВРЕМЯ
         protected float _cofForChangeAnim; // coefficient of changing animation
         protected float _moverTimer;
-        protected const float _cofForRest = 0.05f; // coefficient of changing animation while resting
-        protected const float _cofForFight = 0.2f; // coefficient of changing animation while resting
+        protected const float _cofForRest = 0.01f; // coefficient of changing animation while resting
         protected Vector3 _startPosition; // start position of player
         protected Vector3 _oldPosition; // old position of player
         protected Vector3 _newPosition; // new position of player
         protected Vector3 _speed; // speed of player
 
         // ОТДЫХ
+        protected bool stopping; // Закончилась ли волна? Если нет - то юнит активничает
         protected bool _canToChangeCofForChangeAnim; // Флаг на смену коэффициента анимации
         protected bool _canRandomWalk; // Можно ли отдыхать?
-        protected int _startDmg; // Промежуточный урон юнита
         protected float _timer; // Таймер на отдых
         protected float _restartTimer; // Рестарт-таймер на отдых
         protected Vector3 _randomPosition; // Случайная позиция во время отдыха
@@ -262,22 +268,31 @@ namespace Game
                 return netID;
             }
         }
+
+        public bool Stopping
+        {
+            get
+            {
+                return stopping;
+            }
+
+            set
+            {
+                stopping = value;
+            }
+        }
         #endregion
 
         /// <summary>
         /// Начальный метод
         /// </summary>
-        public void StartMethod()
+        public virtual void StartMethod()
         {
-            RpcSetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
+            RpcSetSizeOfUnitVisibleRadius(_standartRadius);
             if (_isTurrel)
-            {
                 _maxCountOfAttackers = 3;
-            }
             else
-            {
                 _maxCountOfAttackers = 1;
-            }
         }
 
         /// <summary>
@@ -303,9 +318,12 @@ namespace Game
         /// <summary>
         /// Установить начальные переменные
         /// </summary>
-        public void Start()
+        public virtual void Start()
         {
             if (!isServer) return; // Выполняется только на сервере
+
+            if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
+               && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
             _points = new bool[4];
             _maskCursor = 1 << 9;
@@ -327,7 +345,6 @@ namespace Game
             _isReturning = false;
             _canToChangeCofForChangeAnim = true;
             _canRandomWalk = true;
-            _startDmg = _playerDmg;
             _timer = _restartTimer;
             _animFlag1 = true;
             _animFlag2 = true;
@@ -336,6 +353,13 @@ namespace Game
             _cofForChangeAnim = _cofForRest;
             _startPosition = gameObject.transform.position;
             _canPlayAnimAttack = true;
+
+            // Апгрейдовые переменные
+            _playerDmgNear = _standartDmgNear;
+            _hpTurrelTemp = _hpTurrel;
+            _agent.speed = _moveSpeed;
+            _standartRadius = GetComponent<SphereCollider>().radius;
+
             StartMethod();
         }
 
@@ -430,7 +454,6 @@ namespace Game
                 _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
                 CalculatePoint(_point);
                 _canRandomWalk = false;
-                _cofForChangeAnim = _cofForFight;
                 _isFighting = true;
             }
         }
@@ -667,7 +690,7 @@ namespace Game
                 && _attackedObject.GetComponent<EnemyAbstract>().IsAlive)
             {
                 RandomHit();
-                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(InstantedPlayerReference,gameObject, _playerDmg);
+                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(InstantedPlayerReference,gameObject, _playerDmgNear);
             }
             else
             {
@@ -739,6 +762,7 @@ namespace Game
         /// </summary>
         public void ChangeValues(bool a, bool b, bool c, bool d)
         {
+            _animatorOfPlayer.speed = _moveSpeed;
             _animFlag1 = a;
             _animFlag2 = b;
             _animFlag3 = c;
@@ -792,6 +816,7 @@ namespace Game
                             _attackedObject.transform.position + _enemyPoint) < _sideCof * 2
                                 && _canPlayAnimAttack)
                 {
+                    RandomHit();
                     Timing.RunCoroutine(HitTime());
                 }
                 else
@@ -807,6 +832,7 @@ namespace Game
         /// v1.01
         public virtual void NullAttackedObject()
         {
+            _animatorOfPlayer.speed = _moveSpeed;
             _canPlayAnimAttack = true;
             _isStoppingWalkFight = false;
 
@@ -860,6 +886,7 @@ namespace Game
         public void ToMoveBack()
         {
             _moveBack = true;
+            _animatorOfPlayer.speed = _moveSpeed;
             _canPlayAnimAttack = true;
         }
 
@@ -1050,6 +1077,7 @@ namespace Game
         [ClientRpc]
         public void RpcSetSizeOfUnitVisibleRadius(float _side)
         {
+            _side /= 2.5f;
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
             float temp = _side / 4;
             _radiusOfAttackVisual.transform.GetComponent<SphereCollider>().radius /= temp;
@@ -1060,9 +1088,10 @@ namespace Game
         /// </summary>
         public void RandomHit()
         {
-            CmdSyncAnimationSpeed((float)randomer.NextDouble() / 4 + 1);
-            _playerDmg =
-                randomer.Next(_startDmg - (_startDmg / 3), _startDmg + (_startDmg / 3));
+            // +-15%
+            CmdSyncAnimationSpeed(_attackSpeed + (float)((randomer.NextDouble()*2-1)*_attackSpeed*0.15f));
+            _playerDmgNear =
+                _standartDmgNear + (int)((randomer.NextDouble() * 2 - 1) * _standartDmgNear * 0.15f);
         }
 
         #region Корутины
@@ -1095,6 +1124,7 @@ namespace Game
         protected IEnumerator<float> HitTime()
         {
             _canPlayAnimAttack = false;
+
             RpcChangeAnimation(0, false);
             yield return Timing.WaitForSeconds(2);
             _canPlayAnimAttack = true;

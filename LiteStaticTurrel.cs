@@ -23,20 +23,37 @@ namespace Game
         protected bool _coroutineReload;
         protected int debI;
             [SerializeField, Tooltip("Количество производимых мин за тик")]
-        protected int _minesPerTick;
+        protected int _standartMinesPerTick; // DOWNLOADABLE
         protected List<int> _euler;
             [SerializeField, Tooltip("Темп производства мин")]
-        protected float _reloadTime;
+        protected float _standartReloadTime; // DOWNLOADABLE
+            [SerializeField, Tooltip("Максимальное количество мин")]
+        protected float _standartMaxMinesCount; // DOWNLOADABLE
         protected float _currrentSide;
         protected float _distance;
             [SerializeField, Tooltip("Время возрождения")]
-        protected float _timeToReAlive;
+        protected float _standartTimeToReAlive; // DOWNLOADABLE
         protected Ray ray;
         protected RaycastHit hit;
         protected LayerMask mask = new LayerMask();
             [SerializeField, Tooltip("Префаб мины")]
         protected GameObject _mine;
+
+        private int mineCounter; // Количество установленных мин
         #endregion
+
+        public int MineCounter
+        {
+            get
+            {
+                return mineCounter;
+            }
+
+            set
+            {
+                mineCounter = value;
+            }
+        }
 
         /// <summary>
         /// Стартовый метод
@@ -44,6 +61,9 @@ namespace Game
         new void Start()
         {
             if (!isServer) return; // Выполняется только на сервере
+
+            if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
+                && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
             _euler = new List<int>();
             debI = 1;
@@ -58,7 +78,6 @@ namespace Game
             {
                 _maxEdge *= 2;
             }
-            _timeToReAlive = 10;
 
             _hpTurrelTemp = _hpTurrel;
             _isStoppingWalkFight = false;
@@ -69,7 +88,6 @@ namespace Game
             _isReturning = false;
             _canToChangeCofForChangeAnim = true;
             _canRandomWalk = true;
-            _startDmg = _playerDmg;
             _animFlag1 = true;
             _animFlag2 = true;
             _animFlag3 = true;
@@ -81,6 +99,11 @@ namespace Game
 
             _distance = gameObject.GetComponent<SphereCollider>().radius / 4f;
             transform.localEulerAngles = Vector3.zero;
+
+            // Апгрейдовые переменные
+            _hpTurrelTemp = _hpTurrel;
+            _standartRadius = GetComponent<SphereCollider>().radius;
+
             CheckRoad();
         }
 
@@ -115,12 +138,14 @@ namespace Game
             if (!isServer) return;
 
             // Выполняется только на сервере
-            if (_isAlive)
+            if (_isAlive 
+                && mineCounter <= _standartMaxMinesCount)
             {
-                if (_coroutineReload)
+                if (_coroutineReload 
+                    && !stopping)
                 {
                     Timing.RunCoroutine(ReloadTimer());
-                    for (int i = 0; i < _minesPerTick; i++)
+                    for (int i = 0; i < _standartMinesPerTick; i++)
                     {
                         GameObject clone = _mine;
                         _currrentSide = _euler[randomer.Next(0, _euler.Count)]; // random element from list
@@ -131,6 +156,7 @@ namespace Game
                         clone.transform.position = transform.position;
                         clone.GetComponent<Mine>().setDistance(_distance - (float)randomer.NextDouble()); // set distance
                         CmdPlayAudio(3);
+                        mineCounter++;
                         CmdPlantMine(clone);
                     }
                 }
@@ -197,7 +223,7 @@ namespace Game
         /// <returns></returns>
         private IEnumerator<float> ReAliveTimer()
         {
-            yield return Timing.WaitForSeconds(_timeToReAlive);
+            yield return Timing.WaitForSeconds(_standartTimeToReAlive);
             _hpTurrel = _hpTurrelTemp;
             _isAlive = true;
             _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
@@ -210,7 +236,7 @@ namespace Game
         private IEnumerator<float> ReloadTimer()
         {
             _coroutineReload = false;
-            yield return Timing.WaitForSeconds(_reloadTime);
+            yield return Timing.WaitForSeconds(_standartReloadTime);
             _coroutineReload = true;
         }
         #endregion

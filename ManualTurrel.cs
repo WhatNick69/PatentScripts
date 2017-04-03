@@ -12,6 +12,15 @@ namespace Game
     {
         protected Vector2 mouse;
 
+        public override void StartMethod()
+        {
+            RpcSetSizeOfUnitVisibleRadius(0.001f);
+            if (_isTurrel)
+                _maxCountOfAttackers = 3;
+            else
+                _maxCountOfAttackers = 1;
+        }
+
         /// <summary>
         /// Предзагрузка на клиенте
         /// </summary>

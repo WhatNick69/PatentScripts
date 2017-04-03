@@ -52,7 +52,6 @@ namespace Game {
         protected GameObject _bullet; // bullet-prefab
             [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
-        private float _agentSpeed;
             [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
         protected byte _countOfAttackers; // count attackers of enemy
@@ -395,7 +394,6 @@ namespace Game {
             {
                 if (!_isStopingOnWay || _walkSpeed != 0)
                 {
-                    _agentSpeed = _walkSpeed;
                     transform.StopFollowing();
                     _isStopingOnWay = true;
                 }
@@ -540,7 +538,6 @@ namespace Game {
             if (_hp <= 0)
             {
                 // Понизить количество активных игроков
-                GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--; 
                 RpcRM(playerInstance.gameObject); // Дать бонус игроку, который убил
                 CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving(); // Прекратить движение
@@ -580,7 +577,6 @@ namespace Game {
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
-                GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--;
                 RpcRM(playerInstance.gameObject);
                 CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
@@ -819,7 +815,7 @@ namespace Game {
         public void CmdDead()
         {
             if (!isServer) return; // Выполняем только на сервере
-
+            GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--;
             RpcClientDeath();
         }
 

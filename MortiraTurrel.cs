@@ -14,8 +14,6 @@ namespace Game
             [Header("Переменные минометной туррели")]
             [SerializeField,Tooltip("Цель для атаки")]
         private GameObject _targetSpot;
-            [SerializeField, Tooltip("Время перезарядки минометной туррели")]
-        private float _reloadTime;
         private Vector3 _target; 
         private Vector3 _tempVec;
         private static int countActiveMortires;
@@ -40,10 +38,17 @@ namespace Game
         {
             if (isClient)  CheckTarget();
 
-            if (isServer)
-            {
+            if (isServer && !stopping)
                 AliveUpdater();
-            }
+        }
+
+        public override void StartMethod()
+        {
+            RpcSetSizeOfUnitVisibleRadius(0.001f);
+            if (_isTurrel)
+                _maxCountOfAttackers = 3;
+            else
+                _maxCountOfAttackers = 1;
         }
 
         /// <summary>
@@ -142,6 +147,10 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Назначить случайную позицию атаки
+        /// </summary>
+        /// <returns></returns>
         private Vector3 SetRandomAttackPosition()
         {
             return new Vector3(_targetSpot.transform.position.x + (float)randomer.NextDouble() / 2 - 0.3f, 0,
@@ -211,7 +220,7 @@ namespace Game
         protected new IEnumerator<float> ReloadTimer()
         {
             _coroutineReload = false;
-            yield return Timing.WaitForSeconds(_reloadTime);
+            yield return Timing.WaitForSeconds(_standartShootingSpeed);
             Bursting();
             _coroutineReload = true;
         }

@@ -21,15 +21,21 @@ namespace Game {
             [SerializeField, Tooltip("Префаб пули")]
         protected GameObject _bullet; // bullet-prefab
             [SerializeField, Tooltip("Время до возрождения")]
-        protected float _timeToReAlive;
+        protected float _standartTimeToReAlive; // DOWNLOADABLE
+            [SerializeField, Tooltip("Урон, который наносит туррель в дальнем бою")]
+        protected int _standartDmgFar;  // DOWNLOADABLE
             [SerializeField, Tooltip("Стрельба очередью")]
-        protected bool _isBurst;
-        protected bool _coroutineReload = true;
-        protected bool _coroutineReAlive = true;
+        protected bool _isBurst; 
             [SerializeField, Tooltip("Скорость стрельбы")]
-        protected float _shootingSpeed; // speed of bullet
+        protected float _standartShootingSpeed; // DOWNLOADABLE
+            [SerializeField, Tooltip("Аккуратность стрельбы")]
+        protected float _standartAccuracy; // DOWNLOADABLE
+            [SerializeField, Tooltip("Скорость полета снаряда")]
+        protected float _standartFlySpeed; // DOWNLOADABLE
         protected Ray ray;
         protected RaycastHit hit;
+        protected bool _coroutineReload = true;
+        protected bool _coroutineReAlive = true;
         protected bool mayToCheckForEnemy;
 
             [Header("Умная стрельба")]
@@ -132,7 +138,10 @@ namespace Game {
         new void Start()
         {
             if (!isServer) return; // Выполняется только на сервере
-   
+
+            if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
+                && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
+
             Application.runInBackground = true;
             _points = new bool[4];
             _minDistance = 1000;
@@ -155,13 +164,17 @@ namespace Game {
             _isReturning = false;
             _canToChangeCofForChangeAnim = true;
             _canRandomWalk = true;
-            _startDmg = _playerDmg;
             _animFlag1 = true;
             _animFlag2 = true;
             _animFlag3 = true;
             _animFlag4 = true;
             _cofForChangeAnim = 2f;
             _startPosition = gameObject.transform.position;
+
+            // Апгрейдовые переменные
+            _hpTurrelTemp = _hpTurrel;
+            _standartRadius = GetComponent<SphereCollider>().radius;
+
             StartMethod();
         }
 
@@ -363,25 +376,6 @@ namespace Game {
         }
 
         /// <summary>
-        /// Часть метода Start()
-        /// </summary>
-        new void StartMethod()
-        {
-            RpcSetSizeOfUnitVisibleRadius(gameObject.GetComponent<SphereCollider>().radius / 2.5f);
-            _hpTurrelTemp = _hpTurrel;
-            Debug.Log(gameObject.name + " загружен!");
-
-            if (_isTurrel)
-            {
-                _maxCountOfAttackers = 3;
-            }
-            else
-            {
-                _maxCountOfAttackers = 1;
-            }
-        }
-
-        /// <summary>
         /// Обнулить объект
         /// </summary>
         override public void NullAttackedObject()
@@ -436,7 +430,7 @@ namespace Game {
         /// <returns></returns>
         protected IEnumerator<float> ReAliveTimer()
         {
-            yield return Timing.WaitForSeconds(_timeToReAlive);
+            yield return Timing.WaitForSeconds(_standartTimeToReAlive);
             _hpTurrel = _hpTurrelTemp;
             _isAlive = true;
             _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
@@ -451,7 +445,7 @@ namespace Game {
             mayToCheckForEnemy = false;
             _coroutineReload = false;
             Bursting();
-            yield return Timing.WaitForSeconds(_shootingSpeed);
+            yield return Timing.WaitForSeconds(_standartShootingSpeed);
             _coroutineReload = true;
             mayToCheckForEnemy = true;
         }
@@ -514,6 +508,8 @@ namespace Game {
         private void RpcInstantiateObject(GameObject _bullet)
         {
             GameObject clone = Instantiate(_bullet);
+            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar
+                + (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
             NetworkServer.Spawn(clone);
         }
         #endregion

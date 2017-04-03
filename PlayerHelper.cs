@@ -23,7 +23,7 @@ namespace Game
             [SyncVar,SerializeField,Tooltip("Количество денег")]
         private int _money; // количество денег
             [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
-        private List<GameObject> _units; // лист с юнитами
+        private GameObject[] _units; // лист с юнитами
             [SyncVar,SerializeField, Tooltip("Текущий номер юнита для покупки")]
         private int _currentUnit; // выбранный юнит для инстанса
             [SerializeField, Tooltip("Режим осмотра юнитов")]
@@ -41,9 +41,6 @@ namespace Game
         private string playerUniqueName;
             [SyncVar]
         private int playerNetID;
-
-            [SyncVar]
-        private bool _moneyFlag;
 
         Vector2 mouse;
         Vector3 _target;
@@ -113,6 +110,11 @@ namespace Game
                 //if (_money < 0) _money = 0;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
             }
+        }
+
+        public string GetNameElementUnits(int i)
+        {
+            return _units[i].name;
         }
         #endregion
 
@@ -331,7 +333,7 @@ namespace Game
 
             flag = Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
             Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
-            gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
+            //gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
         }
 
         /// <summary>
