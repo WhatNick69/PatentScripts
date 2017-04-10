@@ -12,8 +12,8 @@ namespace Game {
     {
             [Header("Переменные кластера")]
             [Tooltip("Урон, наносимый кластером")]
-        protected int _dmgForCluster;
-            [SerializeField, Tooltip("Пушка-родитель")]
+        protected float _dmgForCluster;
+        [SerializeField, Tooltip("Пушка-родитель")]
         protected GameObject _parentObject;
             [SerializeField, Tooltip("Количество проникновений")]
         protected byte _countOfPenetrations; // count of penetrated objects
@@ -22,6 +22,19 @@ namespace Game {
             [SerializeField, Tooltip("Создает ли кластер??")]
         protected bool _isClustered; // can it to be clustered
         protected static System.Random rnd = new System.Random();
+
+        public float DmgForCluster
+        {
+            get
+            {
+                return _dmgForCluster;
+            }
+
+            set
+            {
+                _dmgForCluster = value;
+            }
+        }
 
         public void SetParent(GameObject gO)
         {
@@ -39,8 +52,7 @@ namespace Game {
             if (col.gameObject.tag == "Enemy")
             {
                 //Debug.Log("AZAZA");
-                col.GetComponent<EnemyAbstract>().EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference,
-                    rnd.Next(_dmgForCluster - (_dmgForCluster / 3), _dmgForCluster + (_dmgForCluster / 3)));
+                col.GetComponent<EnemyAbstract>().EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference,_dmgForCluster);
                 Destroy(gameObject);
             }
         }

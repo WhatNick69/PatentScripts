@@ -23,9 +23,9 @@ namespace Game {
             [SerializeField, Tooltip("Время до возрождения")]
         protected float _standartTimeToReAlive; // DOWNLOADABLE
             [SerializeField, Tooltip("Урон, который наносит туррель в дальнем бою")]
-        protected int _standartDmgFar;  // DOWNLOADABLE
+        protected float _standartDmgFar;  // DOWNLOADABLE
             [SerializeField, Tooltip("Стрельба очередью")]
-        protected bool _isBurst; 
+        protected bool _isBurst;
             [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _standartShootingSpeed; // DOWNLOADABLE
             [SerializeField, Tooltip("Аккуратность стрельбы")]
@@ -50,6 +50,58 @@ namespace Game {
         protected float _oldX;
         protected float _oldZ;
         protected Vector3 _plusPos;
+
+        public float StandartAccuracy
+        {
+            get
+            {
+                return _standartAccuracy;
+            }
+
+            set
+            {
+                _standartAccuracy = value;
+            }
+        }
+
+        public float StandartShootingSpeed
+        {
+            get
+            {
+                return _standartShootingSpeed;
+            }
+
+            set
+            {
+                _standartShootingSpeed = value;
+            }
+        }
+
+        public float StandartTimeToReAlive
+        {
+            get
+            {
+                return _standartTimeToReAlive;
+            }
+
+            set
+            {
+                _standartTimeToReAlive = value;
+            }
+        }
+
+        public float StandartDmgFar
+        {
+            get
+            {
+                return _standartDmgFar;
+            }
+
+            set
+            {
+                _standartDmgFar = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -508,8 +560,8 @@ namespace Game {
         private void RpcInstantiateObject(GameObject _bullet)
         {
             GameObject clone = Instantiate(_bullet);
-            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar
-                + (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
+            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar,_standartAccuracy);
+                //+ (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
             NetworkServer.Spawn(clone);
         }
         #endregion

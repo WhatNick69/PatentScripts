@@ -23,10 +23,24 @@ namespace Game
         protected GameObject _cluster;
             [SerializeField, Tooltip("Аудио компонент")]
         protected AudioSource _audioSource;
+        protected float _dmgForCluster;
 
         protected Vector3 _speedVector;
         protected float _angle;
         private System.Random rnd = new System.Random();
+
+        public float DmgForCluster
+        {
+            get
+            {
+                return _dmgForCluster;
+            }
+
+            set
+            {
+                _dmgForCluster = value;
+            }
+        }
 
         public void SetParent(GameObject gO)
         {
@@ -74,6 +88,7 @@ namespace Game
             _newClustering.transform.parent = transform;
             _newClustering.GetComponent<Cluster>().SetParent(_parentObject);
             _newClustering.GetComponent<BulletMotionSync>().SpeedVec = _speedVector;
+            _newClustering.GetComponent<Cluster>().DmgForCluster = _dmgForCluster;
             NetworkServer.Spawn(_newClustering);
         }
 

@@ -20,7 +20,7 @@ namespace Game
             [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _standartShootingSpeed; // speed of bullet
             [SerializeField, Tooltip("Урон, который наносит юнит в дальнем бою")]
-        protected int _standartDmgFar;  // DOWNLOADABLE
+        protected float _standartDmgFar;  // DOWNLOADABLE
             [SerializeField, Tooltip("Аккуратность стрельбы")]
         protected float _standartAccuracy; // DOWNLOADABLE
             [SerializeField, Tooltip("Скорость полета снаряда")]
@@ -45,6 +45,45 @@ namespace Game
         protected float _oldX;
         protected float _oldZ;
         protected Vector3 _plusPos;
+
+        public float StandartDmgFar
+        {
+            get
+            {
+                return _standartDmgFar;
+            }
+
+            set
+            {
+                _standartDmgFar = value;
+            }
+        }
+
+        public int StandartOfAmmo
+        {
+            get
+            {
+                return _standartOfAmmo;
+            }
+
+            set
+            {
+                _standartOfAmmo = value;
+            }
+        }
+
+        public float StandartShootingSpeed
+        {
+            get
+            {
+                return _standartShootingSpeed;
+            }
+
+            set
+            {
+                _standartShootingSpeed = value;
+            }
+        }
 
         /// <summary>
         /// Установить начальные переменные
@@ -211,6 +250,8 @@ namespace Game
         /// </summary>
         protected void CleverShoot()
         {
+            if (_attackedObject == null) return;
+
             _speedEnemy = _attackedObject.GetComponent<EnemyAbstract>().WalkSpeed;
             _speedEnemy *= _multiplier;
             if (_speedEnemy >= 2) _speedEnemy = 2;
@@ -241,12 +282,13 @@ namespace Game
         {
             if (_cleverShooting) CleverShoot();
 
+            CmdPlayAudio(3);
             if (!_isBurst)
             {
                 _instantier.transform.LookAt(_attackedObject.transform.position
                     + _up +_plusPos);
                 _bullet.transform.position = _instantier.transform.position;
-                _bullet.transform.rotation = _instantier.transform.rotation;
+                _bullet.transform.localEulerAngles = _instantier.transform.localEulerAngles;
                 _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
                 CmdInstantiate(_bullet);
                 _countOfAmmo--;
@@ -258,7 +300,7 @@ namespace Game
                     _instantier.transform.LookAt(_attackedObject.transform.position
                             + _up + _plusPos);
                     _bullet.transform.position = _instantier.transform.position;
-                    _bullet.transform.rotation = _instantier.transform.rotation;
+                    _bullet.transform.localEulerAngles = _instantier.transform.localEulerAngles;
                     _bullet.transform.Rotate(new Vector3(0, i, 0));
                     _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
 
@@ -269,6 +311,7 @@ namespace Game
                     }
                 }
             }
+            _coroutineShoot = true;
         }
 
         /// <summary>
@@ -289,8 +332,8 @@ namespace Game
         protected virtual void RpcInstantiate(GameObject _bullet)
         {
             GameObject clone = Instantiate(_bullet);
-            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar
-                + (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
+            clone.GetComponent<Bullet>().SetImportantVariables(_standartDmgFar);
+                //+ (float)((randomer.NextDouble() * 2 - 1) * _standartDmgFar * 0.1f),_standartFlySpeed,_standartAccuracy);
             NetworkServer.Spawn(clone);
         }
 
@@ -320,7 +363,7 @@ namespace Game
                 && !_isStoppingWalkFight && 
                     (_distance <= _maxEdge && _distance > _maxEdge/4 && _countOfAmmo > 0))
             {
-                RpcChangeAnimation(5, false);
+                //Debug.Log("Выстрел");
                 Timing.RunCoroutine(BurstingTimer()); // ЗАПУСК КОРУТИНА
             }
             else if (_attackedObject != null
@@ -371,10 +414,10 @@ namespace Game
         /// <returns></returns>
         protected IEnumerator<float> BurstingTimer()
         {
-            CmdPlayAudio(3);
-            Bursting();
+            CmdSyncAnimationSpeed(_standartShootingSpeed + (float)((randomer.NextDouble() * 2 - 1) * _standartShootingSpeed * 0.15f));
+            CmdChangeAnimation(6);
             _coroutineShoot = false;
-            yield return Timing.WaitForSeconds(_standartShootingSpeed);
+            yield return Timing.WaitForSeconds(_standartShootingSpeed*2);
             _coroutineShoot = true;
         }
     }

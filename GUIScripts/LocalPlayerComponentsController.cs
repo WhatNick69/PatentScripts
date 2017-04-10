@@ -15,7 +15,7 @@ namespace GameGUI
         private Camera cam;
             [SerializeField, Tooltip("PlayerHelper компонент клиента")]
         private PlayerHelper playerHelper;
-            [SerializeField, Tooltip("TurrelSetControl компонент клиента")]
+            [SerializeField, Tooltip("Интерфейс клиента")]
         private GameObject canvas;
 
         public override void OnStartLocalPlayer()

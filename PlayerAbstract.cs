@@ -73,13 +73,13 @@ namespace Game
         protected byte _countOfAttackers; // count of active fighters for turrel/player's fighter 
         protected byte _maxCountOfAttackers;
             [SerializeField, Tooltip("Урон, который наносит юнит в ближнем бою")]
-        protected int _standartDmgNear;  // DOWNLOADABLE
-        protected int _playerDmgNear; 
+        protected float _standartDmgNear;  // DOWNLOADABLE
+        protected float _playerDmgNear; 
             [SerializeField, Tooltip("Стоимость юнита в денежном эквиваленте")]
         protected int _cost; // DOWNLOADABLE
             [SerializeField, Tooltip("Количество жизней юнита")]
-        protected float _hpTurrel; 
-        protected float _hpTurrelTemp;  // DOWNLOADABLE
+        protected float _hpTurrel;  // DOWNLOADABLE
+        protected float _hpTurrelTemp;
             [SerializeField, Tooltip("Скорость удара")]
         protected float _attackSpeed;  // DOWNLOADABLE
             [SerializeField, Tooltip("Скорость движения")]
@@ -281,6 +281,58 @@ namespace Game
                 stopping = value;
             }
         }
+
+        public float StandartDmgNear
+        {
+            get
+            {
+                return _standartDmgNear;
+            }
+
+            set
+            {
+                _standartDmgNear = value;
+            }
+        }
+
+        public float StandartRadius
+        {
+            get
+            {
+                return _standartRadius;
+            }
+
+            set
+            {
+                _standartRadius = value;
+            }
+        }
+
+        public float MoveSpeed
+        {
+            get
+            {
+                return _moveSpeed;
+            }
+
+            set
+            {
+                _moveSpeed = value;
+            }
+        }
+
+        public float AttackSpeed
+        {
+            get
+            {
+                return _attackSpeed;
+            }
+
+            set
+            {
+                _attackSpeed = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -357,10 +409,15 @@ namespace Game
             // Апгрейдовые переменные
             _playerDmgNear = _standartDmgNear;
             _hpTurrelTemp = _hpTurrel;
-            _agent.speed = _moveSpeed;
+            SetNewAgentSpeed();
             _standartRadius = GetComponent<SphereCollider>().radius;
 
             StartMethod();
+        }
+
+        public void SetNewAgentSpeed()
+        {
+            _agent.speed = _moveSpeed;;
         }
 
         /// <summary>
@@ -847,8 +904,9 @@ namespace Game
 
             _cofForChangeAnim = _cofForRest;
             ChangeValues(true, true, true, true);
-            ChangeEnemy();
             RestartValues();
+            ChangeEnemy();
+
         }
 
         /// <summary>
@@ -1051,14 +1109,6 @@ namespace Game
             _minDistance = float.MaxValue;
             _minPower = 0;
             _minSpeed = -1;
-
-            if (gameObject.tag == "Player")
-            {
-                if (_animatorOfPlayer != null)
-                {
-                    RpcChangeAnimation(5, false);
-                }
-            }
         }
 
         /// <summary>
@@ -1081,6 +1131,14 @@ namespace Game
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
             float temp = _side / 4;
             _radiusOfAttackVisual.transform.GetComponent<SphereCollider>().radius /= temp;
+            GetComponent<SphereCollider>().radius = _standartRadius;
+            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+        }
+
+        public void SetSizeSadius(float _side)
+        {
+            GetComponent<SphereCollider>().radius = _standartRadius;
+            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
         }
 
         /// <summary>
@@ -1091,7 +1149,7 @@ namespace Game
             // +-15%
             CmdSyncAnimationSpeed(_attackSpeed + (float)((randomer.NextDouble()*2-1)*_attackSpeed*0.15f));
             _playerDmgNear =
-                _standartDmgNear + (int)((randomer.NextDouble() * 2 - 1) * _standartDmgNear * 0.15f);
+                _standartDmgNear + (float)((randomer.NextDouble() * 2 - 1) * _standartDmgNear * 0.15f);
         }
 
         #region Корутины
@@ -1177,7 +1235,7 @@ namespace Game
         /// </summary>
         /// <param name="i"></param>
         [Command]
-        private void CmdChangeAnimation(int i)
+        protected void CmdChangeAnimation(int i)
         {
             RpcChangeAnimation(i, false);
         }
@@ -1207,7 +1265,7 @@ namespace Game
         [Command]
         protected void CmdSyncAnimationSpeed(float speedAnim)
         {
-            this._animationSpeed = speedAnim;
+            _animationSpeed = speedAnim;
             RpcSyncAnimationSpeed(speedAnim);
         }
 

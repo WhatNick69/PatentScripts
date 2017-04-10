@@ -18,6 +18,19 @@ namespace Game
         private float _standartBurnDmg;
         protected Vector3 _burningPosition;
 
+        public float StandartBurnDmg
+        {
+            get
+            {
+                return _standartBurnDmg;
+            }
+
+            set
+            {
+                _standartBurnDmg = value;
+            }
+        }
+
         /// <summary>
         /// Выстрел
         /// </summary>
@@ -25,12 +38,14 @@ namespace Game
         {
             if (_cleverShooting) CleverShoot();
 
+            CmdPlayAudio(3);
             _instantier.transform.LookAt(_attackedObject.transform.position
                 + _plusPos);
 
             Debug.DrawLine(_instantier.transform.position, _attackedObject.transform.position + _plusPos, Color.red,1);
             CmdInstantiate(_bullet);
             _countOfAmmo--;
+            _coroutineShoot = true;
         }
 
         [Command]
@@ -47,8 +62,7 @@ namespace Game
             clone.transform.localEulerAngles = _instantier.transform.localEulerAngles;
             clone.GetComponent<Molotov>().setPosition(_attackedObject.transform.position + _plusPos);
             clone.GetComponent<Molotov>().setInstantedPlayer(gameObject.GetComponent<PlayerAbstract>());
-            clone.GetComponent<Molotov>().SetImportantVariables
-                (_standartFlySpeed,_standartAccuracy, _standartBurnDmg, _standartBurnTime);
+            clone.GetComponent<Molotov>().SetImportantVariables(_standartBurnDmg);
             NetworkServer.Spawn(clone);
         }
 

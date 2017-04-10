@@ -7,7 +7,7 @@ namespace Game
     /// Контроллер анимаций у пользовательского юнита на элементе Body
     /// </summary>
     public class AnimatorControllerBody 
-        : NetworkBehaviour {
+        : MonoBehaviour {
 
         [SerializeField, Tooltip("Компонент PlayerAbstract из родителя")]
         private PlayerAbstract _playerAbstract;

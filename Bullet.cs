@@ -16,11 +16,11 @@ namespace Game
             [SerializeField, Tooltip("Атакуемый объект")]
         protected GameObject _attackedObject;
         protected float _dmgBullet; // bullet damage
-            [Tooltip("Аккуратность полета снаряда")]
+            [SerializeField,Tooltip("Аккуратность полета снаряда")]
         protected float _accuracy; // bullet accuracy
             [SerializeField, Tooltip("Время жизни снаряда")]
         protected float _lifeTime; // bullet life
-            [Tooltip("Скорость снаряда")]
+            [SerializeField,Tooltip("Скорость снаряда")]
         protected float _speed; // bullet speed
             [SyncVar]
         protected Vector3 _speedVec;
@@ -34,15 +34,14 @@ namespace Game
         }
 
         /// <summary>
-        /// Задать урон, скорость полета пули и точность
+        /// Задать урон и точность
         /// </summary>
         /// <param name="dmg"></param>
         /// <param name="speedFly"></param>
         /// <param name="accuracy"></param>
-        public void SetImportantVariables(float dmg,float speedFly,float accuracy)
+        public void SetImportantVariables(float dmg, float accuracy=0.25f)
         {
             _dmgBullet = dmg;
-            _speed = speedFly;
             _accuracy = accuracy;
         }
 
@@ -55,7 +54,7 @@ namespace Game
             {
                 Destroy(gameObject, _lifeTime);
                 _speedVec 
-                    = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2) * _accuracy, 0, _speed);
+                    = new Vector3((float)rnd.NextDouble() * rnd.Next(-1, 2)*_accuracy, 0, _speed);
                 transform.position
                     = new Vector3(transform.position.x, 0.1f, transform.position.z);
             }
@@ -119,8 +118,9 @@ namespace Game
         [Client]
         protected virtual void RpcInstantiate(GameObject _bullet)
         {
-            GameObject clone = GameObject.Instantiate(_bullet);
+            GameObject clone = Instantiate(_bullet);
             clone.GetComponent<ClusteredMine>().SetParent(_parentObject);
+            clone.GetComponent<ClusteredMine>().DmgForCluster = _dmgBullet / 3;
             NetworkServer.Spawn(clone);
         }
 

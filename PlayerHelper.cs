@@ -1,45 +1,47 @@
-﻿using System;
+﻿using GameGUI;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using UpgradeSystemAndData;
 
 namespace Game
 {
     /// <summary>
     /// Позволяет управлять интерфейсом пользователя
     /// </summary>
-    public class PlayerHelper 
+    public class PlayerHelper
         : NetworkBehaviour
     {
         #region Переменные
-            [Header("Переменные пользователя")]
-            [SerializeField, Tooltip("Камера")]
+        [Header("Переменные пользователя")]
+        [SerializeField, Tooltip("Камера")]
         private Camera _cam;
-            [SerializeField, Tooltip("Text лэйбл")]
+        [SerializeField, Tooltip("Text лэйбл")]
         private GameObject _textLabel;
-            [SyncVar, SerializeField, Tooltip("Счетчик денег")]
+        [SyncVar, SerializeField, Tooltip("Счетчик денег")]
         private GameObject _moneyfield;
-            [SyncVar,SerializeField,Tooltip("Количество денег")]
+        [SyncVar, SerializeField, Tooltip("Количество денег")]
         private int _money; // количество денег
-            [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
+        [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
         private GameObject[] _units; // лист с юнитами
-            [SyncVar,SerializeField, Tooltip("Текущий номер юнита для покупки")]
+        [SyncVar, SerializeField, Tooltip("Текущий номер юнита для покупки")]
         private int _currentUnit; // выбранный юнит для инстанса
-            [SerializeField, Tooltip("Режим осмотра юнитов")]
+        [SerializeField, Tooltip("Режим осмотра юнитов")]
         private bool _isPickTurrelMode;
         private static LayerMask _roadLayer;
         private static LayerMask _groundLayer;
         private static LayerMask _playerLayer;
-            [SerializeField, Tooltip("Видимость радиусов")]
+        [SerializeField, Tooltip("Видимость радиусов")]
         private bool _isRadiusVisible;
         private GameObject _tempRadiusGameObject;
-            [SyncVar, SerializeField, Tooltip("Количество активных юнитов")]
+        [SyncVar, SerializeField, Tooltip("Количество активных юнитов")]
         private int _numberOfUnits;
 
-            [SyncVar]
+        [SyncVar]
         private string playerUniqueName;
-            [SyncVar]
+        [SyncVar]
         private int playerNetID;
 
         Vector2 mouse;
@@ -106,6 +108,9 @@ namespace Game
 
             set
             {
+                GetComponent<TurrelSetControl>().
+                    UpgradeSystem.GetComponent<UpgradeSystem>().
+                    CheckMoneyAndValueForButtons();
                 _money = value;
                 //if (_money < 0) _money = 0;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
@@ -115,6 +120,20 @@ namespace Game
         public string GetNameElementUnits(int i)
         {
             return _units[i].name;
+        }
+        public GameObject GetPrefab(int i)
+        {
+            return _units[i];
+        }
+
+        public void RefreshPrefab(GameObject newPrefab, int prefabNumber)
+        {
+            _units[prefabNumber] = newPrefab;
+        }
+
+        public int GetLenghtOfUnits()
+        {
+            return _units.Length;
         }
         #endregion
 
@@ -190,7 +209,7 @@ namespace Game
         /// Селф-обновление
         /// </summary>
         private void Update()
-        {        
+        {
             if (isLocalPlayer)
             {
                 if (Input.GetMouseButtonDown(0))
@@ -200,7 +219,7 @@ namespace Game
             }
         }
 
-        private void LabelSet(bool condition,int cost=0)
+        private void LabelSet(bool condition, int cost = 0)
         {
             _textLabel.GetComponent<RectTransform>().position = mouse;
             _textLabel.SetActive(false);
@@ -315,7 +334,7 @@ namespace Game
         /// <param name="_moneyFlag"></param>
         /// <param name="gO"></param>
         [Command]
-        private void CmdCheckMoney(int _currentUnit, int money,GameObject gO)
+        private void CmdCheckMoney(int _currentUnit, int money, GameObject gO)
         {
             RpcCheckMoney(_currentUnit, _money, gameObject);
         }

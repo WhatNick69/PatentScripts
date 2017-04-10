@@ -59,12 +59,12 @@ namespace Game
         /// <param name="burnDmg"></param>
         /// <param name="dmg"></param>
         /// <param name="burnTime"></param>
-        public void SetImportantVariables(float flySpeed, float accuracy, float burnDmg,float burnTime)
+        public void SetImportantVariables(float burnDmg, float flySpeed=3, float accuracy = 0.5f, float burnTime = 3)
         {
-            _speed = flySpeed;
             _dmgPerSec = burnDmg;
-            _burningTime = burnTime;
+            _speed = flySpeed;
             _accuracy = accuracy;
+            _burningTime = burnTime;
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace Game
                 }
                 else
                 {
-                    CmdBurner();
+                    CmdBurner(_burningTime);
                 }
             }
         }
@@ -153,7 +153,7 @@ namespace Game
             {
                 if (_can)
                 {
-                    CmdBurner();
+                    CmdBurner(_burningTime);
                 }
                 else
                 {
@@ -194,16 +194,16 @@ namespace Game
         /// Взорвать бутылку. Запрос на сервер
         /// </summary>
         [Command]
-        private void CmdBurner()
+        private void CmdBurner(float burningTime)
         {
-            RpcBurner();
+            RpcBurner(burningTime);
         }
 
         /// <summary>
         /// Взорвать бутылку. На клиентах
         /// </summary>
         [ClientRpc]
-        public void RpcBurner()
+        public void RpcBurner(float burningTime)
         {
             _can = false;
             _audio.clip = ResourcesPlayerHelper.
@@ -217,7 +217,7 @@ namespace Game
             transform.GetComponent<SphereCollider>().enabled = true;
             transform.GetChild(0).gameObject.SetActive(true);
             transform.GetChild(1).gameObject.SetActive(false);
-            Destroy(gameObject, _burningTime);
+            Destroy(gameObject, burningTime);
         }
         #endregion
     }
