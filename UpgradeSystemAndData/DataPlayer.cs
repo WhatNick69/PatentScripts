@@ -37,13 +37,11 @@ namespace UpgradeSystemAndData
             unit0.AddSkill("_standartRadius", 10);
             unit0.AddSkill("_attackSpeed", 1);
             unit0.AddSkill("_moveSpeed", 1);
-
             unit0.AddCost("_hpTurrel", 50);
             unit0.AddCost("_standartDmgNear", 100);
             unit0.AddCost("_standartRadius", 75);
             unit0.AddCost("_attackSpeed", 100);
             unit0.AddCost("_moveSpeed", 75);
-
             dataList.Add("Penguin", unit0);
 
             Unit unit1 = new Unit();
@@ -53,14 +51,12 @@ namespace UpgradeSystemAndData
             unit1.AddSkill("_standartDmgFar", 10);
             unit1.AddSkill("_standartOfAmmo", 15);
             unit1.AddSkill("_standartShootingSpeed", 1);
-
             unit1.AddCost("_hpTurrel", 50);
             unit1.AddCost("_standartDmgNear", 100);
             unit1.AddCost("_standartRadius", 100);
             unit1.AddCost("_standartDmgFar", 100);
             unit1.AddCost("_standartOfAmmo", 50);
             unit1.AddCost("_standartShootingSpeed", 100);
-
             dataList.Add("Archer", unit1);
 
             Unit unit2 = new Unit();
@@ -70,14 +66,12 @@ namespace UpgradeSystemAndData
             unit2.AddSkill("_standartBurnDmg", 0.15f);
             unit2.AddSkill("_standartOfAmmo", 10);
             unit2.AddSkill("_standartShootingSpeed", 0.5f);
-
             unit2.AddCost("_hpTurrel", 50);
             unit2.AddCost("_standartDmgNear", 100);
             unit2.AddCost("_standartRadius", 100);
             unit2.AddCost("_standartBurnDmg", 100);
             unit2.AddCost("_standartOfAmmo", 50);
             unit2.AddCost("_standartShootingSpeed", 100);
-
             dataList.Add("Burner", unit2);
 
             Unit unit3 = new Unit();
@@ -87,14 +81,12 @@ namespace UpgradeSystemAndData
             unit3.AddSkill("_standartShootingSpeed", 0.5f);
             unit3.AddSkill("_accuracy", 1);
             unit3.AddSkill("_standartTimeToReAlive", 20);
-
             unit3.AddCost("_hpTurrel", 50);
             unit3.AddCost("_standartRadius", 100);
             unit3.AddCost("_standartDmgFar", 100);      
             unit3.AddCost("_standartShootingSpeed", 100);
             unit3.AddCost("_accuracy", 50);
             unit3.AddCost("_standartTimeToReAlive", 75);
-
             dataList.Add("Turrel", unit3);
 
             Unit unit4 = new Unit();
@@ -103,13 +95,11 @@ namespace UpgradeSystemAndData
             unit4.AddSkill("_standartDmgFar", 6f);
             unit4.AddSkill("_standartShootingSpeed", 2f);
             unit4.AddSkill("_standartTimeToReAlive", 20);
-
             unit4.AddCost("_hpTurrel", 50);
             unit4.AddCost("_standartRadius", 100);
             unit4.AddCost("_standartDmgFar", 100);
             unit4.AddCost("_standartShootingSpeed", 100);
             unit4.AddCost("_standartTimeToReAlive", 75);
-
             dataList.Add("AutoTurrel", unit4);
 
             Unit unit5 = new Unit();
@@ -118,13 +108,35 @@ namespace UpgradeSystemAndData
             unit5.AddSkill("_standartShootingSpeed", 0.25f);
             unit5.AddSkill("_accuracy", 1);
             unit5.AddSkill("_standartTimeToReAlive", 20);
-
             unit5.AddCost("_hpTurrel", 50);
             unit5.AddCost("_standartDmgFar", 100);
             unit5.AddCost("_standartShootingSpeed", 100);
             unit5.AddCost("_accuracy", 50);
             unit5.AddCost("_standartTimeToReAlive", 75);
             dataList.Add("ManualTurrel", unit5);
+
+            Unit unit6 = new Unit();
+            unit6.AddSkill("_hpTurrel", 50);
+            unit6.AddSkill("_mineDamage", 5f);
+            unit6.AddSkill("_standartReloadTime", 1.5f);
+            unit6.AddSkill("_standartTimeToReAlive", 20);
+            unit6.AddCost("_hpTurrel", 50);
+            unit6.AddCost("_mineDamage", 100);
+            unit6.AddCost("_standartReloadTime", 100);
+            unit6.AddCost("_standartTimeToReAlive", 75);
+            dataList.Add("MinesTurrel", unit6);
+
+            Unit unit7 = new Unit();
+            unit7.AddSkill("_hpTurrel", 50);
+            unit7.AddSkill("_mineDamage", 5f);
+            unit7.AddSkill("_standartReloadTime", 2f);
+            unit7.AddSkill("_standartTimeToReAlive", 20);
+            unit7.AddCost("_hpTurrel", 50);
+            unit7.AddCost("_mineDamage", 100);
+            unit7.AddCost("_standartReloadTime", 100);
+            unit7.AddCost("_standartTimeToReAlive", 75);
+            dataList.Add("MortiraTurrel", unit7);
+
         }
 
         private void Start()
@@ -358,7 +370,7 @@ namespace UpgradeSystemAndData
 
             Debug.Log("Сэйв стоимостей имеет вид: " + saveDataCost);
             string[] costs = saveDataCost.Split('%'); // разбираем строку на юниты
-
+            /*
             foreach (KeyValuePair<string, Unit> pair in dataList)
             {
                 Unit un = pair.Value;
@@ -371,11 +383,12 @@ namespace UpgradeSystemAndData
                 }
                 i++;
             }
+
+            */
             LoadDataForUnits();
             Debug.Log("Загружено!");
         }
 
-        // Бляяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяя. Тут нужно загружать //
         public void LoadDataForUnits()
         {
             GameObject prefab;
@@ -475,38 +488,29 @@ namespace UpgradeSystemAndData
                         prefab.GetComponent<ManualTurrel>().StandartTimeToReAlive =
                              un.GetValueSkill("_standartTimeToReAlive");
                         break;
-                        /*
                     case 6:
-                        un = GetDictionaryUnit("Mortira");
-                        prefab.GetComponent<MortiraTurrel>().HpTurrel =
-                            un.GetValueSkill("_hpTurrel");
-                        prefab.GetComponent<MortiraTurrel>().StandartDmgNear =
-                            (int)un.GetValueSkill("_standartDmgNear");
-                        prefab.GetComponent<MortiraTurrel>().StandartRadius =
-                            un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<MortiraTurrel>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
-                        prefab.GetComponent<MortiraTurrel>().AttackSpeed =
-                            un.GetValueSkill("_attackSpeed");
-                        prefab.GetComponent<MortiraTurrel>().MoveSpeed =
-                            un.GetValueSkill("_moveSpeed");
-                        prefab.GetComponent<MortiraTurrel>().SetNewAgentSpeed();
-                        break;
-                    case 7:
-                        un = GetDictionaryUnit("Miner");
+                        un = GetDictionaryUnit("MinesTurrel");
                         prefab.GetComponent<LiteStaticTurrel>().HpTurrel =
                             un.GetValueSkill("_hpTurrel");
-                        prefab.GetComponent<LiteStaticTurrel>().StandartDmgNear =
-                            (int)un.GetValueSkill("_standartDmgNear");
-                        prefab.GetComponent<LiteStaticTurrel>().StandartRadius =
-                            un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<LiteStaticTurrel>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
-                        prefab.GetComponent<LiteStaticTurrel>().AttackSpeed =
-                            un.GetValueSkill("_attackSpeed");
-                        prefab.GetComponent<LiteStaticTurrel>().MoveSpeed =
-                            un.GetValueSkill("_moveSpeed");
-                        prefab.GetComponent<LiteStaticTurrel>().SetNewAgentSpeed();
+                        prefab.GetComponent<LiteStaticTurrel>().MineDamage =
+                            un.GetValueSkill("_mineDamage");
+                        prefab.GetComponent<LiteStaticTurrel>().StandartTimeToReAlive =
+                            un.GetValueSkill("_standartTimeToReAlive");
+                        prefab.GetComponent<LiteStaticTurrel>().StandartReloadTime =
+                             un.GetValueSkill("_standartReloadTime");
                         break;
-                        */
+                    case 7:
+                        un = GetDictionaryUnit("MortiraTurrel");
+                        prefab.GetComponent<MortiraTurrel>().HpTurrel =
+                            un.GetValueSkill("_hpTurrel");
+                        prefab.GetComponent<MortiraTurrel>().StandartDmgFar =
+                            un.GetValueSkill("_mineDamage");
+                        prefab.GetComponent<MortiraTurrel>().StandartTimeToReAlive =
+                            un.GetValueSkill("_standartTimeToReAlive");
+                        prefab.GetComponent<MortiraTurrel>().StandartShootingSpeed =
+                             un.GetValueSkill("_standartReloadTime");
+                        break;
+
                 }
                 playerHelper.RefreshPrefab(prefab, i);
             }

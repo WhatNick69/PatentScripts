@@ -38,6 +38,7 @@ namespace Game {
         private NavMeshAgent _agent;
             [SerializeField, Tooltip("Компонент бар-здоровья")]
         protected HealthBarUnit _healthBarUnit;
+        protected static RespawnWaver respawnWaver;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ
         public string _path; // track path
@@ -185,18 +186,27 @@ namespace Game {
         /// </summary>
         public override void OnStartClient()
         {
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
             if (isServer)
-            {
+            { 
                 _healthBarUnit.HealthUnit = Hp; // Задаем значение бара
-                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 1;
+                _currentAnimation = ResourcesPlayerHelper.LenghtAnimationsPenguins() - 2;
             }
             else if (!isServer)
             {
                 gameObject.name = _enemyType;
                 _spriteRenderer.flipX = _isFlipped;
                 _animatorOfEnemy.speed = this._animationSpeed;
-                _animatorOfEnemy.runtimeAnimatorController
-                    = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
+                try
+                {
+                    _animatorOfEnemy.runtimeAnimatorController
+                        = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
+                }
+                catch
+                {
+                    Debug.Log("Чет не так");
+                }
             }
         }
 
@@ -523,7 +533,8 @@ namespace Game {
         [ClientRpc]
         private void RpcRM(GameObject gO)
         {
-            gO.GetComponent<PlayerHelper>().Money += EnemyBonus; // Плата за убийство
+            if (!respawnWaver.GameOver)
+                gO.GetComponent<PlayerHelper>().Money += EnemyBonus; // Плата за убийство
         }
 
         /// <summary>
@@ -766,7 +777,8 @@ namespace Game {
         [Command]
         public void CmdPlayAudio(byte condition)
         {
-            RpcPlayAudio(condition);
+            if (!respawnWaver.GameOver)
+                RpcPlayAudio(condition);
         }
 
         /// <summary>

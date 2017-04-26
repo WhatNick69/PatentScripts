@@ -19,7 +19,7 @@ namespace Game
         private bool _toSync;
 
             [Header("Переменные мины")]
-            [SerializeField, Tooltip("Урон от кластера")]
+            [SerializeField, Tooltip("Урон от мины")]
         protected int _damage; // damage
             [SerializeField, Tooltip("Скорость движения мины")]
         protected float _speedOfPlanting; // speed of planting a mine
@@ -178,6 +178,7 @@ namespace Game
             GameObject clone = Instantiate(_cluster);
             clone.transform.position = transform.position;
             clone.GetComponent<ClusteredMine>().SetParent(_parentObject);
+            clone.GetComponent<ClusteredMine>().DmgForCluster = _damage;
             NetworkServer.Spawn(clone);
         }
         #endregion

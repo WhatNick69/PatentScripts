@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Game
 {
@@ -12,7 +10,10 @@ namespace Game
 
         public void ShootAttack()
         {
-            _liteArcher.Bursting();
+            if (_liteArcher.AttackedObject)
+            {
+                _liteArcher.Bursting();
+            }
         }
     }
 }

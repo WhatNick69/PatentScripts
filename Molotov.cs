@@ -36,6 +36,7 @@ namespace Game
         private bool oneCheckClient = true;
 
         private PlayerAbstract instantedPlayer;
+        protected static RespawnWaver respawnWaver;
         #endregion
 
         /// <summary>
@@ -82,6 +83,8 @@ namespace Game
             _speedVec = new Vector3((float)rnd.NextDouble()
                     * rnd.Next(-1, 2) * _accuracy, 0, _speed);
             GetComponent<BulletMotionSync>().SpeedVec = _speedVec;
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
         }
 
         /// <summary>
@@ -196,20 +199,27 @@ namespace Game
         [Command]
         private void CmdBurner(float burningTime)
         {
-            RpcBurner(burningTime);
+            if (!respawnWaver.GameOver)
+                RpcBurner(burningTime,true);
+            else
+                RpcBurner(burningTime, false);
         }
 
         /// <summary>
         /// Взорвать бутылку. На клиентах
         /// </summary>
         [ClientRpc]
-        public void RpcBurner(float burningTime)
+        public void RpcBurner(float burningTime,bool flag)
         {
             _can = false;
-            _audio.clip = ResourcesPlayerHelper.
-                GetElementFromAudioDeathsObjects((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
-            _audio.pitch =(float)rnd.NextDouble() / 4 + 0.75f;
-            _audio.Play();
+            if (flag)
+            {
+                _audio.clip = ResourcesPlayerHelper.
+                    GetElementFromAudioDeathsObjects
+                    ((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtAudioDeathsObjects()));
+                _audio.pitch = (float)rnd.NextDouble() / 4 + 0.75f;
+                _audio.Play();
+            }
 
             GetComponent<BulletMotionSync>().IsStopped = true;
             transform.GetChild(0).localEulerAngles = Vector3.zero;

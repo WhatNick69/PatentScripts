@@ -95,6 +95,8 @@ namespace Game
             if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
                && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
             _points = new bool[4];
             _maskCursor = 1 << 9;
             for (byte i = 0; i < _points.Length; i++)

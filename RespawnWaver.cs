@@ -55,6 +55,7 @@ namespace Game
         private bool _isMayBeInstanced; // Может ли враг быть инстантирован
             [SyncVar,SerializeField, Tooltip("Закончилась ли волна?")]
         private bool _isEndWave; // Состояние об окончании волны
+        private bool _gameOver; // Состояние об окончании волны
 
         // timers and random
         private float _tempRespawnTime;
@@ -108,6 +109,32 @@ namespace Game
                 _isEndWave = value;
             }
         }
+
+        public bool GameOver
+        {
+            get
+            {
+                return _gameOver;
+            }
+
+            set
+            {
+                _gameOver = value;
+            }
+        }
+
+        public byte Waves
+        {
+            get
+            {
+                return _waves;
+            }
+
+            set
+            {
+                _waves = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -116,11 +143,6 @@ namespace Game
         /// v1.01
         private void Start()
         {
-            _generalSounder.volume = 0.25f;
-            _generalSounder.clip = ResourcesPlayerHelper.
-                GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
-            _generalSounder.Play();
-
             if (!isServer) return; // Выполняет только сервер
 
             Application.runInBackground = true;
@@ -196,6 +218,7 @@ namespace Game
             }
             if (_tempRespawnTime > 0.05f) _tempRespawnTime -= 0.05f;
             _waves++;
+
             Array.Copy(_tempEnemyCountLevels, _enemyCountLevels,
                 _tempEnemyCountLevels.Length);
         }
@@ -249,7 +272,7 @@ namespace Game
         /// v1.01
         private void Instansing()
         {
-            GameObject clone = GameObject.Instantiate(_currentEnemy);
+            GameObject clone = Instantiate(_currentEnemy);
             clone.name = "Enemy" + clone.GetComponent<EnemyAbstract>().EnemyType
                 + "#Power" + clone.GetComponent<EnemyAbstract>().GetPower() + "#" + _numberOfEnemies;
             clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
@@ -295,13 +318,57 @@ namespace Game
         /// Воспроизведение звука. Вызов на клиентах
         /// </summary>
         /// <param name="condition"></param>
-        [Client]
+        [ClientRpc]
         protected virtual void RpcPlayGeneralSound(byte condition)
         {
-            _generalSounder.volume = 0.5f;
-            _generalSounder.clip = ResourcesPlayerHelper.
-                GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
-            _generalSounder.Play();
+            switch (condition)
+            {
+                case 0:
+                    _generalSounder.loop = true;
+                    _generalSounder.volume = 0.5f;
+                    _generalSounder.pitch = 1.5f;
+                    _generalSounder.clip = ResourcesPlayerHelper.
+                        GetElementFromGeneralSounds((byte)rnd.Next(0, ResourcesPlayerHelper.LenghtGeneralSounds()));
+                    _generalSounder.Play();
+                    break;
+                case 1:
+                    _generalSounder.pitch = 1;
+                    _generalSounder.clip = ResourcesPlayerHelper.GetElementFromOver(1);
+                    _generalSounder.volume = 1;
+                    _generalSounder.Play();
+                    _generalSounder.loop = false;
+                    break;
+                case 2:
+                    _generalSounder.pitch = 1;
+                    _generalSounder.clip = ResourcesPlayerHelper.GetElementFromOver(2);
+                    _generalSounder.volume = 1;
+                    _generalSounder.Play();
+                    _generalSounder.loop = false;
+                    break;
+                case 3:
+                    _generalSounder.pitch = 1;
+                    _generalSounder.clip = ResourcesPlayerHelper.GetElementFromOver(3);
+                    _generalSounder.volume = 1;
+                    _generalSounder.Play();
+                    _generalSounder.loop = false;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Остановить проигрывание музыки у всех клиентов
+        /// </summary>
+        [Command]
+        public void CmdStopGeneralSounds()
+        {
+            Debug.Log("Остановили");
+            RpcStopGeneralSounds();
+        }
+
+        [ClientRpc]
+        private void RpcStopGeneralSounds()
+        {
+            _generalSounder.Stop();
         }
         #endregion
     }

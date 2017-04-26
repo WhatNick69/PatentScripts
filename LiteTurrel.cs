@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace Game {
 
@@ -14,23 +15,23 @@ namespace Game {
         : PlayerAbstract
     {
         #region Переменные
-            [Space]
-            [Header("Основные возможности туррели")]
-            [SerializeField, Tooltip("Подвижная часть туррели")]
+        [Space]
+        [Header("Основные возможности туррели")]
+        [SerializeField, Tooltip("Подвижная часть туррели")]
         protected Transform _childRotatingTurrel;
-            [SerializeField, Tooltip("Префаб пули")]
+        [SerializeField, Tooltip("Префаб пули")]
         protected GameObject _bullet; // bullet-prefab
-            [SerializeField, Tooltip("Время до возрождения")]
+        [SerializeField, Tooltip("Время до возрождения")]
         protected float _standartTimeToReAlive; // DOWNLOADABLE
-            [SerializeField, Tooltip("Урон, который наносит туррель в дальнем бою")]
+        [SerializeField, Tooltip("Урон, который наносит туррель в дальнем бою")]
         protected float _standartDmgFar;  // DOWNLOADABLE
-            [SerializeField, Tooltip("Стрельба очередью")]
+        [SerializeField, Tooltip("Стрельба очередью")]
         protected bool _isBurst;
-            [SerializeField, Tooltip("Скорость стрельбы")]
+        [SerializeField, Tooltip("Скорость стрельбы")]
         protected float _standartShootingSpeed; // DOWNLOADABLE
-            [SerializeField, Tooltip("Аккуратность стрельбы")]
+        [SerializeField, Tooltip("Аккуратность стрельбы")]
         protected float _standartAccuracy; // DOWNLOADABLE
-            [SerializeField, Tooltip("Скорость полета снаряда")]
+        [SerializeField, Tooltip("Скорость полета снаряда")]
         protected float _standartFlySpeed; // DOWNLOADABLE
         protected Ray ray;
         protected RaycastHit hit;
@@ -38,10 +39,10 @@ namespace Game {
         protected bool _coroutineReAlive = true;
         protected bool mayToCheckForEnemy;
 
-            [Header("Умная стрельба")]
-            [SerializeField, Tooltip("Использовать умную стрельбу?")]
+        [Header("Умная стрельба")]
+        [SerializeField, Tooltip("Использовать умную стрельбу?")]
         protected bool _cleverShooting;
-            [SerializeField, Tooltip("Множитель расстояния предугадывания выстрела")]
+        [SerializeField, Tooltip("Множитель расстояния предугадывания выстрела")]
         protected float _multiplier;
         protected byte _dir;
         protected float _speedEnemy;
@@ -50,6 +51,9 @@ namespace Game {
         protected float _oldX;
         protected float _oldZ;
         protected Vector3 _plusPos;
+        [SerializeField, Tooltip("Кольцо возрождения")]
+        protected Image _insideRadial;
+        protected bool ressurectionFlag;
 
         public float StandartAccuracy
         {
@@ -129,7 +133,7 @@ namespace Game {
                     _attackedObject = col.gameObject;
                     _minPower = _attackedObject.GetComponent<EnemyAbstract>().GetPower();
                 }
-                else if (Vector2.Distance(gameObject.transform.position,col.gameObject.transform.position) < _minDistance && _firstStandart)
+                else if (Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position) < _minDistance && _firstStandart)
                 {
                     _attackedObject = col.gameObject;
                     _minDistance = Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position);
@@ -194,6 +198,8 @@ namespace Game {
             if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
                 && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
             Application.runInBackground = true;
             _points = new bool[4];
             _minDistance = 1000;
@@ -292,8 +298,8 @@ namespace Game {
                     _bullet.transform.position = _childRotatingTurrel.position;
                     _bullet.transform.rotation = _childRotatingTurrel.rotation;
                     _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
-                    _bullet.transform.localEulerAngles 
-                        = new Vector2(0, _bullet.transform.localEulerAngles.y+90);
+                    _bullet.transform.localEulerAngles
+                        = new Vector2(0, _bullet.transform.localEulerAngles.y + 90);
                     CmdInstantiateObject(_bullet);
                 }
                 else
@@ -303,7 +309,7 @@ namespace Game {
                         _bullet.transform.position = _childRotatingTurrel.position;
                         _bullet.transform.rotation = _childRotatingTurrel.rotation;
                         _bullet.GetComponent<Bullet>().setAttackedObject(gameObject, _attackedObject);
-                        _bullet.transform.localEulerAngles 
+                        _bullet.transform.localEulerAngles
                             = new Vector2(0, _bullet.transform.localEulerAngles.y + 90);
 
                         _bullet.transform.Rotate(new Vector2(0, i));
@@ -413,7 +419,7 @@ namespace Game {
             {
                 Debug.DrawLine(gameObject.transform.position,
                     _attackedObject.transform.position, Color.blue);
-                _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x, 
+                _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x,
                     0, _attackedObject.transform.position.z);
 
                 // Поворот дочернего объекта
@@ -447,7 +453,7 @@ namespace Game {
         /// <summary>
         /// Установить урон объекту
         /// </summary>
-        public override void PlayerDamage(GameObject obj, float _dmg,byte condition = 0)
+        public override void PlayerDamage(GameObject obj, float _dmg, byte condition = 0)
         {
             _hpTurrel -= _dmg;
             _healthBarUnit.CmdDecreaseHealthBar(_hpTurrel);
@@ -482,10 +488,45 @@ namespace Game {
         /// <returns></returns>
         protected IEnumerator<float> ReAliveTimer()
         {
+            ressurectionFlag = true;
+            CmdRadialRefreshing(true);
             yield return Timing.WaitForSeconds(_standartTimeToReAlive);
-            _hpTurrel = _hpTurrelTemp;
-            _isAlive = true;
-            _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
+            ResurrectionTurrel();
+        }
+
+        public void ResurrectionTurrel()
+        {
+            if (ressurectionFlag)
+            {
+                ressurectionFlag = false;
+                _hpTurrel = _hpTurrelTemp;
+                _isAlive = true;
+                _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
+                CmdRadialRefreshing(false);
+            }
+        }
+
+        [Command]
+        protected void CmdRadialRefreshing(bool condition)
+        {
+            RpcRadialRefreshing(condition);
+        }
+
+        [ClientRpc]
+        protected void RpcRadialRefreshing(bool condition)
+        {
+            if (condition)
+            {
+                _insideRadial.gameObject.transform.parent.transform.parent.GetChild(0).gameObject.SetActive(false);
+                _insideRadial.gameObject.GetComponent<Animator>().speed = 20f / _standartTimeToReAlive;
+                _insideRadial.gameObject.GetComponent<Animator>().Play("RadialRealive");
+                _insideRadial.gameObject.transform.parent.gameObject.SetActive(true);
+            }
+            else
+            {
+                _insideRadial.gameObject.transform.parent.transform.parent.GetChild(0).gameObject.SetActive(true);
+                _insideRadial.gameObject.transform.parent.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -504,7 +545,7 @@ namespace Game {
         #endregion
 
         #region Мультиплеерные методы
-        [Client]
+        [ClientRpc]
         protected override void RpcPlayAudio(byte condition)
         {
             switch (condition)

@@ -210,6 +210,7 @@ namespace Game
         {
             GameObject clone = Instantiate(_bullet);
             clone.GetComponent<ClusteredMine>().SetParent(gameObject);
+            clone.GetComponent<ClusteredMine>().DmgForCluster = _standartDmgFar;
             NetworkServer.Spawn(clone);
         }
 

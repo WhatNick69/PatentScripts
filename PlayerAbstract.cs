@@ -50,9 +50,10 @@ namespace Game
         protected static LayerMask _maskCursor; // Маска курсора
         protected List<GameObject> _enemyList = new List<GameObject>(); // Лист противников
         protected GameObject _newAttackedObject; // Новая цель юнита для атаки
+        protected static RespawnWaver respawnWaver;
 
         // ГЛАВНЫЕ ПЕРЕМЕННЫЕ. BOOL
-            [Header("Бинарные опции")]
+        [Header("Бинарные опции")]
             [SerializeField, Tooltip("Этот юнит является туррелью?")]
         protected bool _isTurrel; // isTurrel condition of player
             [SerializeField, Tooltip("Юнит ищет самого мощного противника")]
@@ -374,8 +375,12 @@ namespace Game
         {
             if (!isServer) return; // Выполняется только на сервере
 
-            if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
-               && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
+            if (GameObject.FindGameObjectWithTag("Core").
+                GetComponent<RespawnWaver>().IsEndWave
+               && GameObject.FindGameObjectWithTag("Core").
+               GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
             _points = new bool[4];
             _maskCursor = 1 << 9;
@@ -541,7 +546,7 @@ namespace Game
                     _minPower = 0;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        try
+                        if (_enemyList[i].GetComponent<EnemyAbstract>())
                         {
                             _tempPower = _enemyList[i].GetComponent<EnemyAbstract>().GetPower();
                             if (_tempPower > _minPower)
@@ -550,7 +555,6 @@ namespace Game
                                 _minPower = _tempPower;
                             }
                         }
-                        catch { }
                     }
                 }
                 else if (_firstFast)
@@ -559,11 +563,14 @@ namespace Game
                     _minSpeed = -5;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        _tempSpeed = _enemyList[i].GetComponent<EnemyAbstract>().WalkSpeed;
-                        if (_tempSpeed > _minSpeed)
+                        if (_enemyList[i].GetComponent<EnemyAbstract>())
                         {
-                            _newAttackedObject = _enemyList[i];
-                            _minSpeed = _tempSpeed;
+                            _tempSpeed = _enemyList[i].GetComponent<EnemyAbstract>().WalkSpeed;
+                            if (_tempSpeed > _minSpeed)
+                            {
+                                _newAttackedObject = _enemyList[i];
+                                _minSpeed = _tempSpeed;
+                            }
                         }
                     }
                 }
@@ -573,7 +580,7 @@ namespace Game
                     _minDistance = 1000;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        try
+                        if (_enemyList[i].GetComponent<EnemyAbstract>())
                         {
                             _tempDistance =
                                 Vector3.Distance(gameObject.transform.position,
@@ -584,7 +591,6 @@ namespace Game
                                 _minDistance = _tempDistance;
                             }
                         }
-                        catch { }
                     }
                 }
 
@@ -1291,7 +1297,8 @@ namespace Game
         [Command]
         public void CmdPlayAudio(byte condition)
         {
-            RpcPlayAudio(condition);
+            if (!respawnWaver.GameOver)
+                RpcPlayAudio(condition);
         }
 
         /// <summary>

@@ -16,6 +16,8 @@ namespace Game
     {
         #region Переменные
         [Header("Переменные пользователя")]
+        [SerializeField, Tooltip("Animator компонент интерфейса игрока")]
+        private Animator uiAnimator;
         [SerializeField, Tooltip("Камера")]
         private Camera _cam;
         [SerializeField, Tooltip("Text лэйбл")]
@@ -33,11 +35,13 @@ namespace Game
         private static LayerMask _roadLayer;
         private static LayerMask _groundLayer;
         private static LayerMask _playerLayer;
+        private static LayerMask _obsLayer;
         [SerializeField, Tooltip("Видимость радиусов")]
         private bool _isRadiusVisible;
         private GameObject _tempRadiusGameObject;
         [SyncVar, SerializeField, Tooltip("Количество активных юнитов")]
         private int _numberOfUnits;
+        private bool _gameOver;
 
         [SyncVar]
         private string playerUniqueName;
@@ -114,6 +118,19 @@ namespace Game
                 _money = value;
                 //if (_money < 0) _money = 0;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
+            }
+        }
+
+        public bool GameOver
+        {
+            get
+            {
+                return _gameOver;
+            }
+
+            set
+            {
+                _gameOver = value;
             }
         }
 
@@ -194,7 +211,8 @@ namespace Game
                 SetIdentity();
                 _roadLayer = 1 << 8; // дорога (пингвины)
                 _groundLayer = 1 << 10; // земля (туррели)
-                _playerLayer = 1 << 11;
+                _playerLayer = 1 << 11; // юниты
+                _obsLayer = 1 << 12;
             }
 
             if (transform.name.Equals("")
@@ -219,22 +237,34 @@ namespace Game
             }
         }
 
-        private void LabelSet(bool condition, int cost = 0)
+        private void LabelSet(byte condition, int cost = 0)
         {
             _textLabel.GetComponent<RectTransform>().position = mouse;
             _textLabel.SetActive(false);
 
-            if (condition)
+            switch (condition)
             {
-                _textLabel.GetComponent<Text>().color = Color.green;
-                _textLabel.GetComponent<Text>().text = "-" + cost + "$";
+                case 0: // нет денег
+                    _textLabel.GetComponent<Text>().color = Color.red;
+                    _textLabel.GetComponent<Text>().text = "Not enough money!";
+                    break;
+                case 1: // разместили юнит
+                    _textLabel.GetComponent<Text>().color = Color.green;
+                    _textLabel.GetComponent<Text>().text = "-" + cost + "$";
+                    break;
+                case 2: // пингвин не на дороге
+                    _textLabel.GetComponent<Text>().color = Color.red;
+                    _textLabel.GetComponent<Text>().text = "Unit must be placed on the road!";
+                    break;
+                case 3: // турель не на земле
+                    _textLabel.GetComponent<Text>().color = Color.red;
+                    _textLabel.GetComponent<Text>().text = "Turel must be placed on the ground!";
+                    break;
+                case 4: // слишком близко
+                    _textLabel.GetComponent<Text>().color = Color.red;
+                    _textLabel.GetComponent<Text>().text = "Not so close to a Unit/Turel!";
+                    break;
             }
-            else
-            {
-                _textLabel.GetComponent<Text>().color = Color.red;
-                _textLabel.GetComponent<Text>().text = "Not enough money!";
-            }
-
             _textLabel.SetActive(true);
         }
 
@@ -243,6 +273,8 @@ namespace Game
         /// </summary>
         private void CheckTap()
         {
+            if (_gameOver) return;
+
             mouse = Input.mousePosition;
             _target = _cam.ScreenToWorldPoint(mouse);
             ray = _cam.ScreenPointToRay(mouse);
@@ -250,28 +282,44 @@ namespace Game
             if (_isPickTurrelMode)
             {
                 //CmdCheckMoney(_currentUnit, _money, gameObject);
+                _target.y = 0;
+
                 if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
                 {
+                    if (Physics.Raycast(ray, out hit, 100, _playerLayer))
+                    {
+                        LabelSet(4);
+                        return;
+                    }
                     if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _roadLayer))
                     {
                         Debug.Log("Создали динамику");
-                        LabelSet(true, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
+                        LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита\
                     }
                     else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _groundLayer))
                     {
                         Debug.Log("Создали статику");
-                        LabelSet(true, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
+                        LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита
                     }
-                    else Debug.Log("Невозможно");
+                    else if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
+                        Physics.Raycast(ray, out hit, 100, _groundLayer) || Physics.Raycast(ray, out hit, 100, _obsLayer))
+                    {
+                        LabelSet(2);
+                    }
+                    else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
+                        Physics.Raycast(ray, out hit, 100, _roadLayer) || Physics.Raycast(ray, out hit, 100, _obsLayer))
+                    {
+                        LabelSet(3);
+                    }
                 }
                 else if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost < 0 &&
                     (Physics.Raycast(ray, out hit, 100, _roadLayer) || Physics.Raycast(ray, out hit, 100, _groundLayer)))
                 {
-                    LabelSet(false);
+                    LabelSet(0);
                 }
             }
             else
@@ -322,6 +370,12 @@ namespace Game
                     _isRadiusVisible = false;
                 }
             }
+        }
+
+        public void UnshowPlayerUI()
+        {
+            uiAnimator.enabled = true;
+            uiAnimator.Play("PlayerUIUnshow");
         }
 
         #region Работа с инстансом юнита
@@ -413,7 +467,5 @@ namespace Game
             Money -= _units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
         }
         #endregion
-
-
     }
 }

@@ -30,6 +30,7 @@ namespace Game
         private static AudioClip[] audioUnitPlanted;
 
         private static AudioClip[] generalSounds;
+        private static AudioClip[] over;
         #endregion
 
         #region Геттеры и сеттеры
@@ -118,6 +119,11 @@ namespace Game
             return generalSounds[i];
         }
 
+        public static AudioClip GetElementFromOver(byte i)
+        {
+            return over[i];
+        }
+
         public static int LenghtAudioHitsCloseUnit()
         {
             return audioHitsCloseUnit.Length;
@@ -192,6 +198,11 @@ namespace Game
         {
             return generalSounds.Length;
         }
+
+        public static int LenghtOver()
+        {
+            return over.Length;
+        }
         #endregion
 
         /// <summary>
@@ -217,6 +228,7 @@ namespace Game
             audioUnitPlanted = Resources.LoadAll<AudioClip>("Sounds/UnitPlanted");
 
             generalSounds = Resources.LoadAll<AudioClip>("Sounds/GeneralSounds");
+            over = Resources.LoadAll<AudioClip>("Sounds/Interface/Over");
         }
     }
 }

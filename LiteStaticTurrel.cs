@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace Game
 {
@@ -22,13 +23,13 @@ namespace Game
 
         protected bool _coroutineReload;
         protected int debI;
-            [SerializeField, Tooltip("Количество производимых мин за тик")]
         protected int _standartMinesPerTick; // DOWNLOADABLE
+            [SerializeField, Tooltip("Урон он мины")]
+        protected float _mineDamage; // DOWNLOADABLE
         protected List<int> _euler;
             [SerializeField, Tooltip("Темп производства мин")]
         protected float _standartReloadTime; // DOWNLOADABLE
-            [SerializeField, Tooltip("Максимальное количество мин")]
-        protected float _standartMaxMinesCount; // DOWNLOADABLE
+        protected float _standartMaxMinesCount;
         protected float _currrentSide;
         protected float _distance;
             [SerializeField, Tooltip("Время возрождения")]
@@ -40,6 +41,9 @@ namespace Game
         protected GameObject _mine;
 
         private int mineCounter; // Количество установленных мин
+            [SerializeField, Tooltip("Кольцо возрождения")]
+        protected Image _insideRadial;
+        protected bool ressurectionFlag;
         #endregion
 
         public int MineCounter
@@ -55,6 +59,45 @@ namespace Game
             }
         }
 
+        public float MineDamage
+        {
+            get
+            {
+                return _mineDamage;
+            }
+
+            set
+            {
+                _mineDamage = value;
+            }
+        }
+
+        public float StandartTimeToReAlive
+        {
+            get
+            {
+                return _standartTimeToReAlive;
+            }
+
+            set
+            {
+                _standartTimeToReAlive = value;
+            }
+        }
+
+        public float StandartReloadTime
+        {
+            get
+            {
+                return _standartReloadTime;
+            }
+
+            set
+            {
+                _standartReloadTime = value;
+            }
+        }
+
         /// <summary>
         /// Стартовый метод
         /// </summary>
@@ -62,9 +105,12 @@ namespace Game
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
             if (GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().IsEndWave
                 && GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies == 0) stopping = true;
 
+            _standartMaxMinesCount = 100;
             _euler = new List<int>();
             debI = 1;
             _coroutineReload = true;
@@ -104,7 +150,18 @@ namespace Game
             _hpTurrelTemp = _hpTurrel;
             _standartRadius = GetComponent<SphereCollider>().radius;
 
+            SetMinesPerSecond();
             CheckRoad();
+        }
+
+        private void SetMinesPerSecond()
+        {
+            if (_standartReloadTime <= 0.3f)
+                _standartMinesPerTick = 3;
+            else if (_standartReloadTime <= 0.8f)
+                _standartMinesPerTick = 2;
+            else if (_standartReloadTime <= 1.5f)
+                _standartMinesPerTick = 1;
         }
 
         /// <summary>
@@ -221,12 +278,47 @@ namespace Game
         /// Таймер для возрождения пушки
         /// </summary>
         /// <returns></returns>
-        private IEnumerator<float> ReAliveTimer()
+        protected IEnumerator<float> ReAliveTimer()
         {
+            ressurectionFlag = true;
+            CmdRadialRefreshing(true);
             yield return Timing.WaitForSeconds(_standartTimeToReAlive);
-            _hpTurrel = _hpTurrelTemp;
-            _isAlive = true;
-            _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
+            ResurrectionTurrel();
+        }
+
+        public void ResurrectionTurrel()
+        {
+            if (ressurectionFlag)
+            {
+                ressurectionFlag = false;
+                _hpTurrel = _hpTurrelTemp;
+                _isAlive = true;
+                _healthBarUnit.CmdResetHealthBar(_hpTurrelTemp);
+                CmdRadialRefreshing(false);
+            }
+        }
+
+        [Command]
+        protected void CmdRadialRefreshing(bool condition)
+        {
+            RpcRadialRefreshing(condition);
+        }
+
+        [ClientRpc]
+        protected void RpcRadialRefreshing(bool condition)
+        {
+            if (condition)
+            {
+                _insideRadial.gameObject.transform.parent.transform.parent.GetChild(0).gameObject.SetActive(false);
+                _insideRadial.gameObject.GetComponent<Animator>().speed = 20f / _standartTimeToReAlive;
+                _insideRadial.gameObject.GetComponent<Animator>().Play("RadialRealive");
+                _insideRadial.gameObject.transform.parent.gameObject.SetActive(true);
+            }
+            else
+            {
+                _insideRadial.gameObject.transform.parent.transform.parent.GetChild(0).gameObject.SetActive(true);
+                _insideRadial.gameObject.transform.parent.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -261,6 +353,7 @@ namespace Game
         {
             GameObject newClone = Instantiate(clone);
             newClone.GetComponent<Cluster>().SetParent(gameObject);
+            newClone.GetComponent<Cluster>().DmgForCluster = _mineDamage;
             NetworkServer.Spawn(newClone);
         }
 

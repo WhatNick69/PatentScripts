@@ -57,6 +57,7 @@ namespace UpgradeSystemAndData
         public void CheckMoneyAndValueForButtons()
         {
             int i = 0;
+            ShowAddButtonsInUpgradeElements();
             foreach (GameObject obj in upgradeElements)
             {
                 if (player.GetComponent<PlayerHelper>().Money -
@@ -82,6 +83,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 500)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(500);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -91,6 +93,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 100)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(50);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -100,6 +103,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 50)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(50);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -109,6 +113,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 3)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(3);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -118,6 +123,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 3)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(3);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -127,6 +133,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 50)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(50);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -136,6 +143,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 100)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(100);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -145,6 +153,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) > 3)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(3);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -152,6 +161,7 @@ namespace UpgradeSystemAndData
                         else if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) < 0.1f)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(0.01);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -161,6 +171,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) < 0.1f)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(0.01);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -170,6 +181,7 @@ namespace UpgradeSystemAndData
                         if (float.Parse(upgradeElements[i].transform.GetChild(0).
                             GetComponentInChildren<Text>().text) < 5)
                         {
+                            Debug.Log(i);
                             upgradeElements[i].transform.GetChild(0).
                                 GetComponentInChildren<Text>().text = Convert.ToString(5);
                             upgradeElements[i].GetComponent<Skill>().AddButtonReference(false);
@@ -396,6 +408,40 @@ namespace UpgradeSystemAndData
                     dictionaryOfUnit.ChangeValue("_standartShootingSpeed", prefab.GetComponent<ManualTurrel>().StandartShootingSpeed);
                     dictionaryOfUnit.ChangeValue("_accuracy", prefab.GetComponent<ManualTurrel>().StandartAccuracy);
                     dictionaryOfUnit.ChangeValue("_standartTimeToReAlive", prefab.GetComponent<ManualTurrel>().StandartTimeToReAlive);
+
+                    player.GetComponent<DataPlayer>().SetDictionaryUnit(unitName, dictionaryOfUnit);
+                    break;
+                case 6:
+                    prefab.GetComponent<LiteStaticTurrel>().HpTurrel =
+                       Convert.ToInt32(upgradeElements[0].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<LiteStaticTurrel>().MineDamage =
+                        float.Parse(upgradeElements[5].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<LiteStaticTurrel>().StandartReloadTime =
+                        float.Parse(upgradeElements[10].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<LiteStaticTurrel>().StandartTimeToReAlive =
+                        float.Parse(upgradeElements[9].transform.GetChild(0).GetComponentInChildren<Text>().text);
+
+                    dictionaryOfUnit.ChangeValue("_hpTurrel", prefab.GetComponent<LiteStaticTurrel>().HpTurrel);
+                    dictionaryOfUnit.ChangeValue("_mineDamage", prefab.GetComponent<LiteStaticTurrel>().MineDamage);
+                    dictionaryOfUnit.ChangeValue("_standartReloadTime", prefab.GetComponent<LiteStaticTurrel>().StandartReloadTime);
+                    dictionaryOfUnit.ChangeValue("_standartTimeToReAlive", prefab.GetComponent<LiteStaticTurrel>().StandartTimeToReAlive);
+
+                    player.GetComponent<DataPlayer>().SetDictionaryUnit(unitName, dictionaryOfUnit);
+                    break;
+                case 7:
+                    prefab.GetComponent<MortiraTurrel>().HpTurrel =
+                       Convert.ToInt32(upgradeElements[0].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<MortiraTurrel>().StandartDmgFar =
+                        float.Parse(upgradeElements[5].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<MortiraTurrel>().StandartShootingSpeed =
+                        float.Parse(upgradeElements[10].transform.GetChild(0).GetComponentInChildren<Text>().text);
+                    prefab.GetComponent<MortiraTurrel>().StandartTimeToReAlive =
+                        float.Parse(upgradeElements[9].transform.GetChild(0).GetComponentInChildren<Text>().text);
+
+                    dictionaryOfUnit.ChangeValue("_hpTurrel", prefab.GetComponent<MortiraTurrel>().HpTurrel);
+                    dictionaryOfUnit.ChangeValue("_mineDamage", prefab.GetComponent<MortiraTurrel>().StandartDmgFar);
+                    dictionaryOfUnit.ChangeValue("_standartReloadTime", prefab.GetComponent<MortiraTurrel>().StandartShootingSpeed);
+                    dictionaryOfUnit.ChangeValue("_standartTimeToReAlive", prefab.GetComponent<MortiraTurrel>().StandartTimeToReAlive);
 
                     player.GetComponent<DataPlayer>().SetDictionaryUnit(unitName, dictionaryOfUnit);
                     break;
@@ -659,6 +705,70 @@ namespace UpgradeSystemAndData
                     upgradeElements[7].SetActive(true);
                     upgradeElements[8].SetActive(true);
                     upgradeElements[9].SetActive(true);
+
+                    player.GetComponent<TurrelSetControl>().NormalizeSkillsList();
+                    break;
+                case "MinesTurrel":
+                    numberPrefab = 6;
+                    upgradeElements[0].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_hpTurrel").ToString();
+                    upgradeElements[5].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_mineDamage").ToString();
+                    upgradeElements[5].GetComponent<Skill>().IsFloat = true;
+                    upgradeElements[5].GetComponent<Skill>().IsDoubleFloat = true;
+                    upgradeElements[9].transform.GetChild(0).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueSkill("_standartTimeToReAlive").ToString();
+                    upgradeElements[10].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_standartReloadTime").ToString();
+                    upgradeElements[10].GetComponent<Skill>().ValueMultiplier = 0.95f;
+
+                    upgradeElements[0].transform.GetChild(1).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueCost("_hpTurrel").ToString();
+                    upgradeElements[5].transform.GetChild(1).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueCost("_mineDamage").ToString();
+                    upgradeElements[9].transform.GetChild(1).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueCost("_standartTimeToReAlive").ToString();
+                    upgradeElements[9].transform.GetChild(1).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueCost("_standartReloadTime").ToString();
+
+                    upgradeElements[0].SetActive(true);
+                    upgradeElements[0].GetComponent<Image>().sprite = Resources.Load<Sprite>("TexturesIcons/hpTurrelIcon");
+                    upgradeElements[5].SetActive(true);
+                    upgradeElements[5].GetComponent<Image>().sprite = Resources.Load<Sprite>("TexturesIcons/mineIcon");
+                    upgradeElements[9].SetActive(true);
+                    upgradeElements[10].SetActive(true);
+
+                    player.GetComponent<TurrelSetControl>().NormalizeSkillsList();
+                    break;
+                case "MortiraTurrel":
+                    numberPrefab = 7;
+                    upgradeElements[0].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_hpTurrel").ToString();
+                    upgradeElements[5].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_mineDamage").ToString();
+                    upgradeElements[5].GetComponent<Skill>().IsFloat = true;
+                    upgradeElements[5].GetComponent<Skill>().IsDoubleFloat = true;
+                    upgradeElements[9].transform.GetChild(0).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueSkill("_standartTimeToReAlive").ToString();
+                    upgradeElements[10].transform.GetChild(0).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueSkill("_standartReloadTime").ToString();
+                    upgradeElements[10].GetComponent<Skill>().ValueMultiplier = 0.95f;
+
+                    upgradeElements[0].transform.GetChild(1).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueCost("_hpTurrel").ToString();
+                    upgradeElements[5].transform.GetChild(1).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueCost("_mineDamage").ToString();
+                    upgradeElements[9].transform.GetChild(1).GetComponentInChildren<Text>().text
+                         = dictionaryOfUnit.GetValueCost("_standartTimeToReAlive").ToString();
+                    upgradeElements[9].transform.GetChild(1).GetComponentInChildren<Text>().text
+                        = dictionaryOfUnit.GetValueCost("_standartReloadTime").ToString();
+
+                    upgradeElements[0].SetActive(true);
+                    upgradeElements[0].GetComponent<Image>().sprite = Resources.Load<Sprite>("TexturesIcons/hpTurrelIcon");
+                    upgradeElements[5].SetActive(true);
+                    upgradeElements[5].GetComponent<Image>().sprite = Resources.Load<Sprite>("TexturesIcons/mineIcon");
+                    upgradeElements[9].SetActive(true);
+                    upgradeElements[10].SetActive(true);
 
                     player.GetComponent<TurrelSetControl>().NormalizeSkillsList();
                     break;

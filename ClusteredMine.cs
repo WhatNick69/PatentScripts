@@ -28,6 +28,7 @@ namespace Game
         protected Vector3 _speedVector;
         protected float _angle;
         private System.Random rnd = new System.Random();
+        protected static RespawnWaver respawnWaver;
 
         public float DmgForCluster
         {
@@ -54,6 +55,8 @@ namespace Game
         {
             if (!isServer) return;
 
+            respawnWaver = GameObject.FindGameObjectWithTag("Core")
+                .GetComponent<RespawnWaver>();
             CmdBangAudio();
             _speedVector = new Vector3(0, 0, _speed);
 
@@ -88,7 +91,7 @@ namespace Game
             _newClustering.transform.parent = transform;
             _newClustering.GetComponent<Cluster>().SetParent(_parentObject);
             _newClustering.GetComponent<BulletMotionSync>().SpeedVec = _speedVector;
-            _newClustering.GetComponent<Cluster>().DmgForCluster = _dmgForCluster;
+            _newClustering.GetComponent<Cluster>().DmgForCluster = _dmgForCluster / 3;
             NetworkServer.Spawn(_newClustering);
         }
 
@@ -110,7 +113,8 @@ namespace Game
         [Command]
         public void CmdBangAudio()
         {
-            RpcBangAudio();
+            if (!respawnWaver.GameOver)
+                RpcBangAudio();
         }
 
         /// <summary>
