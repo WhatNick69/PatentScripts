@@ -3,6 +3,7 @@ using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
+using UpgradeSystemAndData;
 
 namespace Game
 {
@@ -39,8 +40,6 @@ namespace Game
         protected SpriteRenderer _spriteRenderer;
             [SerializeField, Tooltip("Компонент Аудио")]
         protected AudioSource _audioSource;
-            [SerializeField, Tooltip("Компонент-контроллер опыта юнита")]
-        private UnitXPController unitXpControllerInstance;
             [SerializeField, Tooltip("Компонент-агент")]                                                                                                                                                                                            
         protected NavMeshAgent _agent;
             [SerializeField, Tooltip("Компонент бар-здоровья")]

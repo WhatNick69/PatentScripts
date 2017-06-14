@@ -1,5 +1,4 @@
-﻿using System;
-using Game;
+﻿using Game;
 using UnityEngine;
 using UnityEngine.UI;
 using UpgradeSystemAndData;
@@ -13,7 +12,8 @@ namespace GameGUI
     public class TurrelSetControl
         : NetworkBehaviour
     {
-            [SerializeField, Tooltip("Кнопки с туррелями")]
+        #region Переменные
+        [SerializeField, Tooltip("Кнопки с туррелями")]
         private TurrelNumber[] arrayObjects;
             [SerializeField, Tooltip("Аудио компонент")]
         private AudioSource audioSource;
@@ -29,7 +29,9 @@ namespace GameGUI
         private int page;
         private byte _unitNumber;
         private bool isAlreadyLoaded;
+        #endregion
 
+        #region Геттеры/сеттеры
         public byte UnitNumber
         {
             get
@@ -55,6 +57,7 @@ namespace GameGUI
                 upgradeSystem = value;
             }
         }
+        #endregion
 
         /// <summary>
         /// Проигрываем щелчок
@@ -66,6 +69,7 @@ namespace GameGUI
                 GetElementFromAudioTaps(i);
             audioSource.Play();
         }
+
 
         /// <summary>
         /// Убираем со всего списка юнитов пометку на апгрейд

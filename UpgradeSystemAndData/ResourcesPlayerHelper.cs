@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Game
+namespace UpgradeSystemAndData
 {
     /// <summary>
     /// Медиа-данные

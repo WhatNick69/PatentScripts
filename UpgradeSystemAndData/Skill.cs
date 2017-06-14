@@ -8,7 +8,8 @@ namespace UpgradeSystemAndData
     public class Skill
         : MonoBehaviour
     {
-            [SerializeField,Tooltip("Множитель стоимости")]
+        #region переменные
+        [SerializeField,Tooltip("Множитель стоимости")]
         private float _costMultiplier;
             [SerializeField, Tooltip("Множитель навыка")]
         private float _valueMultiplier;
@@ -18,7 +19,9 @@ namespace UpgradeSystemAndData
         private bool _isDoubleFloat;
             [SerializeField, Tooltip("Кнопка добавления навыка")]
         private GameObject _addButton;
+        #endregion
 
+        #region Геттеры/сеттеры
         public float CostMultiplier
         {
             get
@@ -69,7 +72,12 @@ namespace UpgradeSystemAndData
                 _isDoubleFloat = value;
             }
         }
+        #endregion
 
+        /// <summary>
+        /// Изменить состояние видимости кнопки
+        /// </summary>
+        /// <param name="activity"></param>
         public void AddButtonReference(bool activity)
         {
             _addButton.SetActive(activity);

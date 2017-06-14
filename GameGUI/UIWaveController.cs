@@ -8,12 +8,13 @@ using UnityEngine.UI;
 namespace GameGUI
 {
     /// <summary>
-    /// Навигация по листу с юнитами
+    /// Управление волнами
     /// </summary>
     public class UIWaveController 
         : NetworkBehaviour
     {
-            [Header("Работа с кнопками")]
+        #region Переменные
+        [Header("Работа с кнопками")]
             [SerializeField, Tooltip("RespawnWaver компонент ядра")]
         private RespawnWaver respawnWaver;
             [SerializeField, Tooltip("TowerHealthControl компонент башни")]
@@ -30,7 +31,9 @@ namespace GameGUI
         private Animator animatorOfWaveInfoLavel;
 
         private bool isPause;
+        #endregion
 
+        #region Геттеры/Сеттеры
         public GameObject DisconnectAcceptButton
         {
             get
@@ -56,14 +59,17 @@ namespace GameGUI
                 startButton = value;
             }
         }
+        #endregion
 
+        /// <summary>
+        /// Оповестить всех, что игра началась
+        /// </summary>
         [Command]
         public void CmdStart()
         {
             towerHealthControl.RpcIncrementUIWaveNumberText(respawnWaver.Waves);
             RpcStart();
         }
-
         [Client]
         public void RpcStart()
         {
@@ -73,6 +79,10 @@ namespace GameGUI
             Timing.RunCoroutine(StartNewWave());
         }
 
+        /// <summary>
+        /// Корутин на запуск новой волны
+        /// </summary>
+        /// <returns></returns>
         private IEnumerator<float> StartNewWave()
         {
             respawnWaver.CmdPlayGeneralSounds(2);
@@ -82,12 +92,16 @@ namespace GameGUI
             respawnWaver.CmdPlayGeneralSounds(0);
         }
 
+        /// <summary>
+        /// Анимация уведомления об старте новой волны
+        /// </summary>
+        /// <param name="flag"></param>
+        /// <param name="waves"></param>
         [Command]
         private void CmdStartNewWaveAnimation(bool flag, int waves)
         {
             RpcStartNewWaveAnimation(flag, waves);
         }
-
         [ClientRpc]
         private void RpcStartNewWaveAnimation(bool flag,int waves)
         {
@@ -103,12 +117,14 @@ namespace GameGUI
             }
         }
 
+        /// <summary>
+        /// Пауза. Не используется
+        /// </summary>
         [Command]
         public void CmdPause()
         {
             RpcPause();
         }
-
         [Client]
         public void RpcPause()
         {
@@ -124,13 +140,15 @@ namespace GameGUI
             }
         }
 
+        /// <summary>
+        /// Показать/скрыть кнопки
+        /// </summary>
         [Command]
         public void CmdVisibleButton()
         {
             ClearMinesAndStopTurrels(true);
             RpcVisibleButton();
         }
-
         [Client]
         public void RpcVisibleButton()
         {
@@ -138,9 +156,7 @@ namespace GameGUI
 
             respawnWaver.CmdPlayGeneralSounds(1);
             startButton.SetActive(true);
-            //pauseButton.SetActive(false);
         }
-
 
         /// <summary>
         /// Очищаем поле от мин и обнуляем счетчик мин у всех минных пушек.
@@ -170,6 +186,10 @@ namespace GameGUI
             }
         }
 
+        /// <summary>
+        /// Показать кнопки после старта.
+        /// Вызывается на сервере.
+        /// </summary>
         public void ShowButtonsAfterLoad()
         {
             startButton.SetActive(true);

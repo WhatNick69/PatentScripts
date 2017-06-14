@@ -11,7 +11,8 @@ namespace GameGUI
     public class LocalPlayerComponentsController 
         : NetworkBehaviour
     {
-            [Header("Компоненты игрока")]
+        #region Переменные
+        [Header("Компоненты игрока")]
             [SerializeField, Tooltip("Камера")]
         private Camera cam;
             [SerializeField, Tooltip("PlayerHelper компонент клиента")]
@@ -20,7 +21,11 @@ namespace GameGUI
         private DataPlayer dataPlayer;
             [SerializeField, Tooltip("Интерфейс клиента")]
         private GameObject canvas;
+        #endregion
 
+        /// <summary>
+        /// При запуске исключительно на игроке
+        /// </summary>
         public override void OnStartLocalPlayer()
         {
             cam.GetComponent<Camera>().enabled = true;
@@ -28,6 +33,15 @@ namespace GameGUI
             playerHelper.enabled = true;
             canvas.SetActive(true);
             dataPlayer.enabled = true;
+        }
+
+        /// <summary>
+        /// Отключить управление
+        /// </summary>
+        public void UnableControl()
+        {
+            cam.GetComponent<AudioListener>().enabled = false;
+            playerHelper.enabled = false;
         }
     }
 }

@@ -13,7 +13,8 @@ namespace UpgradeSystemAndData
     public class UpgradeSystem
         : MonoBehaviour
     {
-            [SerializeField, Tooltip("Все бар-элементы системы апгрейда")]
+        #region Переменные
+        [SerializeField, Tooltip("Все бар-элементы системы апгрейда")]
         private GameObject[] upgradeElements;
             [SerializeField, Tooltip("Бар с подтверждением покупки")]
         private GameObject buyButton;
@@ -41,7 +42,9 @@ namespace UpgradeSystemAndData
         private Text totalXP;
             [SerializeField, Tooltip("Текущий опыт")]
         private Text currentXP;
+        #endregion
 
+        #region Геттеры/Сеттеры
         public float TotalCost
         {
             get
@@ -93,6 +96,7 @@ namespace UpgradeSystemAndData
                 unitName = value;
             }
         }
+        #endregion
 
         /// <summary>
         /// Проверить, хватает ли опыта у юнита

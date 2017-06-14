@@ -9,6 +9,7 @@ using Game;
 using UnityEngine.UI;
 using GameGUI;
 using UnityEngine.Networking;
+using NETControl;
 
 namespace UpgradeSystemAndData
 {

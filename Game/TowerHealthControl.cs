@@ -3,13 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using System;
 
 namespace Game
 {
+    /// <summary>
+    /// Отвечает за игровым процессом.
+    /// Включает оповещения о волнах. 
+    /// Хранит в себе жизни башни и реализовывает её поведение.
+    /// Отвечает за появление внутриигровых поп-апов.
+    /// </summary>
     public class TowerHealthControl
         : NetworkBehaviour
     {
+        #region Переменные
         [SerializeField, Tooltip("Жизни башни")]
         private byte _hpTower;
         [SyncVar,SerializeField, Tooltip("Количество волн")]
@@ -26,7 +32,11 @@ namespace Game
         private GameObject gameOverBox;
         [SerializeField, Tooltip("RespawnwWaver компонент из объекта Core")]
         private RespawnWaver respawnWaver;
+        #endregion
 
+        /// <summary>
+        /// Жизни башни
+        /// </summary>
         public byte HpTower
         {
             get
@@ -46,6 +56,9 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Инициализация
+        /// </summary>
         public void Start()
         {
             if (isServer)
@@ -54,6 +67,10 @@ namespace Game
             hpTowerText.text = _hpTower.ToString();
         }
 
+        /// <summary>
+        /// Действие, при столкновении врага с башней
+        /// </summary>
+        /// <param name="collision"></param>
         private void OnCollisionEnter(Collision collision)
         {
             if (!isServer) return;
@@ -66,6 +83,10 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Повысить волну
+        /// </summary>
+        /// <param name="wave"></param>
         [ClientRpc]
         public void RpcIncrementUIWaveNumberText(int wave)
         {
@@ -73,6 +94,10 @@ namespace Game
             _waveNumber = wave;
         }
 
+        /// <summary>
+        /// Корутин, когда враг прошел через башню
+        /// </summary>
+        /// <returns></returns>
         private IEnumerator<float> RedColorHp()
         {
             CmdPlayGeneralSounds();
@@ -81,12 +106,16 @@ namespace Game
             CmdDecreaseHpTowerAndChangeColor(Color.white, HpTower);
         }
 
+        /// <summary>
+        /// Понизить жизни
+        /// </summary>
+        /// <param name="col"></param>
+        /// <param name="value"></param>
         [Command]
         private void CmdDecreaseHpTowerAndChangeColor(Color col, int value)
         {
             RpcDecreaseHpTowerAndChangeColor(col, value);
         }
-
         [ClientRpc]
         private void RpcDecreaseHpTowerAndChangeColor(Color col, int value)
         {
@@ -94,23 +123,24 @@ namespace Game
             hpTowerText.color = col;
         }
 
+        /// <summary>
+        /// Запуск звуков
+        /// </summary>
         [Command]
         public void CmdPlayGeneralSounds()
         {
             if (!respawnWaver.GameOver)
                 RpcPlayGeneralSound();
         }
-
-        /// <summary>
-        /// Воспроизведение звука. Вызов на клиентах
-        /// </summary>
-        /// <param name="condition"></param>
         [ClientRpc]
         protected virtual void RpcPlayGeneralSound()
         {
             GetComponent<AudioSource>().Play();
         }
 
+        /// <summary>
+        /// Окончание игры
+        /// </summary>
         public void GameOver()
         {
             respawnWaver.GameOver = true;
@@ -118,12 +148,14 @@ namespace Game
             DeactivateAllUI();
         }
 
+        /// <summary>
+        /// Включение поп-апа об окончании игры
+        /// </summary>
         [Command]
         private void CmdGameOverBoxShow()
         {
             RpcGameOverBoxShow();
         }
-
         [ClientRpc]
         private void RpcGameOverBoxShow()
         {
@@ -135,6 +167,9 @@ namespace Game
             gameOverBox.GetComponent<AudioSource>().Play();
         }
 
+        /// <summary>
+        /// Отключить весь UI игрока при проигрыше
+        /// </summary>
         public void DeactivateAllUI()
         {
             if (!respawnWaver.IsEndWave)
@@ -145,9 +180,14 @@ namespace Game
             CmdDeactivatePlayerUI();
         }
 
+        /// <summary>
+        /// Отключить весь UI игрока при дисконнекте
+        /// </summary>
+        /// <param name="player"></param>
         public void DeactivateAllUIWhileDisconnecting(PlayerHelper player)
         {
             respawnWaver.StopGeneralMusic();
+            gameOverBox.SetActive(false);
             ui.transform.GetChild(1).GetComponent<Animator>().enabled = true;
             ui.transform.GetChild(1).GetComponent<Animator>().Play("UITowerUnshow");
             ui.transform.GetChild(0).GetComponent<Animator>().enabled = true;
@@ -155,12 +195,14 @@ namespace Game
             player.GetComponent<PlayerHelper>().UnshowPlayerUI();
         }
 
+        /// <summary>
+        /// Отключить UI башин при проигрыше
+        /// </summary>
         [Command]
         private void CmdDeactivateUITower()
         {
             RpcDeactivateUITower();
         }
-
         [ClientRpc]
         private void RpcDeactivateUITower()
         {
@@ -170,6 +212,9 @@ namespace Game
             ui.transform.GetChild(0).GetComponent<Animator>().Play("UIButtonsUnshow");
         }
 
+        /// <summary>
+        /// Отключить UI игрока при проигрыше
+        /// </summary>
         [Command]
         private void CmdDeactivatePlayerUI()
         {
@@ -179,7 +224,6 @@ namespace Game
                 RpcDeactivatePlayerUI(gO);
             }
         }
-
         [ClientRpc]
         private void RpcDeactivatePlayerUI(GameObject player)
         {

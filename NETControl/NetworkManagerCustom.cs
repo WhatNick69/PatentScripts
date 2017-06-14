@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
-using UpgradeSystemAndData;
 using System;
 using System.Collections.Generic;
 using MovementEffects;
 
-namespace GameGUI
+namespace NETControl
 {
     /// <summary>
     /// Переопределенный сетевой менеджер
@@ -133,6 +131,9 @@ namespace GameGUI
             }
         }
 
+        /// <summary>
+        /// Скрыть все кнопки
+        /// </summary>
         private void UnshowMenuButtons()
         {
             hostMenu.SetActive(false);
@@ -189,9 +190,13 @@ namespace GameGUI
             ConnectToUNet();
         }
 
-        IEnumerator ConToUNet()
+        /// <summary>
+        /// Пробуем подключиться к серверам UNet
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator<float> ConToUNet()
         {
-            yield return new WaitForSeconds(0);
+            yield return Timing.WaitForSeconds(0);
             networkManager = NetworkManager.singleton;
             if (networkManager.matchMaker == null)
             {
@@ -222,7 +227,7 @@ namespace GameGUI
         /// </summary>
         private void ConnectToUNet()
         {
-            StartCoroutine(ConToUNet());          
+            Timing.RunCoroutine(ConToUNet());          
         }
 
         /// <summary>
@@ -339,26 +344,6 @@ namespace GameGUI
         }
 
         /// <summary>
-        /// Зайти в игру
-        /// </summary>
-        public void JoinGame()
-        {
-            //SetIPAdress();
-            //SetPort();
-            //singleton.StartClient();
-            PlayAudio();
-        }
-
-        /// <summary>
-        /// Установить IP адрес
-        /// </summary>
-        private void SetIPAdress()
-        {
-            singleton.networkAddress = "localhost";
-            PlayAudio();
-        }
-
-        /// <summary>
         /// Когда уровень загружен
         /// </summary>
         /// <param name="level"></param>
@@ -368,7 +353,7 @@ namespace GameGUI
                 && isMenu)
             {
                 isMenu = false;
-                StartCoroutine(SetupMenuSceneButton());
+                Timing.RunCoroutine(SetupMenuSceneButton());
             }
             else
             {
@@ -381,16 +366,16 @@ namespace GameGUI
 
         public void StartCoroutineFunc()
         {
-            StartCoroutine(SetupOtherSceneButton());
+            Timing.RunCoroutine(SetupOtherSceneButton());
         }
 
         /// <summary>
         /// Установить собатия кнопкам при старте игры
         /// </summary>
         /// <returns></returns>
-        IEnumerator SetupOtherSceneButton()
+        IEnumerator<float> SetupOtherSceneButton()
         {
-            yield return new WaitForSeconds(0.1f);
+            yield return Timing.WaitForSeconds(0.1f);
             FindAllElementsInGameScene();
 
             gameoverDisconectButton.GetComponent<Button>().onClick.RemoveAllListeners();
@@ -448,9 +433,9 @@ namespace GameGUI
         /// Установить события кнопкам при дисконнекте
         /// </summary>
         /// <returns></returns>
-        IEnumerator SetupMenuSceneButton()
+        IEnumerator<float> SetupMenuSceneButton()
         {
-            yield return new WaitForSeconds(0.1f);
+            yield return Timing.WaitForSeconds(0.1f);
             FindButtonsInMenu();
             UnshowMenuButtons();
             ShowMenuButtons();
