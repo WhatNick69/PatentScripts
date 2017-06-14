@@ -37,6 +37,8 @@ namespace Game
 
         private PlayerAbstract instantedPlayer;
         protected static RespawnWaver respawnWaver;
+        private PlayerHelper playerHelperInstance;
+        private string typeUnit;
         #endregion
 
         /// <summary>
@@ -69,6 +71,15 @@ namespace Game
         }
 
         /// <summary>
+        /// Кеширование, для безопасного нанесения урона противнику (даже если владелец умрет)
+        /// </summary>
+        private void SaveCaching()
+        {
+            playerHelperInstance = instantedPlayer.InstantedPlayerReference;
+            typeUnit = instantedPlayer.PlayerType;
+        }
+
+        /// <summary>
         /// Старт
         /// </summary>
         void Start()
@@ -76,6 +87,7 @@ namespace Game
             if (!isServer) return;
 
             // Выполняется только на сервере
+            SaveCaching();
             transform.position 
                 = new Vector3(transform.position.x, 0.1f, transform.position.z);
             _angle = rnd.Next(180, 720);
@@ -161,7 +173,7 @@ namespace Game
                 else
                 {
                     collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamage(instantedPlayer.InstantedPlayerReference,_dmgPerSec, 2);
+                        GetComponent<EnemyAbstract>().EnemyDamageSafe(playerHelperInstance, typeUnit,_dmgPerSec, 2);
                 }
             }
         }
@@ -172,11 +184,12 @@ namespace Game
         /// <param name="collision"></param>
         public void OnCollisionStay(Collision collision)
         {
+
             if (!_can
                     && collision.gameObject.tag.Equals("Enemy"))
             {
                 collision.gameObject.transform.
-                    GetComponent<EnemyAbstract>().EnemyDamage(instantedPlayer.InstantedPlayerReference,_dmgPerSec, 2);
+                    GetComponent<EnemyAbstract>().EnemyDamageSafe(playerHelperInstance, typeUnit, _dmgPerSec, 2);
             }
         }
 

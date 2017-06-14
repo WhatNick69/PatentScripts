@@ -119,10 +119,10 @@ namespace Game {
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
+                            //&& col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
                                 && mayToCheckForEnemy)
             {
-                //Debug.Log("Детектим врага");
+                Debug.Log("Детектим врага");
                 if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
                 {
                     _attackedObject = col.gameObject;
@@ -153,9 +153,10 @@ namespace Game {
             if (_isAlive &&
                 col.gameObject.tag == "Enemy"
                     && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
+                            //&& col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
                                 && mayToCheckForEnemy)
             {
+                Debug.Log("Детектим врага");
                 if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
                 {
                     _attackedObject = col.gameObject;

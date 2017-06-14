@@ -370,6 +370,11 @@ namespace Game
         {
             _generalSounder.Stop();
         }
+
+        public void StopGeneralMusic()
+        {
+            _generalSounder.Stop();
+        }
         #endregion
     }
 }

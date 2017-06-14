@@ -128,8 +128,9 @@ namespace Game
         private void RpcGameOverBoxShow()
         {
             gameOverBox.SetActive(true);
+            gameOverBox.GetComponent<Animator>().enabled = true;
             gameOverBox.GetComponent<Animator>().Play("GameOverBoxShow");
-            gameOverBox.transform.FindChild("WaveLabel")
+            gameOverBox.transform.Find("WaveLabel")
                 .GetComponent<Text>().text = "Wave: " + _waveNumber;
             gameOverBox.GetComponent<AudioSource>().Play();
         }
@@ -142,6 +143,16 @@ namespace Game
             respawnWaver.CmdStopGeneralSounds();
             CmdDeactivateUITower();
             CmdDeactivatePlayerUI();
+        }
+
+        public void DeactivateAllUIWhileDisconnecting(PlayerHelper player)
+        {
+            respawnWaver.StopGeneralMusic();
+            ui.transform.GetChild(1).GetComponent<Animator>().enabled = true;
+            ui.transform.GetChild(1).GetComponent<Animator>().Play("UITowerUnshow");
+            ui.transform.GetChild(0).GetComponent<Animator>().enabled = true;
+            ui.transform.GetChild(0).GetComponent<Animator>().Play("UIButtonsUnshow");
+            player.GetComponent<PlayerHelper>().UnshowPlayerUI();
         }
 
         [Command]

@@ -22,12 +22,40 @@ namespace GameGUI
         private GameObject startButton;
             [SerializeField, Tooltip("Кнопка Pause")]
         private GameObject pauseButton;
+            [SerializeField, Tooltip("Кнопка вызвать меню выхода")]
+        private GameObject disconnectAcceptButton;
             [SerializeField, Tooltip("Кнопка повысить время")]
         private GameObject increaseTimeButton;
             [SerializeField, Tooltip("Animator компонент лэйбла между волнами")]
         private Animator animatorOfWaveInfoLavel;
 
         private bool isPause;
+
+        public GameObject DisconnectAcceptButton
+        {
+            get
+            {
+                return disconnectAcceptButton;
+            }
+
+            set
+            {
+                disconnectAcceptButton = value;
+            }
+        }
+
+        public GameObject StartButton
+        {
+            get
+            {
+                return startButton;
+            }
+
+            set
+            {
+                startButton = value;
+            }
+        }
 
         [Command]
         public void CmdStart()
@@ -41,7 +69,7 @@ namespace GameGUI
         {
             ClearMinesAndStopTurrels(false);
             startButton.SetActive(false);
-            pauseButton.SetActive(true);
+            //pauseButton.SetActive(true);
             Timing.RunCoroutine(StartNewWave());
         }
 
@@ -67,11 +95,10 @@ namespace GameGUI
             {
                 animatorOfWaveInfoLavel.gameObject.GetComponent<Text>().text =
                     "Wave " + waves;
-                animatorOfWaveInfoLavel.enabled = true;
+                animatorOfWaveInfoLavel.Play("WaveInfo", -1, 0f);
             }
             else
             {
-                animatorOfWaveInfoLavel.enabled = false;
                 respawnWaver.IsEndWave = false;
             }
         }
@@ -111,13 +138,9 @@ namespace GameGUI
 
             respawnWaver.CmdPlayGeneralSounds(1);
             startButton.SetActive(true);
-            pauseButton.SetActive(false);
+            //pauseButton.SetActive(false);
         }
 
-        public void OnClickDisconnectButton()
-        {
-            Application.LoadLevel(0);
-        }
 
         /// <summary>
         /// Очищаем поле от мин и обнуляем счетчик мин у всех минных пушек.
@@ -145,6 +168,12 @@ namespace GameGUI
                     turrel.GetComponent<LiteStaticTurrel>().ResurrectionTurrel();
                 }
             }
+        }
+
+        public void ShowButtonsAfterLoad()
+        {
+            startButton.SetActive(true);
+            //pauseButton.SetActive(true);
         }
     }
 }

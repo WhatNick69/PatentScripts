@@ -21,7 +21,7 @@ namespace Game
         #region Переменные
         // МУЛЬТИПЛЕЕРНЫЕ ПЕРЕМЕННЫЕ
             [Header("Ссылки и компоненты")]
-            [SerializeField, SyncVar, Tooltip("Название вражеской единицы")]
+            [SerializeField, SyncVar, Tooltip("Название пользовательской единицы")]
         protected string _playerType;
             [SyncVar]
         protected bool _isAlive; // alive condition of player
@@ -39,6 +39,8 @@ namespace Game
         protected SpriteRenderer _spriteRenderer;
             [SerializeField, Tooltip("Компонент Аудио")]
         protected AudioSource _audioSource;
+            [SerializeField, Tooltip("Компонент-контроллер опыта юнита")]
+        private UnitXPController unitXpControllerInstance;
             [SerializeField, Tooltip("Компонент-агент")]                                                                                                                                                                                            
         protected NavMeshAgent _agent;
             [SerializeField, Tooltip("Компонент бар-здоровья")]
@@ -142,6 +144,7 @@ namespace Game
         protected static Vector3 _up = new Vector3(0, 0, 0.3f);
 
         // ДЛЯ ОПРЕДЕЛЕНИЯ ИГРОКА, КОТОРЫЙ УСТАНОВИЛ ЭТОТ ЮНИТ
+            [SerializeField]
         private PlayerHelper instantedPlayerReference;
             [Header("Сетевое взаимодействие")]
             [SyncVar,SerializeField,Tooltip("Номер игрока, который установил этот юнит")]
@@ -546,7 +549,8 @@ namespace Game
                     _minPower = 0;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        if (_enemyList[i].GetComponent<EnemyAbstract>())
+                        if (_enemyList[i] != null
+                            && _enemyList[i].GetComponent<EnemyAbstract>())
                         {
                             _tempPower = _enemyList[i].GetComponent<EnemyAbstract>().GetPower();
                             if (_tempPower > _minPower)
@@ -563,7 +567,8 @@ namespace Game
                     _minSpeed = -5;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        if (_enemyList[i].GetComponent<EnemyAbstract>())
+                        if (_enemyList[i] != null &&
+                            _enemyList[i].GetComponent<EnemyAbstract>())
                         {
                             _tempSpeed = _enemyList[i].GetComponent<EnemyAbstract>().WalkSpeed;
                             if (_tempSpeed > _minSpeed)
@@ -580,7 +585,8 @@ namespace Game
                     _minDistance = 1000;
                     for (byte i = 0; i < _enemyList.Count; i++)
                     {
-                        if (_enemyList[i].GetComponent<EnemyAbstract>())
+                        if (_enemyList[i] != null && 
+                            _enemyList[i].GetComponent<EnemyAbstract>())
                         {
                             _tempDistance =
                                 Vector3.Distance(gameObject.transform.position,
@@ -753,7 +759,7 @@ namespace Game
                 && _attackedObject.GetComponent<EnemyAbstract>().IsAlive)
             {
                 RandomHit();
-                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(InstantedPlayerReference,gameObject, _playerDmgNear);
+                _attackedObject.GetComponent<EnemyAbstract>().EnemyDamage(gameObject, PlayerType,_playerDmgNear);
             }
             else
             {
@@ -1232,7 +1238,7 @@ namespace Game
         [ClientRpc]
         public void RpcClientDeath()
         {
-            _animatorOfPlayer.Stop();
+            _animatorOfPlayer.StopPlayback();
             Destroy(gameObject);
         }
 

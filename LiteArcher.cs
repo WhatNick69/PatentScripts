@@ -401,7 +401,7 @@ namespace Game
                     }
                     else if (Vector3.Distance(_attackedObject.transform.position, transform.position) > _maxEdge*1.1f)
                     {
-                        Debug.Log("Враг сбежал");
+                        //Debug.Log("Враг сбежал");
                         RemoveFromList(_attackedObject);
                         Decreaser();
                         NullAttackedObject();

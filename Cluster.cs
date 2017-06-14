@@ -13,7 +13,7 @@ namespace Game {
             [Header("Переменные кластера")]
             [Tooltip("Урон, наносимый кластером")]
         protected float _dmgForCluster;
-        [SerializeField, Tooltip("Пушка-родитель")]
+            [SerializeField, Tooltip("Пушка-родитель")]
         protected GameObject _parentObject;
             [SerializeField, Tooltip("Количество проникновений")]
         protected byte _countOfPenetrations; // count of penetrated objects
@@ -52,7 +52,9 @@ namespace Game {
             if (col.gameObject.tag == "Enemy")
             {
                 //Debug.Log("AZAZA");
-                col.GetComponent<EnemyAbstract>().EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference,_dmgForCluster);
+                col.GetComponent<EnemyAbstract>()
+                    .EnemyDamage(_parentObject.GetComponent<PlayerAbstract>()
+                    .gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType,_dmgForCluster,1);
                 Destroy(gameObject);
             }
         }

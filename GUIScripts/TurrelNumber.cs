@@ -82,6 +82,7 @@ namespace GameGUI {
                 _player.GetComponent<PlayerHelper>().IsPickTurrelMode = false;
                 UnsetTurrel();
             }
+            Debug.Log(_player.GetComponent<PlayerHelper>().name);
             _player.GetComponent<PlayerHelper>().CurrentUnit = _number;
         }
     }

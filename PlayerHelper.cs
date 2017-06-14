@@ -24,10 +24,16 @@ namespace Game
         private GameObject _textLabel;
         [SyncVar, SerializeField, Tooltip("Счетчик денег")]
         private GameObject _moneyfield;
-        [SyncVar, SerializeField, Tooltip("Количество денег")]
+        [SyncVar, SerializeField, Tooltip("Счетчик денег")]
+        private GameObject _xpField;
+        [SerializeField, Tooltip("Количество денег")]
         private int _money; // количество денег
+        [SerializeField, Tooltip("Количество общего опыта")]
+        private int _playerXP; // количество опыта
         [SerializeField, Tooltip("Префабы возможных пользовательских юнитов")]
         private GameObject[] _units; // лист с юнитами
+        [SerializeField, Tooltip("Родитель списка юнитов")]
+        private GameObject unitsParent; // лист с юнитами
         [SyncVar, SerializeField, Tooltip("Текущий номер юнита для покупки")]
         private int _currentUnit; // выбранный юнит для инстанса
         [SerializeField, Tooltip("Режим осмотра юнитов")]
@@ -115,7 +121,7 @@ namespace Game
                 GetComponent<TurrelSetControl>().
                     UpgradeSystem.GetComponent<UpgradeSystem>().
                     CheckMoneyAndValueForButtons();
-                _money = value;
+                _money = _money + value;
                 //if (_money < 0) _money = 0;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
             }
@@ -134,6 +140,33 @@ namespace Game
             }
         }
 
+        public int PlayerXP
+        {
+            get
+            {
+                return _playerXP;
+            }
+
+            set
+            {
+                _playerXP = _playerXP + value;
+                _xpField.transform.GetChild(0).GetComponent<Text>().text = _playerXP.ToString(); // обновить деньги
+            }
+        }
+
+        public string PlayerUniqueName
+        {
+            get
+            {
+                return playerUniqueName;
+            }
+
+            set
+            {
+                playerUniqueName = value;
+            }
+        }
+
         public string GetNameElementUnits(int i)
         {
             return _units[i].name;
@@ -141,6 +174,12 @@ namespace Game
         public GameObject GetPrefab(int i)
         {
             return _units[i];
+        }
+        public GameObject GetPrefabByName(string name)
+        {
+            foreach (GameObject gO in _units)
+                if (gO.name == name) return gO;
+            return null;
         }
 
         public void RefreshPrefab(GameObject newPrefab, int prefabNumber)
@@ -158,14 +197,15 @@ namespace Game
         /// <summary>
         /// Получить сетевой идентификатор
         /// </summary>
-        private void GetNetIdentity()
+        public void GetNetIdentity(string name)
         {
-            playerNetID = (int)GetComponent<NetworkIdentity>().netId.Value;
-            CmdTellServerMyIdentity(MakeUniqueName());
+            playerNetID = (int)GetComponent<NetworkIdentity>().netId.Value; // получаем ид
+            CmdTellServerMyIdentity(MakeUniqueName()); // создаем имя локальное
+            SetIdentity(name);
         }
 
         /// <summary>
-        /// 
+        /// Создаем локальное имя
         /// </summary>
         /// <param name="name"></param>
         private void CmdTellServerMyIdentity(string name)
@@ -186,18 +226,28 @@ namespace Game
         /// <summary>
         /// Установить идентификацию
         /// </summary>
-        private void SetIdentity()
+        private void SetIdentity(string namePlayer)
         {
-            if (!isLocalPlayer)
+            if (namePlayer == null || namePlayer == "")
             {
                 transform.name = playerUniqueName;
             }
             else
             {
-                transform.name = MakeUniqueName();
+                playerUniqueName = namePlayer;
+                transform.name = playerUniqueName;
             }
         }
         #endregion
+
+        private void InitialisationImportantReferencesForUnits()
+        {
+            foreach (GameObject gO in _units)
+            {
+                gO.GetComponent<PlayerAbstract>().InstantedPlayerReference
+                    = GetComponent<PlayerHelper>();
+            }
+        }
 
         /// <summary>
         /// Начальный метод
@@ -206,20 +256,16 @@ namespace Game
         {
             if (isLocalPlayer)
             {
+                GameObject.Find("NetworkManager").GetComponent<NetworkManagerCustom>().StartCoroutineFunc();
+                unitsParent.GetComponent<ScrollRect>().verticalNormalizedPosition = 1;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money;
-                GetNetIdentity();
-                SetIdentity();
+                _xpField.transform.GetChild(0).GetComponent<Text>().text = _playerXP.ToString();
+
                 _roadLayer = 1 << 8; // дорога (пингвины)
                 _groundLayer = 1 << 10; // земля (туррели)
                 _playerLayer = 1 << 11; // юниты
                 _obsLayer = 1 << 12;
-            }
-
-            if (transform.name.Equals("")
-                    || transform.name.Equals("Player(Clone)"))
-            {
-                GetNetIdentity();
-                SetIdentity();
+                InitialisationImportantReferencesForUnits();
             }
         }
 
@@ -284,7 +330,7 @@ namespace Game
                 //CmdCheckMoney(_currentUnit, _money, gameObject);
                 _target.y = 0;
 
-                if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
+                if (_money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0)
                 {
                     if (Physics.Raycast(ray, out hit, 100, _playerLayer))
                     {
@@ -296,14 +342,14 @@ namespace Game
                     {
                         Debug.Log("Создали динамику");
                         LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
-                        CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита\
+                        InstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита\
                     }
                     else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _groundLayer))
                     {
                         Debug.Log("Создали статику");
                         LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
-                        CmdInstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита
+                        InstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита
                     }
                     else if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _groundLayer) || Physics.Raycast(ray, out hit, 100, _obsLayer))
@@ -316,7 +362,7 @@ namespace Game
                         LabelSet(3);
                     }
                 }
-                else if (Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost < 0 &&
+                else if (_money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost < 0 &&
                     (Physics.Raycast(ray, out hit, 100, _roadLayer) || Physics.Raycast(ray, out hit, 100, _groundLayer)))
                 {
                     LabelSet(0);
@@ -404,9 +450,26 @@ namespace Game
         {
             bool flag;
 
-            flag = Money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
+            flag = _money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
             Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
             //gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
+        }
+
+        void InstantiateObject(Vector3 pos, int _currentUnit, int _money)
+        {
+            pos.y = 0;
+            CmdPlayAudio();
+            Money = -_units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
+
+            CmdInstantiateObject(_currentUnit, gameObject,pos);
+
+            _numberOfUnits++;
+        }
+
+        [Command]
+        void CmdPlayAudio()
+        {
+            RpcPlayAudio();
         }
 
         /// <summary>
@@ -414,22 +477,23 @@ namespace Game
         /// </summary>
         /// <param name="_target"></param>
         [Command]
-        private void CmdInstantiateObject(Vector3 pos, int _currentUnit, int _money)
+        private void CmdInstantiateObject(int currentNumber,GameObject playerHelper, Vector3 pos)
         {
-            pos.y = 0;
-            RpcPlayAudio();
-            RpcRefreshMoney(_currentUnit); // вызов метода, для покупки юнита
-            GameObject objectForInstantiate = Instantiate(_units[_currentUnit], pos, Quaternion.Euler(90, 0, 0));
-            objectForInstantiate.name = "Player" + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType + "#Cost"
-                + objectForInstantiate.GetComponent<PlayerAbstract>().Cost + "#" + _numberOfUnits;
-            objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType = objectForInstantiate.name;
+            Debug.Log(playerHelper.GetComponent<PlayerHelper>());
+            Debug.Log(playerHelper.GetComponent<PlayerHelper>().GetPrefab(currentNumber));
 
-            objectForInstantiate.transform.parent = this.transform;
-            objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference
-                = GetComponent<PlayerHelper>();
-            //NetworkServer.SpawnWithClientAuthority(objectForInstantiate, connectionToClient);
+            GameObject objectForInstantiate 
+                = Instantiate(playerHelper.GetComponent<PlayerHelper>()
+                .GetPrefab(currentNumber), pos, Quaternion.Euler(90, 0, 0));
+
+            objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference 
+                = playerHelper.GetComponent<PlayerHelper>();
+
+            objectForInstantiate.name = "Player#" 
+                + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#" + _numberOfUnits;
+
             NetworkServer.Spawn(objectForInstantiate);
-            _numberOfUnits++;
+            objectForInstantiate.transform.parent = playerHelper.transform;
         }
 
         [ClientRpc]
@@ -454,7 +518,6 @@ namespace Game
                     GetElementFromAudioTaps(0);
                 gameObject.GetComponent<AudioSource>().Play();
             }
-
         }
 
         /// <summary>
@@ -464,7 +527,25 @@ namespace Game
         [ClientRpc]
         private void RpcRefreshMoney(int _currentUnit)
         {
-            Money -= _units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
+            Money = -_units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
+        }
+
+        public void IncrementSkillOfUnit(string unitType,int xp)
+        {
+            if (isLocalPlayer)
+            {
+                GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpTotal += xp;
+                GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpForBuy += xp;
+                if (GetComponent<DataPlayer>().GetDictionaryNumber(unitType) == _currentUnit)
+                {
+                    Debug.Log(GetComponent<DataPlayer>().GetDictionaryNumber(unitType));
+                    Debug.Log(_currentUnit);
+                    GetComponent<TurrelSetControl>().UpgradeSystem.GetComponent<UpgradeSystem>().CurrentXP.text =
+                        GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpForBuy.ToString();
+                    GetComponent<TurrelSetControl>().UpgradeSystem.GetComponent<UpgradeSystem>().TotalXP.text =
+                        GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpTotal.ToString();
+                }
+            }
         }
         #endregion
     }

@@ -80,7 +80,8 @@ namespace Game
             {
 
                 if (col.gameObject.GetComponent<EnemyAbstract>().
-                    EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference, _dmgBullet) != 0
+                    EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject, 
+                    _parentObject.GetComponent<PlayerAbstract>().PlayerType,_dmgBullet,1) != 0
                         && _countOfPenetrations > 0)
                 {
                     Debug.Log("Снижено");

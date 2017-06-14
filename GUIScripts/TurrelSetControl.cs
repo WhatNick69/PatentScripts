@@ -3,6 +3,7 @@ using Game;
 using UnityEngine;
 using UnityEngine.UI;
 using UpgradeSystemAndData;
+using UnityEngine.Networking;
 
 namespace GameGUI
 {
@@ -10,7 +11,7 @@ namespace GameGUI
     /// Управляем списком юнитов и основным меню
     /// </summary>
     public class TurrelSetControl
-        : MonoBehaviour
+        : NetworkBehaviour
     {
             [SerializeField, Tooltip("Кнопки с туррелями")]
         private TurrelNumber[] arrayObjects;
@@ -22,6 +23,8 @@ namespace GameGUI
         private GameObject priceList;
             [SerializeField, Tooltip("BuyButton из апгрейд-системы")]
         private GameObject buyButtonFromUpgradeSystem;
+            [SerializeField, Tooltip("LoadBar объект")]
+        private GameObject dataLoadBar;
 
         private int page;
         private byte _unitNumber;
@@ -94,16 +97,36 @@ namespace GameGUI
             }
         }
 
+        /// <summary>
+        /// Скрыть лист с юнитами
+        /// </summary>
         private void UnshowPageWithUnits()
         {
             priceList.SetActive(false);
         }
 
+        /// <summary>
+        /// Показать лист с юнитами
+        /// </summary>
         private void ShowPageWithUnits()
         {
             priceList.SetActive(true);
         }
 
+        /// <summary>
+        /// Показать лист с юнитами и скрыть бар загрузки
+        /// </summary>
+        public void ShowPageWithUnitsAndUnshowLoadar()
+        {
+            priceList.SetActive(true);
+            dataLoadBar.SetActive(false);
+            if (isServer) GameObject.Find("UI").
+                    gameObject.GetComponent<UIWaveController>().ShowButtonsAfterLoad();
+        }
+
+        /// <summary>
+        /// Нормализуем расположение листа для апгрейда
+        /// </summary>
         public void NormalizeSkillsList()
         {
             upgradeSystem.transform.GetChild(1).GetComponent<ScrollRect>().verticalNormalizedPosition = 1;

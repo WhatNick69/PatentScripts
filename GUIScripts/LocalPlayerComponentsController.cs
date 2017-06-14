@@ -1,6 +1,7 @@
 ﻿using Game;
 using UnityEngine;
 using UnityEngine.Networking;
+using UpgradeSystemAndData;
 
 namespace GameGUI
 {
@@ -15,6 +16,8 @@ namespace GameGUI
         private Camera cam;
             [SerializeField, Tooltip("PlayerHelper компонент клиента")]
         private PlayerHelper playerHelper;
+            [SerializeField, Tooltip("DataPlayer компонент клиента")]
+        private DataPlayer dataPlayer;
             [SerializeField, Tooltip("Интерфейс клиента")]
         private GameObject canvas;
 
@@ -22,8 +25,9 @@ namespace GameGUI
         {
             cam.GetComponent<Camera>().enabled = true;
             cam.GetComponent<AudioListener>().enabled = true;
-            //playerHelper.enabled = true;
+            playerHelper.enabled = true;
             canvas.SetActive(true);
+            dataPlayer.enabled = true;
         }
     }
 }

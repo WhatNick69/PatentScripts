@@ -69,8 +69,9 @@ namespace Game
 
             if (col.gameObject.tag == "Enemy")
             {
-                col.GetComponent<EnemyAbstract>().EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().InstantedPlayerReference,
-                    rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)));
+                col.GetComponent<EnemyAbstract>()
+                    .EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType,
+                    rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)),1);
                 if (_isClustered)
                 {
                     Destroy(gameObject);

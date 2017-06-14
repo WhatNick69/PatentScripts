@@ -3,6 +3,7 @@ using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
+using System;
 
 namespace Game {
 
@@ -530,17 +531,56 @@ namespace Game {
             }
         }
 
-        [ClientRpc]
-        private void RpcRM(GameObject gO)
+        /// <summary>
+        /// Добавить денег игроку и опыта юниту
+        /// Безопасная перегрузка RpcRMandXP
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="typeUnit"></param>
+        [Command]
+        private void CmdRMandXP(GameObject unit, string typeUnit)
         {
             if (!respawnWaver.GameOver)
-                gO.GetComponent<PlayerHelper>().Money += EnemyBonus; // Плата за убийство
+            {
+                RpcRMandXP(unit, typeUnit);
+            }
+        }
+
+        [ClientRpc]
+        private void RpcRMandXP(GameObject unit, string typeUnit)
+        {
+            unit.GetComponent<PlayerAbstract>().InstantedPlayerReference.PlayerXP = EnemyBonus / 2;
+            unit.GetComponent<PlayerAbstract>().InstantedPlayerReference.Money = EnemyBonus; // Плата за убийство
+            unit.GetComponent<PlayerAbstract>().InstantedPlayerReference.IncrementSkillOfUnit(typeUnit, EnemyBonus / 2); // Плата опытом за убийство
+        }
+
+        /// <summary>
+        /// Добавить денег игроку и опыта юниту
+        /// Безопасная перегрузка RpcRMandXP
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="typeUnit"></param>
+        [Command]
+        private void CmdRMandXPSafe(GameObject player, string typeUnit)
+        {
+            if (!respawnWaver.GameOver)
+            {
+                RpcRMandXPSafe(player, typeUnit);
+            }
+        }
+
+        [ClientRpc]
+        private void RpcRMandXPSafe(GameObject player, string typeUnit)
+        {
+            player.GetComponent<PlayerHelper>().PlayerXP = EnemyBonus / 2;
+            player.GetComponent<PlayerHelper>().Money = EnemyBonus; // Плата за убийство
+            player.GetComponent<PlayerHelper>().IncrementSkillOfUnit(typeUnit,EnemyBonus/2); // Плата опытом за убийство
         }
 
         /// <summary>
         /// Получить урон и попробовать установить противника
         /// </summary>
-        public float EnemyDamage(PlayerHelper playerInstance,GameObject obj, float _dmg)
+        public float EnemyDamage(GameObject obj,string typeUnit, float _dmg)
         {
             _hp -= _dmg;
             _healthBarUnit.CmdDecreaseHealthBar(Hp);
@@ -549,7 +589,8 @@ namespace Game {
             if (_hp <= 0)
             {
                 // Понизить количество активных игроков
-                RpcRM(playerInstance.gameObject); // Дать бонус игроку, который убил
+                CmdRMandXP(obj, typeUnit); // Дать бонус игроку, который убил
+
                 CmdPlayAudio(4); // Звук смерти
                 StopEnemyMoving(); // Прекратить движение
                 GetComponent<BoxCollider>().enabled = false; // Выключить коллизии
@@ -579,16 +620,48 @@ namespace Game {
         /// </summary>
         /// <param name="_dmg"></param>
         /// <returns></returns>
-        public float EnemyDamage(PlayerHelper playerInstance,float _dmg,byte condition = 1)
+        public float EnemyDamage(GameObject unitInstance,string typeUnit,float _dmg,byte condition)
         {
-
             _hp -= _dmg;
             _healthBarUnit.CmdDecreaseHealthBar(Hp);
             CmdPlayAudio(condition); // Звук получения урона
             Timing.RunCoroutine(DamageAnimation());
             if (_hp <= 0)
             {
-                RpcRM(playerInstance.gameObject);
+                CmdRMandXP(unitInstance, typeUnit);
+
+                CmdPlayAudio(4); // Звук смерти
+                GetComponent<BoxCollider>().enabled = false;
+                _isAlive = false;
+                Decreaser();
+                NullAttackedObject();
+                RpcChangeAnimation(2, false);
+                return Mathf.Abs(_hp);
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Безопасное нанесение урона (для молотова, например)
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="typeUnit"></param>
+        /// <param name="_dmg"></param>
+        /// <param name="condition"></param>
+        /// <returns></returns>
+        public float EnemyDamageSafe(PlayerHelper player,string typeUnit,float _dmg, byte condition)
+        {
+            _hp -= _dmg;
+            _healthBarUnit.CmdDecreaseHealthBar(Hp);
+            CmdPlayAudio(condition); // Звук получения урона
+            Timing.RunCoroutine(DamageAnimation());
+            if (_hp <= 0)
+            {
+                CmdRMandXPSafe(player.gameObject, typeUnit);
+
                 CmdPlayAudio(4); // Звук смерти
                 GetComponent<BoxCollider>().enabled = false;
                 _isAlive = false;

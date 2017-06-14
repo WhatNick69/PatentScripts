@@ -6,31 +6,89 @@ using System;
 using System.Text;
 using System.Linq;
 using Game;
+using UnityEngine.UI;
+using GameGUI;
+using UnityEngine.Networking;
 
 namespace UpgradeSystemAndData
 {
     /// <summary>
-    /// Загружаемые данные
+    /// Сохранение и загрузка данных
     /// </summary>
     public class DataPlayer
-        : MonoBehaviour
+        : NetworkBehaviour
     {
-            [SerializeField, Tooltip("Все данные")]
+        #region Переменные и свойства доступа
+        [SerializeField, Tooltip("Все данные")]
         private Dictionary<string, Unit> dataList 
             = new Dictionary<string, Unit>();
             [SerializeField, Tooltip("PlayerHelper компонент")]
         private PlayerHelper playerHelper;
+            [SerializeField, Tooltip("PopupManager. Для дебага.")]
+        private Text popupManager;
+            [SerializeField, Tooltip("Контроллер NET-сообщений")]
+        private NETMsgController netMsgController;
 
         private bool isSaving;
         private bool hasBeenWarnedLocalSave;
+        private bool isLoaded = false;
+
         public DataPlayer Instance { get; private set; }
         public double TotalPlaytime { get { return (Time.time - LastSave) + PlayTimeSinceSave; } }
-
         public float LastSave { get; private set; }
         public float PlayTimeSinceSave { get; private set; }
+        public Text PopupManager
+        {
+            get
+            {
+                return popupManager;
+            }
 
+            set
+            {
+                popupManager = value;
+            }
+        }
+
+        /// <summary>
+        /// Получить словарь с данными о текущем юните
+        /// </summary>
+        /// <param name="unitName"></param>
+        /// <returns></returns>
+        public Unit GetDictionaryUnit(string unitName)
+        {
+            //Debug.Log(unitName);
+            return dataList[unitName];
+        }
+        public int GetDictionaryNumber(string unitName)
+        {
+            int i = 0;
+            foreach (KeyValuePair<string,Unit> un in dataList)
+            {
+                if (un.Key == unitName) break;
+                else i++;
+            }
+            return i;
+        }
+        /// <summary>
+        /// Добавить словарь с данными о юните
+        /// </summary>
+        /// <param name="unitName"></param>
+        /// <param name="newUnit"></param>
+        public void SetDictionaryUnit(string unitName, Unit newUnit)
+        {
+            dataList.Remove(unitName);
+            dataList.Add(unitName, newUnit);
+        }
+        #endregion
+
+        #region Старт
+        /// <summary>
+        /// Инициализируем начальные параметры
+        /// </summary>
         public void SetFirstData()
         {
+            // пингвин
             Unit unit0 = new Unit();
             unit0.AddSkill("_hpTurrel", 50);
             unit0.AddSkill("_standartDmgNear", 10);
@@ -42,8 +100,11 @@ namespace UpgradeSystemAndData
             unit0.AddCost("_standartRadius", 75);
             unit0.AddCost("_attackSpeed", 100);
             unit0.AddCost("_moveSpeed", 75);
+            unit0.XpForBuy = 0;
+            unit0.XpTotal = 0;
             dataList.Add("Penguin", unit0);
 
+            // лучник
             Unit unit1 = new Unit();
             unit1.AddSkill("_hpTurrel", 25);
             unit1.AddSkill("_standartDmgNear", 5);
@@ -57,8 +118,11 @@ namespace UpgradeSystemAndData
             unit1.AddCost("_standartDmgFar", 100);
             unit1.AddCost("_standartOfAmmo", 50);
             unit1.AddCost("_standartShootingSpeed", 100);
+            unit1.XpForBuy = 0;
+            unit1.XpTotal = 0;
             dataList.Add("Archer", unit1);
 
+            // поджигатель
             Unit unit2 = new Unit();
             unit2.AddSkill("_hpTurrel", 25);
             unit2.AddSkill("_standartDmgNear", 5);
@@ -72,8 +136,11 @@ namespace UpgradeSystemAndData
             unit2.AddCost("_standartBurnDmg", 100);
             unit2.AddCost("_standartOfAmmo", 50);
             unit2.AddCost("_standartShootingSpeed", 100);
+            unit2.XpForBuy = 0;
+            unit2.XpTotal = 0;
             dataList.Add("Burner", unit2);
 
+            // туррель
             Unit unit3 = new Unit();
             unit3.AddSkill("_hpTurrel", 100);
             unit3.AddSkill("_standartRadius", 17.5f);
@@ -83,12 +150,15 @@ namespace UpgradeSystemAndData
             unit3.AddSkill("_standartTimeToReAlive", 20);
             unit3.AddCost("_hpTurrel", 50);
             unit3.AddCost("_standartRadius", 100);
-            unit3.AddCost("_standartDmgFar", 100);      
+            unit3.AddCost("_standartDmgFar", 100);
             unit3.AddCost("_standartShootingSpeed", 100);
             unit3.AddCost("_accuracy", 50);
             unit3.AddCost("_standartTimeToReAlive", 75);
+            unit3.XpForBuy = 0;
+            unit3.XpTotal = 0;
             dataList.Add("Turrel", unit3);
 
+            // автоматическая туррель
             Unit unit4 = new Unit();
             unit4.AddSkill("_hpTurrel", 75);
             unit4.AddSkill("_standartRadius", 15f);
@@ -100,8 +170,11 @@ namespace UpgradeSystemAndData
             unit4.AddCost("_standartDmgFar", 100);
             unit4.AddCost("_standartShootingSpeed", 100);
             unit4.AddCost("_standartTimeToReAlive", 75);
+            unit4.XpForBuy = 0;
+            unit4.XpTotal = 0;
             dataList.Add("AutoTurrel", unit4);
 
+            // ручная туррель
             Unit unit5 = new Unit();
             unit5.AddSkill("_hpTurrel", 50);
             unit5.AddSkill("_standartDmgFar", 2f);
@@ -113,8 +186,11 @@ namespace UpgradeSystemAndData
             unit5.AddCost("_standartShootingSpeed", 100);
             unit5.AddCost("_accuracy", 50);
             unit5.AddCost("_standartTimeToReAlive", 75);
+            unit5.XpForBuy = 0;
+            unit5.XpTotal = 0;
             dataList.Add("ManualTurrel", unit5);
 
+            // миномет
             Unit unit6 = new Unit();
             unit6.AddSkill("_hpTurrel", 50);
             unit6.AddSkill("_mineDamage", 5f);
@@ -124,8 +200,11 @@ namespace UpgradeSystemAndData
             unit6.AddCost("_mineDamage", 100);
             unit6.AddCost("_standartReloadTime", 100);
             unit6.AddCost("_standartTimeToReAlive", 75);
+            unit6.XpForBuy = 0;
+            unit6.XpTotal = 0;
             dataList.Add("MinesTurrel", unit6);
 
+            // минная туррель
             Unit unit7 = new Unit();
             unit7.AddSkill("_hpTurrel", 50);
             unit7.AddSkill("_mineDamage", 5f);
@@ -135,154 +214,78 @@ namespace UpgradeSystemAndData
             unit7.AddCost("_mineDamage", 100);
             unit7.AddCost("_standartReloadTime", 100);
             unit7.AddCost("_standartTimeToReAlive", 75);
+            unit7.XpForBuy = 0;
+            unit7.XpTotal = 0;
             dataList.Add("MortiraTurrel", unit7);
 
+            popupManager.text += "First data seted\n";
         }
 
+        /// <summary>
+        /// Устанавливаем сетевому менеджеру делегат на сохранение данных
+        /// </summary>
+        public void DelegateForSaveSet()
+        {
+            if (isLocalPlayer)
+            {
+                GameObject.Find("NetworkManager")
+                    .GetComponent<NetworkManagerCustom>().ActionForSave 
+                    = DisconnectMethodForDelegate;
+            }
+        }
+
+        /// <summary>
+        /// Инициализация важных переменных
+        /// </summary>
         private void Start()
         {
-            Instance = this;
             SetFirstData();
-            // ПОЛУЧАЕМ ДАННЫЕ С GOOGLE PLAY SERVICES
-            if (!Social.localUser.authenticated)
+
+            if (isLocalPlayer)
             {
-                Social.localUser.Authenticate((bool success) =>
+                Instance = this;
+                DelegateForSaveSet();
+
+                // ПОЛУЧАЕМ ДАННЫЕ С GOOGLE PLAY SERVICES
+                if (PlayGamesPlatform.Instance.IsAuthenticated())
                 {
-                    if (success)
+                    Instance.LoadCloud();
+                    playerHelper.GetNetIdentity(PlayGamesPlatform
+                        .Instance.GetUserDisplayName());
+                    netMsgController.
+                        CmdEnableAvatar(playerHelper.PlayerUniqueName);
+                }
+                // ПОЛУЧАЕМ ДАННЫЕ ЛОКАЛЬНО, ЕСЛИ НЕТ СОЕДИНЕНИЯ
+                else
+                {
+                    playerHelper.GetNetIdentity(null);
+                    if (PlayerPrefs.HasKey("LocalSave"))
                     {
-                        //Instance.LoadCloud();
+                        Instance.LoadLocal();
                     }
                     else
                     {
-                        if (PlayerPrefs.GetString("SaveStringUnits") != "")
-                        {
-                            //Instance.LoadLocal();
-                        }
+                        playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
                     }
-                });
+                    netMsgController.
+                        CmdEnableAvatar(playerHelper.PlayerUniqueName);
+                }
             }
-            Instance.LoadLocal();
-        }
-
-        /// <summary>
-        /// Получить словарь с данными о текущем юните
-        /// </summary>
-        /// <param name="unitName"></param>
-        /// <returns></returns>
-        public Unit GetDictionaryUnit(string unitName)
-        {
-            return dataList[unitName];
-        }
-
-        /// <summary>
-        /// Добавить словарь с данными о юните
-        /// </summary>
-        /// <param name="unitName"></param>
-        /// <param name="newUnit"></param>
-        public void SetDictionaryUnit(string unitName,Unit newUnit)
-        {
-            dataList.Remove(unitName);
-            dataList.Add(unitName, newUnit);
-        }
-
-        /// <summary>
-        /// Пользовательский юнит имеет 2 словаря, 
-        /// где хранятся данные о навыках, их величинах и стоимостях
-        /// </summary>
-        public class Unit
-        {
-            private List<string> skillNames = new List<string>();
-            private Dictionary<string, float> unitSkill
-                = new Dictionary<string, float>(); // величины навыков
-            private Dictionary<string, int> unitCost
-                = new Dictionary<string, int>(); // стоимость навыков
-
-            public void ClearAll()
+            else
             {
-                skillNames.Clear();
-                unitSkill.Clear();
-                unitCost.Clear();
-            }
-
-            /// <summary>
-            /// Добавить в словарь название навыка и его величину
-            /// </summary>
-            /// <param name="skill"></param>
-            /// <param name="value"></param>
-            public void AddSkill(string skill, float value)
-            {
-                skillNames.Add(skill);
-                unitSkill.Add(skill, value);
-            }
-
-            /// <summary>
-            /// Изменить значение навыка (при загрузке, прокачке)
-            /// </summary>
-            /// <param name="key"></param>
-            /// <param name="value"></param>
-            public void ChangeValue(string key, float value)
-            {
-                unitSkill[key] = value;
-            }
-            public void ChangeValue(int index, float value)
-            {
-
-                unitSkill[GetSkillName(index)] = value;
-            }
-
-            /// <summary>
-            /// Изменить стоимость навыка (при загрузке, прокачке)
-            /// </summary>
-            /// <param name="index"></param>
-            /// <param name="newCost"></param>
-            public void ChangeCost(int index, int newCost)
-            {
-                unitCost[GetSkillName(index)] = newCost;
-            }
-
-            /// <summary>
-            /// Получить значения навыка
-            /// </summary>
-            /// <param name="skill"></param>
-            /// <returns></returns>
-            public float GetValueSkill(string skill)
-            {
-                return unitSkill[skill];
-            }
-
-            public string GetSkillName(int i)
-            {
-                return skillNames.ElementAt(i);
-            }
-
-            public int GetLenghtOfAllSkills()
-            {
-                return skillNames.Count;
-            }
-
-            /// <summary>
-            /// Добавить в словарь название навыка и его стоимость
-            /// </summary>
-            /// <param name="skill"></param>
-            /// <param name="value"></param>
-            public void AddCost(string skill, int value)
-            {
-                unitCost.Add(skill, value);
-            }
-
-            /// <summary>
-            /// Получить стоимость навыка
-            /// </summary>
-            /// <param name="skill"></param>
-            /// <returns></returns>
-            public float GetValueCost(string skill)
-            {
-                return unitCost[skill];
+                Debug.Log("1");
+                netMsgController.
+                    RpcConnectPlayerNotification();
             }
         }
+        #endregion
 
         #region Сохранение и загрузка
-
+        /// <summary>
+        /// Используется для обработки сохранения/загрузки в облако
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="game"></param>
         public void SavedGameOpened(SavedGameRequestStatus status,
             ISavedGameMetadata game)
         {
@@ -290,7 +293,7 @@ namespace UpgradeSystemAndData
             {
                 if (isSaving) // writing data
                 {
-                    byte[] data = ASCIIEncoding.ASCII.GetBytes(GetSaveStringSkill());
+                    byte[] data = ASCIIEncoding.ASCII.GetBytes(GetSaveStringSkillAndCost());
                     TimeSpan playedTime = TimeSpan.FromSeconds(TotalPlaytime);
                     SavedGameMetadataUpdate.Builder builder =
                         new SavedGameMetadataUpdate.Builder().
@@ -299,7 +302,7 @@ namespace UpgradeSystemAndData
 
                     SavedGameMetadataUpdate update = builder.Build();
                     ((PlayGamesPlatform)Social.Active).SavedGame.CommitUpdate(game, update, data, SavedGameWritten);
-
+                    popupManager.text += " successfully!\n";
                 }
                 else // reading data
                 {
@@ -308,87 +311,137 @@ namespace UpgradeSystemAndData
             }
             else
             {
-                // debug error
+                popupManager.text += "\nWrong saving in cloud...\n";
             }
         }
 
+        /// <summary>
+        /// Перезаписать игру?
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="game"></param>
         private void SavedGameWritten(SavedGameRequestStatus status,
             ISavedGameMetadata game)
         {
             Debug.Log(status);
         }
 
+        /// <summary>
+        /// Чтение из облака
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="data"></param>
         public void SavedGameLoaded(SavedGameRequestStatus status, byte[] data)
         {
             if (status == SavedGameRequestStatus.Success)
             {
-                LoadFromstring(System.Text.ASCIIEncoding.ASCII.GetString(data));
+                LoadFromstring(LocalAndCloudComparison(data));
+                popupManager.text += " successfully!\n";
             }
             else
             {
-                Debug.Log("");
+                popupManager.text += "Error reading from cloud!\n";
             }
         }
 
+        /// <summary>
+        /// Загрузить из облака
+        /// </summary>
+        /// <param name="savedData"></param>
         private void LoadFromstring(string savedData)
         {
-            string[] data = savedData.Split('|');
+            int i = 0;
+            Debug.Log("Load: " + savedData);
+            popupManager.text += "Load cloud: " + savedData.Split('S')[0].ToString() + "\n";
+            string[] unitsANDcostsANDxpANDplayerPrefs = savedData.Split('S');
+            string saveDataUnits = unitsANDcostsANDxpANDplayerPrefs[1];
+            string saveDataCost = unitsANDcostsANDxpANDplayerPrefs[2];
+            string saveDataXP = unitsANDcostsANDxpANDplayerPrefs[3];
+            string playerXP = unitsANDcostsANDxpANDplayerPrefs[4];
+
+            string[] skills = saveDataUnits.Split('_'); // разбираем строку на юниты
+            string[] costs = saveDataCost.Split('_'); // разбираем строку на юниты
+            string[] xps = saveDataXP.Split('_');
+
+            foreach (KeyValuePair<string, Unit> pair in dataList)
+            {
+                Unit un = pair.Value;
+                string[] valuesSkills = skills[i].Split('|'); // разбираем юнита на значения
+                string[] valuesCosts = costs[i].Split('|');
+                string[] valueXPS = xps[i].Split('|');
+                for (int j = 0; j < valuesSkills.Length; j++)
+                {
+                    un.ChangeValue(j, float.Parse(valuesSkills[j]));
+                    un.ChangeCost(j, int.Parse(valuesCosts[j]));
+                }
+                un.XpForBuy = int.Parse(valueXPS[0]);
+                un.XpTotal = int.Parse(valueXPS[1]);
+                i++;
+            }
+            playerHelper.PlayerXP = int.Parse(playerXP);
+            
+            LoadDataForUnits();
+            isLoaded = true;
+            playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
         }
 
         /// <summary>
-        /// Сохраняет на локальное устройство
+        /// Сохраняем данные локально
         /// </summary>
         public void SaveLocal()
         {
-            Debug.Log("Сохраняем...");
-            PlayerPrefs.SetString("SaveStringUnits", GetSaveStringSkill());
-            PlayerPrefs.SetString("SaveStringCost", GetSaveStringCost());
+            string playerSave = GetSaveStringSkillAndCost();
+            popupManager.text += "Local save: " + playerSave.Split('S')[0].ToString() + "\n";
+            PlayerPrefs.SetString("LocalSave", playerSave);
+            Debug.Log("Local save: " + playerSave);
+            popupManager.text += "Local saved\n";
         }
 
         /// <summary>
-        /// Загружает локальные сохранения
+        /// Загружаем данные локально
         /// </summary>
         public void LoadLocal()
         {
             int i = 0;
-            string saveDataUnits = PlayerPrefs.GetString("SaveStringUnits"); // получаем строку с юнитами
-            string saveDataCost = PlayerPrefs.GetString("SaveStringCost"); // получаем строку со стоимостями
+            Debug.Log("Load: " + PlayerPrefs.GetString("LocalSave"));
+            popupManager.text += "Load local: " + PlayerPrefs.GetString("LocalSave").Split('S')[0].ToString() + "\n";
+            string[] unitsANDcostsANDxpANDplayerPrefs = PlayerPrefs.GetString("LocalSave").Split('S');
+            string saveDataUnits = unitsANDcostsANDxpANDplayerPrefs[1];
+            string saveDataCost = unitsANDcostsANDxpANDplayerPrefs[2];
+            string saveDataXP = unitsANDcostsANDxpANDplayerPrefs[3];
+            string playerXP = unitsANDcostsANDxpANDplayerPrefs[4];
 
-            Debug.Log("Сэйв скилов имеет вид: " + saveDataUnits);
             string[] skills = saveDataUnits.Split('_'); // разбираем строку на юниты
+            string[] costs = saveDataCost.Split('_'); // разбираем строку на юниты
+            string[] xps = saveDataXP.Split('_');
 
             foreach (KeyValuePair<string, Unit> pair in dataList)
             {
                 Unit un = pair.Value;
-                string[] values = skills[i].Split('|'); // разбираем юнита на значения
-                for (int j = 0;j<values.Length;j++)
+                string[] valuesSkills = skills[i].Split('|'); // разбираем юнита на значения
+                string[] valuesCosts = costs[i].Split('|');
+                string[] valueXPS = xps[i].Split('|');
+                for (int j = 0;j< valuesSkills.Length;j++)
                 {
-                    un.ChangeValue(j, float.Parse(values[j]));
+                    un.ChangeValue(j, float.Parse(valuesSkills[j]));
+                    un.ChangeCost(j, int.Parse(valuesCosts[j]));
                 }
+                un.XpForBuy = int.Parse(valueXPS[0]);
+                un.XpTotal = int.Parse(valueXPS[1]);
                 i++;
             }
+            playerHelper.PlayerXP = int.Parse(playerXP);
 
-            Debug.Log("Сэйв стоимостей имеет вид: " + saveDataCost);
-            string[] costs = saveDataCost.Split('%'); // разбираем строку на юниты
-            /*
-            foreach (KeyValuePair<string, Unit> pair in dataList)
-            {
-                Unit un = pair.Value;
-                string[] values = costs[i].Split('/'); // разбираем юнита на значения
-                // НЕ РАЗБИРАЕТ
-                for (int j = 0; j < values.Length; j++)
-                {
 
-                    un.ChangeCost(j, Convert.ToInt32(values[j]));
-                }
-                i++;
-            }
-
-            */
             LoadDataForUnits();
-            Debug.Log("Загружено!");
+            popupManager.text += "Local loaded successfully\n";
+            isLoaded = true;
+            playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
         }
 
+        /// <summary>
+        /// Загружаются сохранения
+        /// </summary>
         public void LoadDataForUnits()
         {
             GameObject prefab;
@@ -516,9 +569,14 @@ namespace UpgradeSystemAndData
             }
         }
 
+        /// <summary>
+        /// Получить строку сохраненных скилов
+        /// </summary>
+        /// <returns></returns>
         private string GetSaveStringSkill()
         {
             string saveData = "";
+            int counter = 0;
             foreach (KeyValuePair<string,Unit> pair in dataList)
             {
                 Unit un = pair.Value;
@@ -527,78 +585,328 @@ namespace UpgradeSystemAndData
                     saveData += un.GetValueSkill(un.GetSkillName(i));
                     if (i != un.GetLenghtOfAllSkills()-1) saveData += "|";
                 }
-                saveData += "_";
+                if (counter != dataList.Count - 1) saveData += "_";
+                counter++;
             }
-            Debug.Log("Сэйв скилов имеет вид: " + saveData);
             return saveData;
         }
 
+        /// <summary>
+        /// Получить строку времени, скилов, стоимостей
+        /// Позже добавим деньги и опыт
+        /// </summary>
+        /// <returns></returns>
+        public string GetSaveStringSkillAndCost()
+        {
+            return DateTime.Now.Ticks.ToString() +"S"+GetSaveStringSkill() 
+                + "S" + GetSaveStringCost() + "S" + GetXPUnits() +"S" + GetPlayerXP();
+        }
+
+        private string GetPlayerXP()
+        {
+            return playerHelper.PlayerXP.ToString();
+        }
+
+        public string GetXPUnits()
+        {
+            string saveData = "";
+            int counter = 0;
+            foreach (KeyValuePair<string, Unit> pair in dataList)
+            {
+                Unit un = pair.Value;
+                saveData += un.XpForBuy + "|" + un.XpTotal;
+
+                if (counter != dataList.Count - 1) saveData += "_";
+                counter++;
+            }
+            return saveData;
+        }
+
+        /// <summary>
+        /// Сравниваем время сохранения локалки и облака
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public string LocalAndCloudComparison(byte[] data)
+        {
+            string cloudSave = null;
+            string localSave = null;
+            ulong cloudTime = 0;
+            ulong localTime = 0;
+
+            try
+            {
+                cloudSave = System.Text.ASCIIEncoding.ASCII.GetString(data);
+                if (!PlayerPrefs.HasKey("LocalSave")) return cloudSave;
+                localSave = PlayerPrefs.GetString("LocalSave");
+
+                cloudTime = ulong.Parse(cloudSave.Split('S')[0]);
+                localTime = ulong.Parse(localSave.Split('S')[0]);
+            }
+            catch
+            {
+                popupManager.text += " error reading in comparison!\n";
+            }
+            return localTime > cloudTime ? localSave : cloudSave;
+        }
+
+        /// <summary>
+        /// Получить строку сохраненных стоимостей
+        /// </summary>
+        /// <returns></returns>
         private string GetSaveStringCost()
         {
             string saveData = "";
+            int counter = 0;
             foreach (KeyValuePair<string, Unit> pair in dataList)
             {
                 Unit un = pair.Value;
                 for (int i = 0; i < un.GetLenghtOfAllSkills(); i++)
                 {
                     saveData += un.GetValueCost(un.GetSkillName(i));
-                    if (i != un.GetLenghtOfAllSkills() - 1) saveData += "/";
+                    if (i != un.GetLenghtOfAllSkills() - 1) saveData += "|";
                 }
-                saveData += "%";
+                if (counter != dataList.Count-1) saveData += "_";
+                counter++;
             }
-            Debug.Log("Сэйв стоимостей имеет вид: " + saveData);
             return saveData;
         }
 
-        public void LoadData()
-        {
-            GooglePlayGames.BasicApi.PlayGamesClientConfiguration config =
-                new GooglePlayGames.BasicApi.PlayGamesClientConfiguration.
-                    Builder().EnableSavedGames().Build();
-            PlayGamesPlatform.InitializeInstance(config);
-            Instance = this;
-        }
-
-        private void LoadCloud()
+        /// <summary>
+        /// Загрузить данные из облака
+        /// </summary>
+        public void LoadCloud()
         {
             isSaving = false;
-            ((PlayGamesPlatform)Social.Active).SavedGame.OpenWithAutomaticConflictResolution
-                ("ThePenguinSave", GooglePlayGames.BasicApi.DataSource.ReadCacheOrNetwork,
-                    ConflictResolutionStrategy.UseLongestPlaytime, SavedGameOpened);
+
+            popupManager.text += "Beginning to load from cloud... ";
+            try
+            {
+                // загрузка
+                PlayGamesPlatform.Activate();
+                ((PlayGamesPlatform)Social.Active).SavedGame.OpenWithAutomaticConflictResolution
+                    ("CloudSave", GooglePlayGames.BasicApi.DataSource.ReadCacheOrNetwork,
+                        ConflictResolutionStrategy.UseLongestPlaytime, SavedGameOpened);
+            }
+            catch (Exception e)
+            {
+                popupManager.text += e + "\n";
+                popupManager.text += "Error while load from cloud!\n";
+            }
         }
 
-        private void SaveCloud()
+        public void DisconnectMethodForDelegate()
         {
+            SaveCloud();
+            netMsgController.UnshowAllUI();
+            netMsgController.
+                CmdDisableAvatar(playerHelper.PlayerUniqueName);
+        }
+
+        /// <summary>
+        /// Сохраняем данные в облако (если есть соединение) и локально
+        /// </summary>
+        public void SaveCloud()
+        {
+            if (!isLocalPlayer) return;
+
             if (Social.localUser.authenticated)
             {
                 isSaving = true;
                 hasBeenWarnedLocalSave = false;
-                SaveLocal();
-                ((PlayGamesPlatform)Social.Active).SavedGame.OpenWithAutomaticConflictResolution
-                    ("ThePenguinSave", GooglePlayGames.BasicApi.DataSource.ReadCacheOrNetwork,
-                        ConflictResolutionStrategy.UseLongestPlaytime, SavedGameOpened);
+                popupManager.text += "Beginning to save in cloud... ";
+                try
+                {
+                    // Сохраняет в облако
+                    PlayGamesPlatform.Activate();
+                    ((PlayGamesPlatform)Social.Active).SavedGame.OpenWithAutomaticConflictResolution
+                        ("CloudSave", GooglePlayGames.BasicApi.DataSource.ReadCacheOrNetwork,
+                            ConflictResolutionStrategy.UseLongestPlaytime, SavedGameOpened);
+                }
+                catch (Exception e)
+                {
+                    popupManager.text += e + "\n";
+                    popupManager.text += "Wrong while save in cloud!\n";
+                }
             }
             else
             {
                 if (!hasBeenWarnedLocalSave)
                 {
-                    // unable to save
+                    popupManager.text += "Cloud save error\n";
                 }
                 hasBeenWarnedLocalSave = true;
-                SaveLocal();
-
             }
-        }
-
-        public void ReloadSaveData()
-        {
-            LoadCloud();
-        }
-
-        public void OnApplicationQuit()
-        {
             SaveLocal();
         }
+
+        /// <summary>
+        /// Выход из приложения
+        /// </summary>
+        public void OnApplicationQuit()
+        {
+            SaveCloud();
+            netMsgController.UnshowAllUI();
+            netMsgController.
+                CmdDisableAvatar(playerHelper.PlayerUniqueName);
+        }
         #endregion
+
+        /// <summary>
+        /// Пользовательский юнит имеет 2 словаря, 
+        /// где хранятся данные о навыках, их величинах и стоимостях
+        /// </summary>
+        public class Unit
+        {
+            private int xpForBuy;
+            private int xpTotal;
+
+            private List<string> skillNames = new List<string>();
+            private Dictionary<string, float> unitSkill
+                = new Dictionary<string, float>(); // величины навыков
+            private Dictionary<string, int> unitCost
+                = new Dictionary<string, int>(); // стоимость навыков
+
+            /// <summary>
+            /// Суммарный опыт юнита
+            /// </summary>
+            public int XpTotal
+            {
+                get
+                {
+                    return xpTotal;
+                }
+
+                set
+                {
+                    xpTotal = value;
+                }
+            }
+
+            /// <summary>
+            /// Опыт юнита для покупок
+            /// </summary>
+            public int XpForBuy
+            {
+                get
+                {
+                    return xpForBuy;
+                }
+
+                set
+                {
+                    xpForBuy = value;
+                }
+            }
+
+            /// <summary>
+            /// Очистить все данные
+            /// </summary>
+            public void ClearAll()
+            {
+                skillNames.Clear();
+                unitSkill.Clear();
+                unitCost.Clear();
+            }
+
+            /// <summary>
+            /// Добавить в словарь название навыка и его величину
+            /// </summary>
+            /// <param name="skill"></param>
+            /// <param name="value"></param>
+            public void AddSkill(string skill, float value)
+            {
+                skillNames.Add(skill);
+                unitSkill.Add(skill, value);
+            }
+
+            /// <summary>
+            /// Изменить значение навыка через имя
+            /// </summary>
+            /// <param name="key"></param>
+            /// <param name="value"></param>
+            public void ChangeValue(string key, float value)
+            {
+                unitSkill[key] = value;
+            }
+
+            /// <summary>
+            /// Изменить значение навыка через индекс
+            /// </summary>
+            /// <param name="index"></param>
+            /// <param name="value"></param>
+            public void ChangeValue(int index, float value)
+            {
+                unitSkill[GetSkillName(index)] = value;
+            }
+
+            /// <summary>
+            /// Изменить стоимость навыка через индекс
+            /// </summary>
+            /// <param name="index"></param>
+            /// <param name="newCost"></param>
+            public void ChangeCost(int index, int newCost)
+            {
+                unitCost[GetSkillName(index)] = newCost;
+            }
+            /// <summary>
+            /// Изменить стоимость навыка через имя
+            /// </summary>
+            /// <param name="key"></param>
+            /// <param name="newCost"></param>
+            public void ChangeCost(string key, int newCost)
+            {
+                unitCost[key] = newCost;
+            }
+
+            /// <summary>
+            /// Получить значения навыка
+            /// </summary>
+            /// <param name="skill"></param>
+            /// <returns></returns>
+            public float GetValueSkill(string skill)
+            {
+                return unitSkill[skill];
+            }
+
+            /// <summary>
+            /// Получить название скила
+            /// </summary>
+            /// <param name="i"></param>
+            /// <returns></returns>
+            public string GetSkillName(int i)
+            {
+                return skillNames.ElementAt(i);
+            }
+
+            /// <summary>
+            /// Получить длину всех скилов
+            /// </summary>
+            /// <returns></returns>
+            public int GetLenghtOfAllSkills()
+            {
+                return skillNames.Count;
+            }
+
+            /// <summary>
+            /// Добавить в словарь название навыка и его стоимость
+            /// </summary>
+            /// <param name="skill"></param>
+            /// <param name="value"></param>
+            public void AddCost(string skill, int value)
+            {
+                unitCost.Add(skill, value);
+            }
+
+            /// <summary>
+            /// Получить стоимость навыка
+            /// </summary>
+            /// <param name="skill"></param>
+            /// <returns></returns>
+            public float GetValueCost(string skill)
+            {
+                return unitCost[skill];
+            }
+        }
     }
 }
