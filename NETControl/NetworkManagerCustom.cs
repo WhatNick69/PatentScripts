@@ -55,6 +55,7 @@ namespace NETControl
         private GameObject joinMenu;
 
         private float timeForDisconnect = 3f;
+        private bool isGaming;
 
         // OTHER VARIABLES
         /// <summary>
@@ -98,6 +99,7 @@ namespace NETControl
         public void OpenHostMenu()
         {
             PlayAudio();
+            CheckNETState();
             mainMenu.SetActive(false);
             hostMenu.SetActive(true);
         }
@@ -106,9 +108,9 @@ namespace NETControl
         /// Свернуть главное меню и открыть меню создания комнаты
         /// </summary>
         public void OpenJoinMenu()
-        {
-            
+        {       
             PlayAudio();
+            CheckNETState();
             mainMenu.SetActive(false);
             joinMenu.SetActive(true);
         }
@@ -191,34 +193,83 @@ namespace NETControl
         }
 
         /// <summary>
-        /// Пробуем подключиться к серверам UNet
+        /// Проверить состояние интернет-соединения
         /// </summary>
-        /// <returns></returns>
-        IEnumerator<float> ConToUNet()
+        private void CheckNETState()
         {
-            yield return Timing.WaitForSeconds(0);
             networkManager = NetworkManager.singleton;
             if (networkManager.matchMaker == null)
-            {
                 networkManager.StartMatchMaker();
-            }
+
             if (Application.internetReachability != NetworkReachability.NotReachable)
             {
-                isOnline = true;
+                Debug.Log("isOnline");
                 startHostButton.transform.
                     GetComponentInChildren<Text>().text = "Create room";
                 openJoinMenuButton.SetActive(true);
+                achievementsButton.SetActive(true);
+                leaderBoardButton.SetActive(true);
                 fieldIPAdress.SetActive(true);
                 fieldPassword.SetActive(true);
             }
             else
             {
-                isOnline = false;
+                Debug.Log("isNotOnline");
                 startHostButton.transform.
                     GetComponentInChildren<Text>().text = "Play offline";
                 openJoinMenuButton.SetActive(false);
+                achievementsButton.SetActive(false);
+                leaderBoardButton.SetActive(false);
                 fieldIPAdress.SetActive(false);
                 fieldPassword.SetActive(false);
+            }
+        }
+             
+        /// <summary>
+        /// Пробуем подключиться к серверам UNet
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator<float> ConToUNet()
+        {
+            CheckNETState();
+            networkManager = NetworkManager.singleton;
+            while (true)
+            {
+                if (isGaming) yield break;
+
+                if (networkManager.matchMaker == null)
+                    networkManager.StartMatchMaker();
+
+                if (Application.internetReachability != NetworkReachability.NotReachable)
+                {
+                    if (!isOnline)
+                    {
+                        isOnline = true;
+                        Debug.Log("isOnline");
+                        startHostButton.transform.
+                            GetComponentInChildren<Text>().text = "Create room";
+                        openJoinMenuButton.SetActive(true);
+                        achievementsButton.SetActive(true);
+                        leaderBoardButton.SetActive(true);
+                        fieldIPAdress.SetActive(true);
+                        fieldPassword.SetActive(true);
+                    }
+                }
+                else
+                {
+                    if (isOnline) {
+                        isOnline = false;
+                        Debug.Log("isNotOnline");
+                        startHostButton.transform.
+                            GetComponentInChildren<Text>().text = "Play offline";
+                        openJoinMenuButton.SetActive(false);
+                        achievementsButton.SetActive(false);
+                        leaderBoardButton.SetActive(false);
+                        fieldIPAdress.SetActive(false);
+                        fieldPassword.SetActive(false);
+                    }
+                }
+                yield return Timing.WaitForSeconds(3);
             }
         }
 
@@ -263,6 +314,7 @@ namespace NETControl
         public void ShowAchievements()
         {
             PlayAudio();
+            CheckNETState();
             GetAchievement(3);
             Social.ShowAchievementsUI();
         }
@@ -273,6 +325,7 @@ namespace NETControl
         public void ShowLeaderboard()
         {
             PlayAudio();
+            CheckNETState();
             GetAchievement(2);
             Social.ShowLeaderboardUI();
         }
@@ -293,17 +346,21 @@ namespace NETControl
         /// </summary>
         public void StartupHost()
         {
+            isGaming = true;
+
             string ipAdress = 
                 fieldIPAdress.transform.GetComponentInChildren<Text>().text;
             string password =
                 fieldPassword.transform.GetComponentInChildren<Text>().text;
             if (isOnline)
             {
+                Debug.Log("ONLINE");
                 timeForDisconnect = 5.5f;
                 HostRoom(ipAdress, 2);
             }
             else
             {
+                Debug.Log("OFFLINE");
                 timeForDisconnect = 5f;
                 SetPort();
                 singleton.StartHost();
@@ -395,6 +452,8 @@ namespace NETControl
         /// </summary>
         public void DisconnectEvent()
         {
+            isGaming = false;
+
             if (actionForSave != null)
                 actionForSave.Invoke(); // делегат
 

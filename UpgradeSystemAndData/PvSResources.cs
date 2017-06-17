@@ -21,9 +21,11 @@
 /// Resources.
 ///
 
-
-public static class PvSResources
+namespace UpgradeSystemAndData
 {
+
+    public static class PvSResources
+    {
         public const string achievement_oups = "CgkIsaL_lZ4XEAIQAg"; // <GPGSID>
         public const string achievement_upupup = "CgkIsaL_lZ4XEAIQBQ"; // <GPGSID>
         public const string achievement_up = "CgkIsaL_lZ4XEAIQBA"; // <GPGSID>
@@ -31,5 +33,6 @@ public static class PvSResources
         public const string achievement_started = "CgkIsaL_lZ4XEAIQBg"; // <GPGSID>
         public const string achievement_first_snow = "CgkIsaL_lZ4XEAIQAQ"; // <GPGSID>
 
+    }
 }
 

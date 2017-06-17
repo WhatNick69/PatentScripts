@@ -281,6 +281,28 @@ namespace UpgradeSystemAndData
         }
         #endregion
 
+        private void EmptySaveData()
+        {
+            ((PlayGamesPlatform)Social.Active).SavedGame.OpenWithAutomaticConflictResolution
+            ("CloudSave", GooglePlayGames.BasicApi.DataSource.ReadCacheOrNetwork,
+            ConflictResolutionStrategy.UseLongestPlaytime, SaveEmpty);         
+        }
+
+        private void SaveEmpty(SavedGameRequestStatus status,
+            ISavedGameMetadata game)
+        {
+            byte[] data = ASCIIEncoding.ASCII.GetBytes("");
+            TimeSpan playedTime = TimeSpan.FromSeconds(TotalPlaytime);
+            SavedGameMetadataUpdate.Builder builder =
+                new SavedGameMetadataUpdate.Builder().
+                    WithUpdatedPlayedTime(playedTime).
+                    WithUpdatedDescription("Saved game ad " + DateTime.Now);
+
+            SavedGameMetadataUpdate update = builder.Build();
+            ((PlayGamesPlatform)Social.Active).SavedGame.CommitUpdate(game, update, data, SavedGameWritten);
+            popupManager.text += " successfully!\n";
+        }
+
         #region Сохранение и загрузка
         /// <summary>
         /// Используется для обработки сохранения/загрузки в облако
@@ -336,7 +358,10 @@ namespace UpgradeSystemAndData
         {
             if (status == SavedGameRequestStatus.Success)
             {
-                LoadFromstring(LocalAndCloudComparison(data));
+                string saveData = LocalAndCloudComparison(data);
+                if (saveData == null) return;
+
+                LoadFromstring(saveData);
                 popupManager.text += " successfully!\n";
             }
             else
@@ -438,6 +463,250 @@ namespace UpgradeSystemAndData
             popupManager.text += "Local loaded successfully\n";
             isLoaded = true;
             playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
+        }
+
+        /// <summary>
+        /// Получить строку с навыками для парсинга
+        /// в методе InstantiateObject() класса PlayerHelper
+        /// </summary>
+        /// <param name="curUnit"></param>
+        /// <returns></returns>
+        public string GetUnitSkillsStringForInstantiate(int curUnit)
+        {
+            string skills = null;
+            Unit un = new Unit();
+
+            switch (curUnit)
+            {
+                case 0:
+                    un = GetDictionaryUnit("Penguin");
+                    skills +=
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgNear");
+                    skills += "|" + 
+                        un.GetValueSkill("_standartRadius");
+                    skills += "|" + 
+                        un.GetValueSkill("_attackSpeed");
+                    skills += "|" + 
+                        un.GetValueSkill("_moveSpeed");
+                    break;
+                case 1:
+                    un = GetDictionaryUnit("Archer");
+                    skills +=
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgNear");
+                    skills += "|" +
+                        un.GetValueSkill("_standartRadius");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgFar");
+                    skills += "|" +
+                        (int)un.GetValueSkill("_standartOfAmmo");
+                    skills += "|" +
+                        un.GetValueSkill("_standartShootingSpeed");
+                    break;
+                case 2:
+                    un = GetDictionaryUnit("Burner");
+                    skills += 
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgNear");
+                    skills += "|" +
+                        un.GetValueSkill("_standartRadius");
+                    skills += "|" +
+                        un.GetValueSkill("_standartBurnDmg");
+                    skills += "|" +
+                        (int)un.GetValueSkill("_standartOfAmmo");
+                    skills += "|" +
+                        un.GetValueSkill("_standartShootingSpeed");
+                    break;
+                case 3:
+                    un = GetDictionaryUnit("Turrel");
+                    skills += 
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartRadius");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgFar");
+                    skills += "|" +
+                        un.GetValueSkill("_standartShootingSpeed");
+                    skills += "|" +
+                         un.GetValueSkill("_accuracy");
+                    skills += "|" +
+                         un.GetValueSkill("_standartTimeToReAlive");
+                    break;
+                case 4:
+                    un = GetDictionaryUnit("AutoTurrel");
+                    skills +=
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartRadius");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgFar");
+                    skills += "|" +
+                        un.GetValueSkill("_standartShootingSpeed");
+                    skills += "|" +
+                         un.GetValueSkill("_standartTimeToReAlive");
+                    break;
+                case 5:
+                    un = GetDictionaryUnit("ManualTurrel");
+                    skills +=
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_standartDmgFar");
+                    skills += "|" +
+                        un.GetValueSkill("_standartShootingSpeed");
+                    skills += "|" +
+                         un.GetValueSkill("_accuracy");
+                    skills += "|" +
+                         un.GetValueSkill("_standartTimeToReAlive");
+                    break;
+                case 6:
+                    un = GetDictionaryUnit("MinesTurrel");
+                    skills += 
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_mineDamage");
+                    skills += "|" +
+                        un.GetValueSkill("_standartTimeToReAlive");
+                    skills += "|" +
+                         un.GetValueSkill("_standartReloadTime");
+                    break;
+                case 7:
+                    un = GetDictionaryUnit("MortiraTurrel");
+                    skills += 
+                        un.GetValueSkill("_hpTurrel");
+                    skills += "|" +
+                        un.GetValueSkill("_mineDamage");
+                    skills += "|" +
+                        un.GetValueSkill("_standartTimeToReAlive");
+                    skills += "|" +
+                         un.GetValueSkill("_standartReloadTime");
+                    break;
+            }
+
+            return skills;
+        }
+
+        /// <summary>
+        /// Установить значения скилов для создаваемого юнита из строки
+        /// </summary>
+        /// <param name="skillString"></param>
+        /// <param name="playerUnit"></param>
+        /// <param name="curUnit"></param>
+        public static void SetNewSkillsOfUnitForInstantiate(string skillString,GameObject playerUnit,int curUnit)
+        {
+            List<float> values = skillString.Split('|').Select(float.Parse).ToList();
+
+            switch (curUnit)
+            {
+                case 0:
+                    playerUnit.GetComponent<PlayerAbstract>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<PlayerAbstract>().StandartDmgNear =
+                        values[1];
+                    playerUnit.GetComponent<PlayerAbstract>().StandartRadius =
+                        values[2];
+                    playerUnit.GetComponent<PlayerAbstract>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<PlayerAbstract>().AttackSpeed =
+                        values[3];
+                    playerUnit.GetComponent<PlayerAbstract>().MoveSpeed =
+                        values[4];
+                    playerUnit.GetComponent<PlayerAbstract>().SetNewAgentSpeed();
+                    break;
+                case 1:
+                    playerUnit.GetComponent<LiteArcher>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<LiteArcher>().StandartDmgNear =
+                        values[1];
+                    playerUnit.GetComponent<LiteArcher>().StandartRadius =
+                        values[2];
+                    playerUnit.GetComponent<LiteArcher>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteArcher>().StandartDmgFar =
+                        values[3];
+                    playerUnit.GetComponent<LiteArcher>().StandartOfAmmo =
+                        (int)values[4];
+                    playerUnit.GetComponent<LiteArcher>().StandartShootingSpeed =
+                        values[5];
+                    break;
+                case 2:
+                    playerUnit.GetComponent<LiteBurner>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<LiteBurner>().StandartDmgNear =
+                        values[1];
+                    playerUnit.GetComponent<LiteBurner>().StandartRadius =
+                        values[2];
+                    playerUnit.GetComponent<LiteBurner>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteBurner>().StandartBurnDmg =
+                        values[3];
+                    playerUnit.GetComponent<LiteBurner>().StandartOfAmmo =
+                        (int)values[4];
+                    playerUnit.GetComponent<LiteBurner>().StandartShootingSpeed =
+                        values[5];
+                    break;
+                case 3:
+                    playerUnit.GetComponent<LiteTurrel>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<LiteTurrel>().StandartRadius =
+                        values[1];
+                    playerUnit.GetComponent<LiteTurrel>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteTurrel>().StandartDmgFar =
+                        values[2];
+                    playerUnit.GetComponent<LiteTurrel>().StandartShootingSpeed =
+                        values[3];
+                    playerUnit.GetComponent<LiteTurrel>().StandartAccuracy =
+                        values[4];
+                    playerUnit.GetComponent<LiteTurrel>().StandartTimeToReAlive =
+                        values[5];
+                    break;
+                case 4:
+                    playerUnit.GetComponent<LiteTurrel>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<LiteTurrel>().StandartRadius =
+                        values[1];
+                    playerUnit.GetComponent<LiteTurrel>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteTurrel>().StandartDmgFar =
+                        values[2];
+                    playerUnit.GetComponent<LiteTurrel>().StandartShootingSpeed =
+                        values[3];
+                    playerUnit.GetComponent<LiteTurrel>().StandartTimeToReAlive =
+                        values[4];
+                    break;
+                case 5:
+                    playerUnit.GetComponent<ManualTurrel>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<ManualTurrel>().StandartDmgFar =
+                        values[1];
+                    playerUnit.GetComponent<ManualTurrel>().StandartShootingSpeed =
+                        values[2];
+                    playerUnit.GetComponent<ManualTurrel>().StandartAccuracy =
+                        values[3];
+                    playerUnit.GetComponent<ManualTurrel>().StandartTimeToReAlive =
+                        values[4];
+                    break;
+                case 6:
+                    playerUnit.GetComponent<LiteStaticTurrel>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<LiteStaticTurrel>().MineDamage =
+                        values[1];
+                    playerUnit.GetComponent<LiteStaticTurrel>().StandartTimeToReAlive =
+                        values[2];
+                    playerUnit.GetComponent<LiteStaticTurrel>().StandartReloadTime =
+                        values[3];
+                    break;
+                case 7:
+                    playerUnit.GetComponent<MortiraTurrel>().HpTurrel =
+                        values[0];
+                    playerUnit.GetComponent<MortiraTurrel>().StandartDmgFar =
+                        values[1];
+                    playerUnit.GetComponent<MortiraTurrel>().StandartTimeToReAlive =
+                        values[2];
+                    playerUnit.GetComponent<MortiraTurrel>().StandartShootingSpeed =
+                        values[3];
+                    break;
+            }
+            Debug.Log("Values has been refreshed!");
         }
 
         /// <summary>
@@ -603,11 +872,19 @@ namespace UpgradeSystemAndData
                 + "S" + GetSaveStringCost() + "S" + GetXPUnits() +"S" + GetPlayerXP();
         }
 
+        /// <summary>
+        /// Получить опыт игрока
+        /// </summary>
+        /// <returns></returns>
         private string GetPlayerXP()
         {
             return playerHelper.PlayerXP.ToString();
         }
 
+        /// <summary>
+        /// Получить опыт юнитов
+        /// </summary>
+        /// <returns></returns>
         public string GetXPUnits()
         {
             string saveData = "";
@@ -638,9 +915,26 @@ namespace UpgradeSystemAndData
             try
             {
                 cloudSave = System.Text.ASCIIEncoding.ASCII.GetString(data);
-                if (!PlayerPrefs.HasKey("LocalSave")) return cloudSave;
-                localSave = PlayerPrefs.GetString("LocalSave");
+                // если нет локалки, но есть облако
+                if (!PlayerPrefs.HasKey("LocalSave") && cloudSave != "") return cloudSave;
 
+                // если облако пусто, но есть локалка - выдаем локалку
+                if ((cloudSave == null || cloudSave == "") &&
+                    PlayerPrefs.HasKey("LocalSave"))
+                {
+                    return PlayerPrefs.GetString("LocalSave");
+                }
+
+                // если облако пусто и пуста локалка - сохраняем облако
+                if ((cloudSave == null || cloudSave == "") &&
+                     !PlayerPrefs.HasKey("LocalSave"))
+                {
+                    SaveCloud();
+                    LoadCloud();
+                    return null;
+                }
+
+                localSave = PlayerPrefs.GetString("LocalSave");
                 cloudTime = ulong.Parse(cloudSave.Split('S')[0]);
                 localTime = ulong.Parse(localSave.Split('S')[0]);
             }
@@ -696,6 +990,9 @@ namespace UpgradeSystemAndData
             }
         }
 
+        /// <summary>
+        /// Создание делегата для дисконнекта
+        /// </summary>
         public void DisconnectMethodForDelegate()
         {
             SaveCloud();
@@ -746,10 +1043,10 @@ namespace UpgradeSystemAndData
         /// </summary>
         public void OnApplicationQuit()
         {
-            SaveCloud();
-            netMsgController.UnshowAllUI();
             netMsgController.
                 CmdDisableAvatar(playerHelper.PlayerUniqueName);
+            SaveCloud();
+            //netMsgController.UnshowAllUI();
         }
         #endregion
 
