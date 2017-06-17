@@ -84,6 +84,7 @@ namespace NETControl
         private IEnumerator<float> ActiveAcceptInvokeButton()
         {
             yield return  Timing.WaitForSeconds(1f);
+            if (showDisconnectAcceptBoxButton == null) yield return 0;
             showDisconnectAcceptBoxButton.GetComponent<Button>().enabled = true;
         }
 
@@ -95,6 +96,7 @@ namespace NETControl
         private IEnumerator<float> ActiveAcceptBoxButtons()
         {
             yield return Timing.WaitForSeconds(1f);
+            if (backToGameAgainButton == null) yield return 0;
             backToGameAgainButton.GetComponent<Button>().enabled = true;
             acceptToDisconnectButton.GetComponent<Button>().enabled = true;
         }

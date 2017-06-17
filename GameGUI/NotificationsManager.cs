@@ -132,6 +132,8 @@ namespace GameGUI
                 text.text = i.ToString();
                 yield return Timing.WaitForSeconds(1);
             }
+            if (text == null) yield break;
+
             text.text = "0";
         }
 
@@ -160,6 +162,8 @@ namespace GameGUI
             text.gameObject.GetComponent<Animation>().Play();
 
             yield return Timing.WaitForSeconds(0.15f);
+            if (disconnectImageForText == null) yield break;
+
             disconnectImageForText.enabled = false;
             NetStateNotificationActive(false, text);
         }

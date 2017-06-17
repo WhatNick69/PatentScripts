@@ -1,7 +1,5 @@
 ﻿using GameGUI;
 using NETControl;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -462,7 +460,9 @@ namespace Game
             CmdPlayAudio();
             Money = -_units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
 
-            CmdInstantiateObject(_currentUnit, gameObject,pos);
+            string skillString = 
+                GetComponent<DataPlayer>().GetUnitSkillsStringForInstantiate(_currentUnit);
+            CmdInstantiateObject(skillString,_currentUnit, gameObject,pos);
 
             _numberOfUnits++;
         }
@@ -478,10 +478,10 @@ namespace Game
         /// </summary>
         /// <param name="_target"></param>
         [Command]
-        private void CmdInstantiateObject(int currentNumber,GameObject playerHelper, Vector3 pos)
+        private void CmdInstantiateObject(string skillString,int currentNumber,GameObject playerHelper, Vector3 pos)
         {
-            Debug.Log(playerHelper.GetComponent<PlayerHelper>());
-            Debug.Log(playerHelper.GetComponent<PlayerHelper>().GetPrefab(currentNumber));
+            //Debug.Log(playerHelper.GetComponent<PlayerHelper>());
+            //Debug.Log(playerHelper.GetComponent<PlayerHelper>().GetPrefab(currentNumber));
 
             GameObject objectForInstantiate 
                 = Instantiate(playerHelper.GetComponent<PlayerHelper>()
@@ -490,8 +490,9 @@ namespace Game
             objectForInstantiate.GetComponent<PlayerAbstract>().InstantedPlayerReference 
                 = playerHelper.GetComponent<PlayerHelper>();
 
-            objectForInstantiate.name = "Player#" 
-                + objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#" + _numberOfUnits;
+            objectForInstantiate.name = 
+                objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#" + _numberOfUnits;
+            DataPlayer.SetNewSkillsOfUnitForInstantiate(skillString, objectForInstantiate, currentNumber);
 
             NetworkServer.Spawn(objectForInstantiate);
             objectForInstantiate.transform.parent = playerHelper.transform;
@@ -539,8 +540,8 @@ namespace Game
                 GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpForBuy += xp;
                 if (GetComponent<DataPlayer>().GetDictionaryNumber(unitType) == _currentUnit)
                 {
-                    Debug.Log(GetComponent<DataPlayer>().GetDictionaryNumber(unitType));
-                    Debug.Log(_currentUnit);
+                    //Debug.Log(GetComponent<DataPlayer>().GetDictionaryNumber(unitType));
+                    //Debug.Log(_currentUnit);
                     GetComponent<TurrelSetControl>().UpgradeSystem.GetComponent<UpgradeSystem>().CurrentXP.text =
                         GetComponent<DataPlayer>().GetDictionaryUnit(unitType).XpForBuy.ToString();
                     GetComponent<TurrelSetControl>().UpgradeSystem.GetComponent<UpgradeSystem>().TotalXP.text =
