@@ -70,6 +70,19 @@ namespace GameGUI
             }
         }
 
+        public string NameTwo
+        {
+            get
+            {
+                return nameTwo;
+            }
+
+            set
+            {
+                nameTwo = value;
+            }
+        }
+
         void NameAvatarOne(string name)
         {
             nameOne = name;

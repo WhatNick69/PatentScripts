@@ -6,6 +6,7 @@ using GooglePlayGames.BasicApi;
 using System;
 using System.Collections.Generic;
 using MovementEffects;
+using UnityEngine.Networking.Match;
 
 namespace NETControl
 {
@@ -45,7 +46,6 @@ namespace NETControl
 
         // GAME SCENE
         private GameObject disconnectButton;
-        private GameObject gameoverDisconectButton;
         private GameObject gameoverRestartButton;
         private GameObject acceptDisconnectBoxButton;
 
@@ -203,7 +203,6 @@ namespace NETControl
 
             if (Application.internetReachability != NetworkReachability.NotReachable)
             {
-                Debug.Log("isOnline");
                 startHostButton.transform.
                     GetComponentInChildren<Text>().text = "Create room";
                 openJoinMenuButton.SetActive(true);
@@ -376,7 +375,6 @@ namespace NETControl
             if (roomName == ""
                 || roomName == null || roomName == "Enter room name")
             {
-                Debug.Log(roomName);
                 RandomRoomNameSet(ref roomName);
             }
             Debug.Log("Creating room: " + roomName + " with room for " + roomSize + " players.");
@@ -421,30 +419,12 @@ namespace NETControl
             }
         }
 
+        /// <summary>
+        /// Корутин, задающий функционал на других сценах
+        /// </summary>
         public void StartCoroutineFunc()
         {
             Timing.RunCoroutine(SetupOtherSceneButton());
-        }
-
-        /// <summary>
-        /// Установить собатия кнопкам при старте игры
-        /// </summary>
-        /// <returns></returns>
-        IEnumerator<float> SetupOtherSceneButton()
-        {
-            yield return Timing.WaitForSeconds(0.1f);
-            FindAllElementsInGameScene();
-
-            gameoverDisconectButton.GetComponent<Button>().onClick.RemoveAllListeners();
-            gameoverDisconectButton.GetComponent<Button>().onClick.AddListener(DisconnectEvent);
-
-            acceptDisconnectBoxButton.GetComponent<Button>().onClick.RemoveAllListeners();
-            acceptDisconnectBoxButton.GetComponent<Button>().onClick.AddListener(DisconnectEvent);
-
-            gameoverRestartButton.GetComponent<Button>().onClick.RemoveAllListeners();
-            gameoverRestartButton.GetComponent<Button>().onClick.AddListener(EventForRestart);
-            gameoverRestartButton.transform.parent.gameObject.SetActive(false);
-            Debug.Log("Our network-state is: " + NetworkManager.singleton.IsClientConnected());
         }
 
         /// <summary>
@@ -469,7 +449,18 @@ namespace NETControl
         {
             yield return Timing.WaitForSeconds(timeForDisconnect);
             timeForDisconnect = 3f;
-            singleton.StopHost();
+            if (!isOnline)
+            {
+                singleton.StopHost();
+            }
+            else
+            {
+                MatchInfo natchInfo = networkManager.matchInfo;
+                networkManager.matchMaker.DropConnection
+                    (matchInfo.networkId, matchInfo.nodeId, 0, networkManager.OnDropConnection);
+                networkManager.StopHost();
+            }
+               
         }
 
         /// <summary>
@@ -478,11 +469,13 @@ namespace NETControl
         private void FindAllElementsInGameScene()
         {
             disconnectButton = GameObject.Find("ButtonDisconnect");
-            gameoverDisconectButton = GameObject.Find("GameoverButtonDisconnect");
             gameoverRestartButton = GameObject.Find("GameoverRestartLevel");
             acceptDisconnectBoxButton = GameObject.Find("AcceptToDisconnectFromGame");
         }
 
+        /// <summary>
+        /// Событие для рестарта игры
+        /// </summary>
         private void EventForRestart()
         {
             // something-do
@@ -525,6 +518,24 @@ namespace NETControl
 
             ConnectToGoogleServices();
             ConnectToUNet();
+        }
+
+        /// <summary>
+        /// Установить собатия кнопкам при старте игры
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator<float> SetupOtherSceneButton()
+        {
+            yield return Timing.WaitForSeconds(0.1f);
+            FindAllElementsInGameScene();
+
+            //acceptDisconnectBoxButton.GetComponent<Button>().onClick.RemoveAllListeners();
+            acceptDisconnectBoxButton.GetComponent<Button>().onClick.AddListener(DisconnectEvent);
+
+            gameoverRestartButton.GetComponent<Button>().onClick.RemoveAllListeners();
+            gameoverRestartButton.GetComponent<Button>().onClick.AddListener(EventForRestart);
+            gameoverRestartButton.transform.parent.gameObject.SetActive(false);
+            Debug.Log("Our network-state is: " + NetworkManager.singleton.IsClientConnected());
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ using UnityEngine.UI;
 using GameGUI;
 using UnityEngine.Networking;
 using NETControl;
+using ChatSystem;
 
 namespace UpgradeSystemAndData
 {
@@ -271,14 +272,25 @@ namespace UpgradeSystemAndData
                     netMsgController.
                         CmdEnableAvatar(playerHelper.PlayerUniqueName);
                 }
+                AddListenerToSendMessageInChat();
             }
-            else
+            else if (isServer)
             {
-                Debug.Log("1");
+                Debug.Log("server");
                 netMsgController.
                     RpcConnectPlayerNotification();
             }
         }
+
+        private void AddListenerToSendMessageInChat()
+        {
+            playerHelper.ChatMessagesController 
+                = GameObject.Find("UI").GetComponent<ChatMessagesController>();
+            GameObject.Find("SendMessageInChat")
+                .GetComponent<Button>().onClick
+                .AddListener(playerHelper.GetComponent<ChatMessagesController>().SendMSG);
+        }
+
         #endregion
 
         private void EmptySaveData()

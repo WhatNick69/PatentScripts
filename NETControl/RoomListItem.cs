@@ -19,6 +19,11 @@ namespace NETControl
         private Text roomNameText;
         #endregion
 
+        private void Start()
+        {
+            GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
+        }
+
         /// <summary>
         /// Установить описание комнаты
         /// </summary>

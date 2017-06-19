@@ -20,7 +20,12 @@ namespace NETControl
         private GameObject showDisconnectAcceptBoxButton;
         [SerializeField]
         private Animation thisAnimation;
+        [SerializeField]
+        private Animation pauseImageAnimation;
         private string animName = "AcceptDisconnectBoxShow";
+        private string pauseImageAnimName = "PauseDisconnectMenuImageAnimation";
+        [SerializeField]
+        private GameObject pauseImage;
         #endregion
 
         /// <summary>
@@ -28,6 +33,8 @@ namespace NETControl
         /// </summary>
         private void Start()
         {
+            acceptToDisconnectButton.GetComponent<Button>().onClick.AddListener(delegate { StartThisAnimation(true); });
+            pauseImage.SetActive(false);
             thisAnimation = GetComponent<Animation>();
         }
 
@@ -67,12 +74,22 @@ namespace NETControl
                 thisAnimation[animName].speed = -1;
                 thisAnimation[animName].time
                     = thisAnimation[animName].length;
+
+                pauseImageAnimation[pauseImageAnimName].speed = -1;
+                pauseImageAnimation[pauseImageAnimName].time =
+                     pauseImageAnimation[pauseImageAnimName].length;
             }
             else
             {
+                pauseImage.SetActive(true);
+
                 thisAnimation[animName].speed = 1;
                 thisAnimation[animName].time = 0;
+
+                pauseImageAnimation[pauseImageAnimName].speed = 1;
+                pauseImageAnimation[pauseImageAnimName].time = 0;
             }
+            pauseImageAnimation.Play();
             thisAnimation.Play();
         }
 
@@ -86,6 +103,7 @@ namespace NETControl
             yield return  Timing.WaitForSeconds(1f);
             if (showDisconnectAcceptBoxButton == null) yield return 0;
             showDisconnectAcceptBoxButton.GetComponent<Button>().enabled = true;
+            pauseImage.SetActive(false);
         }
 
         /// <summary>

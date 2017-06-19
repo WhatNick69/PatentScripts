@@ -1,4 +1,5 @@
-﻿using Game;
+﻿using ChatSystem;
+using Game;
 using UnityEngine;
 using UnityEngine.Networking;
 using UpgradeSystemAndData;
@@ -21,6 +22,8 @@ namespace GameGUI
         private DataPlayer dataPlayer;
             [SerializeField, Tooltip("Интерфейс клиента")]
         private GameObject canvas;
+            [SerializeField, Tooltip("Чат-возможность")]
+        private ChatMessagesController chatMessagesController;
         #endregion
 
         /// <summary>
@@ -33,6 +36,7 @@ namespace GameGUI
             playerHelper.enabled = true;
             canvas.SetActive(true);
             dataPlayer.enabled = true;
+            chatMessagesController.enabled = true;
         }
 
         /// <summary>

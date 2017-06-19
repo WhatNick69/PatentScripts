@@ -57,7 +57,7 @@ namespace NETControl
         {
             status.text = "";
 
-            if (matchList == null)
+            if (!success || matchList == null)
             {
                 status.text = "Couldn't get room list";
                 return;
@@ -79,7 +79,7 @@ namespace NETControl
 
             if (roomList.Count == 0)
             {
-                status.text = "No rooms at the moment :(";
+                status.text = "No rooms at the moment.";
             }
         }
 

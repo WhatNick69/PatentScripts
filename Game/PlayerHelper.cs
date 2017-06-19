@@ -1,4 +1,5 @@
-﻿using GameGUI;
+﻿using ChatSystem;
+using GameGUI;
 using NETControl;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -47,6 +48,7 @@ namespace Game
         [SyncVar, SerializeField, Tooltip("Количество активных юнитов")]
         private int _numberOfUnits;
         private bool _gameOver;
+        private ChatMessagesController chatMessagesController;
 
         [SyncVar]
         private string playerUniqueName;
@@ -166,6 +168,19 @@ namespace Game
             }
         }
 
+        public ChatMessagesController ChatMessagesController
+        {
+            get
+            {
+                return chatMessagesController;
+            }
+
+            set
+            {
+                chatMessagesController = value;
+            }
+        }
+
         public string GetNameElementUnits(int i)
         {
             return _units[i].name;
@@ -248,6 +263,18 @@ namespace Game
             }
         }
 
+        private void ListenerForDisconnectButton()
+        {
+            this.enabled = false;
+            GetComponent<TurrelSetControl>().enabled = false;
+        }
+
+        private void ListenerForBackToGameButton()
+        {
+            this.enabled = true;
+            GetComponent<TurrelSetControl>().enabled = true;
+        }
+
         /// <summary>
         /// Начальный метод
         /// </summary>
@@ -255,6 +282,8 @@ namespace Game
         {
             if (isLocalPlayer)
             {
+                GameObject.Find("ButtonDisconnect").GetComponent<Button>().onClick.AddListener(ListenerForDisconnectButton);
+                GameObject.Find("BackToGameAgainButton").GetComponent<Button>().onClick.AddListener(ListenerForBackToGameButton);
                 GameObject.Find("NetworkManager").GetComponent<NetworkManagerCustom>().StartCoroutineFunc();
                 unitsParent.GetComponent<ScrollRect>().verticalNormalizedPosition = 1;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money;
@@ -532,6 +561,11 @@ namespace Game
             Money = -_units[_currentUnit].GetComponent<PlayerAbstract>().Cost;
         }
 
+        /// <summary>
+        /// Повысить опыт юнита
+        /// </summary>
+        /// <param name="unitType"></param>
+        /// <param name="xp"></param>
         public void IncrementSkillOfUnit(string unitType,int xp)
         {
             if (isLocalPlayer)

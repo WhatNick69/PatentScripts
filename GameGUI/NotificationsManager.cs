@@ -92,13 +92,13 @@ namespace GameGUI
         /// Показать уведомление об отключении игрока
         /// </summary>
         /// <param name="playerName"></param>
-        public void ShowDisconnectingNotification(string playerName, bool isServerAvatar)
+        public void ShowDisconnectingNotification(string playerName, bool isServerAvatar
+            ,bool isDisconnectedAlready=false)
         {
             if (isServerAvatar)
             {
                 disconnectImageForText.enabled = true;
                 NetStateNotificationActive(true, netStateNotificationServer);
-
 
                 disconnectTimer.transform.position =
                     new Vector2(Screen.width / 2, Screen.height / 2);
@@ -113,8 +113,16 @@ namespace GameGUI
             else
             {
                 NetStateNotificationActive(true, netStateNotificationClient1);
-                netStateNotificationClient1.text
-                    = playerName + " is disconnecting";
+                if (isDisconnectedAlready)
+                {
+                    netStateNotificationClient1.text
+                        = playerName + " is crushed!";
+                }
+                else
+                {
+                    netStateNotificationClient1.text
+                        = playerName + " is disconnecting";
+                }
                 Timing.RunCoroutine(CoroutineForDisconnectedNotification
                     (netStateNotificationClient1, 2.5f));
             }

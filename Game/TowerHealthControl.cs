@@ -32,6 +32,10 @@ namespace Game
         private GameObject gameOverBox;
         [SerializeField, Tooltip("RespawnwWaver компонент из объекта Core")]
         private RespawnWaver respawnWaver;
+        [SerializeField]
+        private GameObject uiButtons;
+        [SerializeField]
+        private GameObject uiTower;
         #endregion
 
         /// <summary>
@@ -188,10 +192,10 @@ namespace Game
         {
             respawnWaver.StopGeneralMusic();
             gameOverBox.SetActive(false);
-            ui.transform.GetChild(1).GetComponent<Animator>().enabled = true;
-            ui.transform.GetChild(1).GetComponent<Animator>().Play("UITowerUnshow");
-            ui.transform.GetChild(0).GetComponent<Animator>().enabled = true;
-            ui.transform.GetChild(0).GetComponent<Animator>().Play("UIButtonsUnshow");
+            uiTower.GetComponent<Animator>().enabled = true;
+            uiTower.GetComponent<Animator>().Play("UITowerUnshow");
+            uiButtons.GetComponent<Animator>().enabled = true;
+            uiButtons.GetComponent<Animator>().Play("UIButtonsUnshow");
             player.GetComponent<PlayerHelper>().UnshowPlayerUI();
         }
 
@@ -206,10 +210,10 @@ namespace Game
         [ClientRpc]
         private void RpcDeactivateUITower()
         {
-            ui.transform.GetChild(1).GetComponent<Animator>().enabled = true;
-            ui.transform.GetChild(1).GetComponent<Animator>().Play("UITowerUnshow");
-            ui.transform.GetChild(0).GetComponent<Animator>().enabled = true;
-            ui.transform.GetChild(0).GetComponent<Animator>().Play("UIButtonsUnshow");
+            uiTower.GetComponent<Animator>().enabled = true;
+            uiTower.GetComponent<Animator>().Play("UITowerUnshow");
+            uiButtons.GetComponent<Animator>().enabled = true;
+            uiButtons.GetComponent<Animator>().Play("UIButtonsUnshow");
         }
 
         /// <summary>

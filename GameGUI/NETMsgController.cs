@@ -41,7 +41,6 @@ namespace GameGUI
         /// </summary>
         public void UnshowAllUI()
         {
-            GameObject.Find("DisconnectAcceptBox").SetActive(false);
             towerHealthControl.
                 DeactivateAllUIWhileDisconnecting(GetComponent<PlayerHelper>());
             GetComponent<LocalPlayerComponentsController>().UnableControl();
@@ -113,7 +112,8 @@ namespace GameGUI
         [ClientRpc]
         public void RpcConnectPlayerNotification()
         {
-            notificationsManager.ShowConnectingNotification();
+            if (!isLocalPlayer)
+                notificationsManager.ShowConnectingNotification();
         }
     }
 }
