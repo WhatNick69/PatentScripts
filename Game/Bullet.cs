@@ -67,21 +67,24 @@ namespace Game
             _attackedObject = aO;
         }
 
-        /// <summary>
-        /// Set starting properties
-        /// </summary>
-        /// v1.01
-        protected new void OnTriggerEnter(Collider col)
+        protected override void FixedUpdate()
         {
             if (!isServer) return; // Выполняется только на сервере
 
-            if (col.gameObject.tag == "Enemy" 
-                && col.gameObject.GetComponent<EnemyAbstract>().IsAlive)
-            {
+            VectorCalculating();
+        }
 
-                if (col.gameObject.GetComponent<EnemyAbstract>().
-                    EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject, 
-                    _parentObject.GetComponent<PlayerAbstract>().PlayerType,_dmgBullet,1) != 0
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected override void VectorCalculating()
+        {
+            enemyTemp = GameObjectsTransformFinder.IsEnemyIntoTarget(transform);
+            if (enemyTemp != null && enemyTemp.GetComponent<EnemyAbstract>().IsAlive)
+            {
+                if (enemyTemp.GetComponent<EnemyAbstract>().
+                    EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject,
+                    _parentObject.GetComponent<PlayerAbstract>().PlayerType, _dmgBullet, 1) != 0
                         && _countOfPenetrations > 0)
                 {
                     Debug.Log("Снижено");

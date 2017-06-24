@@ -279,6 +279,8 @@ namespace Game
             clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
             _numberOfEnemies++;
             NetworkServer.Spawn(clone);
+            GameObjectsTransformFinder
+                .AddToEnemyTransformList(clone.transform);
 
             _enemyCountLevels[_instEnemy]--;
             _isMayBeInstanced = false;

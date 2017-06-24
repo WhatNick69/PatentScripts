@@ -1,18 +1,17 @@
-﻿using Game;
-using MovementEffects;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 namespace ChatSystem
 {
+    /// <summary>
+    /// Нормализация размера элемента чата
+    /// </summary>
     class ChatItem 
         : MonoBehaviour
     {
         private void Start()
         {
             transform.SetParent(GameObject.Find("ChatContent").transform);
+
             GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1); 
         }
     }

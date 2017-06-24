@@ -35,7 +35,11 @@ namespace Game
         [SerializeField]
         private GameObject uiButtons;
         [SerializeField]
+        private GameObject chatButtons;
+        [SerializeField]
         private GameObject uiTower;
+
+        private GameObject enemyIntoTower;
         #endregion
 
         /// <summary>
@@ -72,18 +76,19 @@ namespace Game
         }
 
         /// <summary>
-        /// Действие, при столкновении врага с башней
+        /// Проверяем, столкнулся ли враг с башней
         /// </summary>
         /// <param name="collision"></param>
-        private void OnCollisionEnter(Collision collision)
+        private void FixedUpdate()
         {
             if (!isServer) return;
 
-            if (collision.transform.tag.Equals(_enemyTag))
+            enemyIntoTower = GameObjectsTransformFinder.IsEnemyIntoTarget();
+            if (enemyIntoTower != null)
             {
                 HpTower -= 1;
                 Timing.RunCoroutine(RedColorHp());
-                collision.gameObject.GetComponent<EnemyAbstract>().CmdDead();
+                enemyIntoTower.GetComponent<EnemyAbstract>().CmdDead();
             }
         }
 
@@ -197,6 +202,7 @@ namespace Game
             uiButtons.GetComponent<Animator>().enabled = true;
             uiButtons.GetComponent<Animator>().Play("UIButtonsUnshow");
             player.GetComponent<PlayerHelper>().UnshowPlayerUI();
+            chatButtons.GetComponent<Animation>().Play();
         }
 
         /// <summary>

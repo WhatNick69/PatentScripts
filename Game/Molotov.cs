@@ -150,47 +150,28 @@ namespace Game
         }
 
         /// <summary>
-        /// Пустая реализация
+        /// Выполняется только на сервере
         /// </summary>
-        protected override void OnTriggerEnter(Collider col)
+        public new void FixedUpdate()
         {
-            return;
+            if (!isServer) return;
+
+            VectorCalculating();
         }
 
         /// <summary>
-        /// Ноносить урон, когда это возможно
+        /// Векторные вычисления
         /// </summary>
-        /// <param name="collision"></param>
-        public void OnCollisionEnter(Collision collision)
+        protected override void VectorCalculating()
         {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (collision.gameObject.tag.Equals("Enemy"))
+            enemyTemp = GameObjectsTransformFinder.IsEnemyIntoTarget(transform);
+            if (enemyTemp != null)
             {
                 if (_can)
-                {
                     CmdBurner(_burningTime);
-                }
-                else
-                {
-                    collision.gameObject.transform.
-                        GetComponent<EnemyAbstract>().EnemyDamageSafe(playerHelperInstance, typeUnit,_dmgPerSec, 2);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Наносить урон, когда это возможно
-        /// </summary>
-        /// <param name="collision"></param>
-        public void OnCollisionStay(Collision collision)
-        {
-
-            if (!_can
-                    && collision.gameObject.tag.Equals("Enemy"))
-            {
-                collision.gameObject.transform.
-                    GetComponent<EnemyAbstract>().EnemyDamageSafe(playerHelperInstance, typeUnit, _dmgPerSec, 2);
+                else if (enemyTemp.GetComponent<EnemyAbstract>().IsAlive)
+                    enemyTemp.GetComponent<EnemyAbstract>().
+                            EnemyDamageSafe(playerHelperInstance, typeUnit, _dmgPerSec, 2);
             }
         }
 
@@ -237,8 +218,6 @@ namespace Game
 
             GetComponent<BulletMotionSync>().IsStopped = true;
             transform.GetChild(0).localEulerAngles = Vector3.zero;
-            transform.GetComponent<BoxCollider>().enabled = false;
-            transform.GetComponent<SphereCollider>().enabled = true;
             transform.GetChild(0).gameObject.SetActive(true);
             transform.GetChild(1).gameObject.SetActive(false);
             Destroy(gameObject, burningTime);

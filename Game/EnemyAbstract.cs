@@ -294,25 +294,26 @@ namespace Game {
             if (_isAlive)
             {
                 Mover();
+
+                VectorCalculating();
             }
         }
 
         /// <summary>
-        /// Коллизия с игроком
+        /// Векторные вычисления
         /// </summary>
-        public void OnTriggerEnter(Collider col)
+        protected virtual void VectorCalculating()
         {
-            if (!isServer) return; // Метод выполняется только на сервере!
+            if (_attackedObject == null)
+            {
+                _attackedObject = GameObjectsTransformFinder
+                    .GetPlayerUnit(transform, 1);
+            }
 
-            if (_isAlive &&
-                (col.tag == "Player" || col.tag == "Turrel")
-                && col.gameObject.GetComponent<PlayerAbstract>().IsAlive
-                    && col.gameObject.GetComponent<PlayerAbstract>().GetReadyToFightCondition()
-                        && _attackedObject == null)
+            if (_attackedObject != null && !_attackFlag)
             {
                 _agent.enabled = true;
                 _multiple = 0.01f;
-                _attackedObject = col.gameObject;
                 _attackFlag = true;
                 _point = _attackedObject.GetComponent<PlayerAbstract>().SwitchPoint();
                 CalculatePoint(_point);
@@ -428,6 +429,7 @@ namespace Game {
         /// </summary>
         public void CallToFight()
         {
+            Debug.Log("Подозвали драться");
             try
             {
                 if (_isAlive
@@ -441,7 +443,7 @@ namespace Game {
                     _attackedObject.GetComponent<PlayerAbstract>().SetEnemyOfPlayer(gameObject);
                 }
             }
-            catch { }
+            catch { Debug.Log("Ошибка"); }
         }
 
         /// <summary>
@@ -902,6 +904,8 @@ namespace Game {
         {
             if (!isServer) return; // Выполняем только на сервере
             GameObject.FindGameObjectWithTag("Core").GetComponent<RespawnWaver>().NumberOfEnemies--;
+            GameObjectsTransformFinder
+                .RemoveFromEnemyTransformList(transform);
             RpcClientDeath();
         }
 

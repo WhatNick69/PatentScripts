@@ -103,7 +103,7 @@ namespace Game
             {
                 _points[i] = false;
             }
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius / 4;
             if (_isTurrel)
             {
                 _maxEdge *= 2;
@@ -130,7 +130,6 @@ namespace Game
             _playerDmgNear = _standartDmgNear;
             _hpTurrelTemp = _hpTurrel;
             _agent.speed = _moveSpeed;
-            _standartRadius = GetComponent<SphereCollider>().radius;
             _countOfAmmo = _standartOfAmmo;
 
             StartMethod();
@@ -145,39 +144,6 @@ namespace Game
 
             AliveUpdater();
             AliveDrawerAndNuller();
-        }
-
-        /// <summary>
-        /// Коллизия с противником
-        /// </summary>
-        /// <param name="col"></param>
-        public new void OnCollisionEnter(Collision col)
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (_isAlive &&
-                col.gameObject.tag == "Enemy"
-                    && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                        && _attackedObject == null
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition())
-            {
-                if (!ChangeEnemy())
-                {
-                    _attackedObject = col.gameObject;
-                    AddToList(_attackedObject); // adding to list
-
-                    _distance =
-                        Vector2.Distance(gameObject.transform.position,
-                            col.transform.position);
-                    if (!(_distance <= _maxEdge) || !(_distance > _maxEdge / 4) || !(_countOfAmmo > 0))
-                    {
-                        col.gameObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
-                    }
-                }
-                _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
-                _canRandomWalk = false;
-                _isFighting = true;
-            }
         }
 
         /// <summary>
@@ -227,23 +193,57 @@ namespace Game
         /// Выполняется только на сервере.
         /// Позволяет проверять направление движения объекта
         /// </summary>
-        public override void FixedUpdate()
+        protected override void FixedUpdate()
         {
-            if (isServer)
+            if (!isServer) return;
+
+            if (_isAlive)
             {
-                if (_isAlive)
-                {
-                    ChangeEnemy();
+                ChangeEnemy();
                     
-                    if (_canPlayAnimAttack)
+                if (_canPlayAnimAttack)
+                {
+                    Mover();
+                }
+                if (_cleverShooting && _attackedObject != null)
+                {
+                    _dir = CheckDirection(_attackedObject.transform.position);
+                }
+
+                VectorCalculating();
+            }
+        }
+
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected override void VectorCalculating()
+        {
+            if (_attackedObject == null)
+            {
+                _attackedObject = GameObjectsTransformFinder
+                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Fast);
+            }
+
+            if (_attackedObject != null
+                    && !_isFighting)
+            {
+                if (!ChangeEnemy())
+                {
+                    AddToList(_attackedObject); // adding to list
+
+                    _distance =
+                        Vector3.Distance(gameObject.transform.position,
+                            _attackedObject.transform.position);
+                    if (!(_distance <= _maxEdge) || !(_distance > _maxEdge / 4) || !(_countOfAmmo > 0))
                     {
-                        Mover();
-                    }
-                    if (_cleverShooting && _attackedObject != null)
-                    {
-                        _dir = CheckDirection(_attackedObject.transform.position);
+                        _attackedObject.GetComponent<EnemyAbstract>()
+                            .IncreaseCountOfTurrelFighters(null);
                     }
                 }
+                _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
+                _canRandomWalk = false;
+                _isFighting = true;
             }
         }
 

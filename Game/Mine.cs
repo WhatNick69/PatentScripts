@@ -63,29 +63,15 @@ namespace Game
         /// <summary>
         /// Остановиться, если есть дорога
         /// </summary>
-        protected override void OnTriggerEnter(Collider col)
+        protected  void OnTriggerEnter(Collider col)
         {
             if (!isServer) return;
 
-            if (col.gameObject.tag == "Enemy")
-            {
-                col.GetComponent<EnemyAbstract>()
-                    .EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType,
-                    rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)),1);
-                if (_isClustered)
-                {
-                    Destroy(gameObject);
-                    CmdInstantiate();
-                }
-                else
-                {
-                    Destroy(gameObject);
-                }
-                _parentObject.GetComponent<LiteStaticTurrel>().MineCounter--;
-            }
             if (col.gameObject.tag == "RoadCollider")
             {
                 _isPlaced = true;
+                Destroy(GetComponent<Rigidbody>());
+                GetComponent<BoxCollider>().enabled = false;
             }
         }
 
@@ -138,11 +124,35 @@ namespace Game
         /// <summary>
         /// Синхронизировать переменные позиции
         /// </summary>
-        private void FixedUpdate()
+        private new void FixedUpdate()
         {
-            if (isServer)
+            if (!isServer) return;
+
+            syncPos = transform.position;
+            VectorCalculating();   
+        }
+
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected override void VectorCalculating()
+        {
+            enemyTemp = GameObjectsTransformFinder.IsEnemyIntoTarget(transform);
+            if (enemyTemp != null && enemyTemp.GetComponent<EnemyAbstract>().IsAlive)
             {
-                syncPos = transform.position;
+                enemyTemp.GetComponent<EnemyAbstract>()
+                    .EnemyDamage(_parentObject.GetComponent<PlayerAbstract>().gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType,
+                    rnd.Next(_damage - (_damage / 3), _damage + (_damage / 3)), 1);
+                if (_isClustered)
+                {
+                    Destroy(gameObject);
+                    CmdInstantiate();
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+                _parentObject.GetComponent<LiteStaticTurrel>().MineCounter--;
             }
         }
 

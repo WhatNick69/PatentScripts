@@ -120,7 +120,7 @@ namespace Game
             {
                 _points[i] = false;
             }
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius / 4;
             if (_isTurrel)
             {
                 _maxEdge *= 2;
@@ -144,12 +144,11 @@ namespace Game
 
             mask.value = 1 << 8; // convert mask to bit-system
 
-            _distance = gameObject.GetComponent<SphereCollider>().radius / 4f;
+            _distance = _standartRadius / 4;
             transform.localEulerAngles = Vector3.zero;
 
             // Апгрейдовые переменные
             _hpTurrelTemp = _hpTurrel;
-            _standartRadius = GetComponent<SphereCollider>().radius;
 
             SetMinesPerSecond();
             CheckRoad();

@@ -24,7 +24,7 @@ namespace NETControl
             = { "CgkIsaL_lZ4XEAIQAQ", "CgkIsaL_lZ4XEAIQAg",
                 "CgkIsaL_lZ4XEAIQAw", "CgkIsaL_lZ4XEAIQBA", "CgkIsaL_lZ4XEAIQBQ", "CgkIsaL_lZ4XEAIQBg"};
         private const string leaderboard = "CgkIsaL_lZ4XEAIQBw";
-        private bool isOnline; // игрок онлайн?
+        private static bool isOnline; // игрок онлайн?
 
         // MENU SCENE
         private GameObject openHostMenuButton;
@@ -47,6 +47,7 @@ namespace NETControl
         // GAME SCENE
         private GameObject disconnectButton;
         private GameObject gameoverRestartButton;
+        private GameObject gameoverButtonDisconnect;
         private GameObject acceptDisconnectBoxButton;
 
         private static bool isAwakening;
@@ -75,21 +76,42 @@ namespace NETControl
                 actionForSave = value;
             }
         }
+
+        public static bool IsOnline
+        {
+            get
+            {
+                return isOnline;
+            }
+
+            set
+            {
+                isOnline = value;
+            }
+        }
         #endregion
 
         /// <summary>
         /// Показать кнопки в меню после подключения 
         /// к сервисам (если есть доступ к сети интернет)
         /// </summary>
-        private void ShowMenuButtons()
+        private void ShowMenuButtons(bool flag = true)
         {
-            openHostMenuButton.SetActive(true);
-            openJoinMenuButton.SetActive(true);
-            closeAppButton.SetActive(true);
-            fieldIPAdress.SetActive(true);
-            fieldPassword.SetActive(true);
-            achievementsButton.SetActive(true);
-            leaderBoardButton.SetActive(true);
+            if (flag)
+            {
+                openHostMenuButton.SetActive(true);
+                openJoinMenuButton.SetActive(true);
+                closeAppButton.SetActive(true);
+                fieldIPAdress.SetActive(true);
+                fieldPassword.SetActive(true);
+                achievementsButton.SetActive(true);
+                leaderBoardButton.SetActive(true);
+            }
+            else
+            {
+                openHostMenuButton.SetActive(true);
+                closeAppButton.SetActive(true);
+            }
             loadBar.SetActive(false);
         }
 
@@ -186,16 +208,19 @@ namespace NETControl
         {
             FindButtonsInMenu();
             UnshowMenuButtons();
-            networkManager = NetworkManager.singleton;
 
-            ConnectToGoogleServices();
+            if (!ConnectToGoogleServices())
+            {
+                ShowMenuButtons(false);
+            }
+
             ConnectToUNet();
         }
 
         /// <summary>
         /// Проверить состояние интернет-соединения
         /// </summary>
-        private void CheckNETState()
+        private bool CheckNETState()
         {
             networkManager = NetworkManager.singleton;
             if (networkManager.matchMaker == null)
@@ -210,6 +235,7 @@ namespace NETControl
                 leaderBoardButton.SetActive(true);
                 fieldIPAdress.SetActive(true);
                 fieldPassword.SetActive(true);
+                return true;
             }
             else
             {
@@ -221,6 +247,7 @@ namespace NETControl
                 leaderBoardButton.SetActive(false);
                 fieldIPAdress.SetActive(false);
                 fieldPassword.SetActive(false);
+                return false;
             }
         }
              
@@ -231,7 +258,7 @@ namespace NETControl
         IEnumerator<float> ConToUNet()
         {
             CheckNETState();
-            networkManager = NetworkManager.singleton;
+
             while (true)
             {
                 if (isGaming) yield break;
@@ -243,6 +270,7 @@ namespace NETControl
                 {
                     if (!isOnline)
                     {
+                        ConnectToGoogleServices();
                         isOnline = true;
                         Debug.Log("isOnline");
                         startHostButton.transform.
@@ -296,12 +324,12 @@ namespace NETControl
             Social.localUser.Authenticate((bool success) =>
             {
                 flag = success;
-                ShowMenuButtons();
+                
 
             });
             if (!flag)
             {
-                ShowMenuButtons();
+                
             }
             IsConnectedToGoogleServices = flag;
             return flag;
@@ -470,6 +498,7 @@ namespace NETControl
         {
             disconnectButton = GameObject.Find("ButtonDisconnect");
             gameoverRestartButton = GameObject.Find("GameoverRestartLevel");
+            gameoverButtonDisconnect = GameObject.Find("GameoverButtonDisconnect");
             acceptDisconnectBoxButton = GameObject.Find("AcceptToDisconnectFromGame");
         }
 
@@ -531,6 +560,9 @@ namespace NETControl
 
             //acceptDisconnectBoxButton.GetComponent<Button>().onClick.RemoveAllListeners();
             acceptDisconnectBoxButton.GetComponent<Button>().onClick.AddListener(DisconnectEvent);
+
+            gameoverButtonDisconnect.GetComponent<Button>().onClick.RemoveAllListeners();
+            gameoverButtonDisconnect.GetComponent<Button>().onClick.AddListener(DisconnectEvent);
 
             gameoverRestartButton.GetComponent<Button>().onClick.RemoveAllListeners();
             gameoverRestartButton.GetComponent<Button>().onClick.AddListener(EventForRestart);

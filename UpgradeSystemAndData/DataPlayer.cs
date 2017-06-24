@@ -1055,9 +1055,9 @@ namespace UpgradeSystemAndData
         /// </summary>
         public void OnApplicationQuit()
         {
-            netMsgController.
-                CmdDisableAvatar(playerHelper.PlayerUniqueName);
             SaveCloud();
+            //netMsgController.
+            //    CmdDisableAvatar(playerHelper.PlayerUniqueName);
             //netMsgController.UnshowAllUI();
         }
         #endregion

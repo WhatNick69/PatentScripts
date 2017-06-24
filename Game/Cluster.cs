@@ -22,6 +22,7 @@ namespace Game {
             [SerializeField, Tooltip("Создает ли кластер??")]
         protected bool _isClustered; // can it to be clustered
         protected static System.Random rnd = new System.Random();
+        protected GameObject enemyTemp;
 
         public float DmgForCluster
         {
@@ -41,20 +42,24 @@ namespace Game {
             _parentObject = gO;
         }
 
-        /// <summary>
-        /// Наносит урон и взрывается при соприкосновении
-        /// </summary>
-        /// <param name="col"></param>
-        protected virtual void OnTriggerEnter(Collider col)
+        protected virtual void FixedUpdate()
         {
             if (!isServer) return; // Выполняется только на сервере
 
-            if (col.gameObject.tag == "Enemy")
+            VectorCalculating();
+        }
+
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected virtual void VectorCalculating()
+        {
+            enemyTemp = GameObjectsTransformFinder.IsEnemyIntoTarget(transform);
+            if (enemyTemp != null && enemyTemp.GetComponent<EnemyAbstract>().IsAlive)
             {
-                //Debug.Log("AZAZA");
-                col.GetComponent<EnemyAbstract>()
+                enemyTemp.GetComponent<EnemyAbstract>()
                     .EnemyDamage(_parentObject.GetComponent<PlayerAbstract>()
-                    .gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType,_dmgForCluster,1);
+                    .gameObject, _parentObject.GetComponent<PlayerAbstract>().PlayerType, _dmgForCluster, 1);
                 Destroy(gameObject);
             }
         }

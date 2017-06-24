@@ -175,7 +175,7 @@ namespace GameGUI
                 boolOne = true;
                 avatarOne.transform.GetChild(0)
                     .GetComponentInChildren<Text>().text = nameOne;
-                CmdRefreshAvatars();
+                //CmdRefreshAvatars();
             }
             else if (!boolTwo)
             {
@@ -183,7 +183,7 @@ namespace GameGUI
                 boolTwo = true;
                 avatarTwo.transform.GetChild(0)
                     .GetComponentInChildren<Text>().text = nameTwo;
-                CmdRefreshAvatars();
+                //CmdRefreshAvatars();
             }
             RefreshActiveAvatars();
         }

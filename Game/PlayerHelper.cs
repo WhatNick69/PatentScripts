@@ -524,6 +524,8 @@ namespace Game
             DataPlayer.SetNewSkillsOfUnitForInstantiate(skillString, objectForInstantiate, currentNumber);
 
             NetworkServer.Spawn(objectForInstantiate);
+            GameObjectsTransformFinder
+                .AddToPlayerTransformList(objectForInstantiate.transform);
             objectForInstantiate.transform.parent = playerHelper.transform;
         }
 

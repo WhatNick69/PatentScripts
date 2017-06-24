@@ -110,74 +110,6 @@ namespace Game {
         #endregion
 
         /// <summary>
-        /// Действие, при столкновении
-        /// </summary>
-        /// <param name="col"></param>
-        public new void OnCollisionEnter(Collision col)
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (_isAlive &&
-                col.gameObject.tag == "Enemy"
-                    && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                            //&& col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && mayToCheckForEnemy)
-            {
-                Debug.Log("Детектим врага");
-                if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
-                {
-                    _attackedObject = col.gameObject;
-                    _minSpeed = _attackedObject.GetComponent<EnemyAbstract>().WalkSpeed;
-                }
-                else if (col.gameObject.GetComponent<EnemyAbstract>().GetPower() > _minPower && _firstPower)
-                {
-                    _attackedObject = col.gameObject;
-                    _minPower = _attackedObject.GetComponent<EnemyAbstract>().GetPower();
-                }
-                else if (Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position) < _minDistance && _firstStandart)
-                {
-                    _attackedObject = col.gameObject;
-                    _minDistance = Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position);
-                }
-                _isFighting = true;
-            }
-        }
-
-        /// <summary>
-        /// Действие, при столкновении
-        /// </summary>
-        /// <param name="col"></param>
-        public void OnCollisionStay(Collision col)
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            if (_isAlive &&
-                col.gameObject.tag == "Enemy"
-                    && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                            //&& col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition()
-                                && mayToCheckForEnemy)
-            {
-                Debug.Log("Детектим врага");
-                if (col.gameObject.GetComponent<EnemyAbstract>().WalkSpeed > _minSpeed && _firstFast)
-                {
-                    _attackedObject = col.gameObject;
-                    _minSpeed = _attackedObject.GetComponent<EnemyAbstract>().WalkSpeed;
-                }
-                else if (col.gameObject.GetComponent<EnemyAbstract>().GetPower() > _minPower && _firstPower)
-                {
-                    _attackedObject = col.gameObject;
-                    _minPower = _attackedObject.GetComponent<EnemyAbstract>().GetPower();
-                }
-                else if (Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position) < _minDistance && _firstStandart)
-                {
-                    _attackedObject = col.gameObject;
-                    _minDistance = Vector2.Distance(gameObject.transform.position, col.gameObject.transform.position);
-                }
-                _isFighting = true;
-            }
-        }
-
-        /// <summary>
         /// Присвоение ссылки медиа-данные
         /// </summary>
         public override void OnStartClient()
@@ -210,7 +142,7 @@ namespace Game {
             {
                 _points[i] = false;
             }
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius / 4;
             if (_isTurrel)
             {
                 _maxEdge *= 2;
@@ -233,7 +165,6 @@ namespace Game {
 
             // Апгрейдовые переменные
             _hpTurrelTemp = _hpTurrel;
-            _standartRadius = GetComponent<SphereCollider>().radius;
 
             StartMethod();
         }
@@ -241,7 +172,7 @@ namespace Game {
         /// <summary>
         /// Сменить врага
         /// </summary>
-        private new void FixedUpdate()
+        protected override void FixedUpdate()
         {
             if (!isServer) return; // Выполняется только на сервере
 
@@ -253,6 +184,26 @@ namespace Game {
                 {
                     _dir = CheckDirection(_attackedObject.transform.position);
                 }
+
+                VectorCalculating();
+            }
+        }
+
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected override void VectorCalculating()
+        {
+            // если врага нет - ищем врага
+            if (_attackedObject == null)
+            {
+                _attackedObject = GameObjectsTransformFinder
+                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Standart);
+            }
+
+            if (_attackedObject != null && !_isFighting && mayToCheckForEnemy)
+            {
+                _isFighting = true;
             }
         }
 

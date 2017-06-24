@@ -70,25 +70,7 @@ namespace Game
         /// <summary>
         /// Переопределенный метод (пустой)
         /// </summary>
-        /// <param name="collision"></param>
-        private new void OnCollisionEnter(Collision collision)
-        {
-            return;
-        }
-
-        /// <summary>
-        /// Переопределенный метод (пустой)
-        /// </summary>
-        /// <param name="collision"></param>
-        private new void OnCollisionStay(Collision collision)
-        {
-            return;
-        }
-
-        /// <summary>
-        /// Переопределенный метод (пустой)
-        /// </summary>
-        private new void FixedUpdate()
+        protected override void FixedUpdate()
         {
             return;
         }

@@ -104,7 +104,6 @@ namespace UpgradeSystemAndData
         /// </summary>
         public void CheckMoneyAndValueForButtons()
         {
-            int i = 0;
             ShowAddButtonsInUpgradeElements();
             foreach (GameObject obj in upgradeElements)
             {

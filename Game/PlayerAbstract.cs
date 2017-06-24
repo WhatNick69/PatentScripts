@@ -12,8 +12,6 @@ namespace Game
     /// </summary>
     /// v1.03
     [RequireComponent(typeof(BoxCollider))]
-    [RequireComponent(typeof(SphereCollider))]
-    [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(HealthBarUnit))]
     public abstract class PlayerAbstract
@@ -117,7 +115,7 @@ namespace Game
         // СКОРОСТЬ, ПОЗИЦИЯ, ВРЕМЯ
         protected float _cofForChangeAnim; // coefficient of changing animation
         protected float _moverTimer;
-        protected const float _cofForRest = 0.01f; // coefficient of changing animation while resting
+        protected const float _cofForRest = 0.001f; // coefficient of changing animation while resting
         protected Vector3 _startPosition; // start position of player
         protected Vector3 _oldPosition; // old position of player
         protected Vector3 _newPosition; // new position of player
@@ -390,7 +388,7 @@ namespace Game
             {
                 _points[i] = false;
             }
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius/4;
             if (_isTurrel)
             {
                 _maxEdge *= 2;
@@ -417,7 +415,6 @@ namespace Game
             _playerDmgNear = _standartDmgNear;
             _hpTurrelTemp = _hpTurrel;
             SetNewAgentSpeed();
-            _standartRadius = GetComponent<SphereCollider>().radius;
 
             StartMethod();
         }
@@ -430,28 +427,48 @@ namespace Game
         /// <summary>
         /// Обновлять анимации с константным временем
         /// </summary>
-        public virtual void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            // если мы живы
             if (_isAlive)
             {
-                ChangeEnemy();
+                //ChangeEnemy();
                 if (_canPlayAnimAttack)
                 {
                     Mover();
                 }
-                // Может, еще и пригодится, если не будет работать правильно
-                /*
-                else if (_attackedObject != null
-                    && !_isStoppingWalkFight)
-                {
-                    if (Vector3.Distance(gameObject.transform.position,
-                        (_attackedObject.transform.position + _enemyPoint)) >= _sideCof)
-                    {
 
-                    }
-                }*/
+                VectorCalculating();
+            }
+        }
+
+        /// <summary>
+        /// Векторные вычисления
+        /// </summary>
+        protected virtual void VectorCalculating()
+        {
+            // если врага нет - ищем врага
+            if (_attackedObject == null)
+                _attackedObject = GameObjectsTransformFinder
+                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Standart);
+
+            // переходим в боевую готовность
+            if (_attackedObject != null && !_isFighting)
+            {
+                _attackedObject.GetComponent<EnemyAbstract>().CallToFight();
+                if (!ChangeEnemy())
+                {
+                    AddToList(_attackedObject); // adding to list
+                    _attackedObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
+                    //Debug.Log(_attackedObject.name + " => " + gameObject.name);
+                }
+                //Debug.Log("Воюем");
+                _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
+                CalculatePoint(_point);
+                _canRandomWalk = false;
+                _isFighting = true;
             }
         }
 
@@ -490,35 +507,6 @@ namespace Game
             else
             {
                 RpcChangeAnimation(2, false);
-            }
-        }
-
-        /// <summary>
-        /// Коллизия с противником
-        /// </summary>
-        public void OnCollisionEnter(Collision col)
-        {
-            if (!isServer) return; // Метод выполняется только на сервере!
-
-            if (_isAlive &&
-                col.gameObject.tag == "Enemy"
-                    && col.gameObject.GetComponent<EnemyAbstract>().IsAlive
-                        && _attackedObject == null
-                            && col.gameObject.GetComponent<EnemyAbstract>().GetReadyToFightCondition())
-            {
-                if (!ChangeEnemy())
-                {
-
-                    _attackedObject = col.gameObject;
-                    AddToList(_attackedObject); // adding to list
-
-                    col.gameObject.GetComponent<EnemyAbstract>().IncreaseCountOfTurrelFighters(null);
-                    //Debug.Log(_attackedObject.name + " => " + gameObject.name);
-                }
-                _point = _attackedObject.GetComponent<EnemyAbstract>().SwitchPoint();
-                CalculatePoint(_point);
-                _canRandomWalk = false;
-                _isFighting = true;
             }
         }
 
@@ -1129,6 +1117,7 @@ namespace Game
         public void VisibleRadiusOfAttack(bool flag)
         {
             _radiusOfAttackVisual.GetComponent<SpriteRenderer>().enabled = flag;
+            _radiusOfAttackVisual.GetComponent<Animation>().enabled = flag;
         }
 
         /// <summary>
@@ -1140,16 +1129,12 @@ namespace Game
         {
             _side /= 2.5f;
             _radiusOfAttackVisual.transform.localScale = new Vector3(_side, _side, _side);
-            float temp = _side / 4;
-            _radiusOfAttackVisual.transform.GetComponent<SphereCollider>().radius /= temp;
-            GetComponent<SphereCollider>().radius = _standartRadius;
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius/4;
         }
 
         public void SetSizeSadius(float _side)
         {
-            GetComponent<SphereCollider>().radius = _standartRadius;
-            _maxEdge = gameObject.GetComponent<SphereCollider>().radius / 4;
+            _maxEdge = _standartRadius/4;
         }
 
         /// <summary>
@@ -1228,6 +1213,7 @@ namespace Game
         {
             if (!isServer) return; // Выполняем только на сервере
             instantedPlayerReference.NumberOfUnits--;
+            GameObjectsTransformFinder.RemoveFromPlayerTransformList(transform);
             RpcClientDeath();
         }
 
