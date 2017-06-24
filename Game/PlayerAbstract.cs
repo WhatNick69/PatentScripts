@@ -55,12 +55,8 @@ namespace Game
         [Header("Бинарные опции")]
             [SerializeField, Tooltip("Этот юнит является туррелью?")]
         protected bool _isTurrel; // isTurrel condition of player
-            [SerializeField, Tooltip("Юнит ищет самого мощного противника")]
-        protected bool _firstPower;
-            [SerializeField, Tooltip("Юнит ищет самого быстрого противника")]
-        protected bool _firstFast;
-            [SerializeField, Tooltip("Юнит ищет самого близкого противника")]
-        protected bool _firstStandart;
+            [SerializeField, Tooltip("Какого противника искать прежде всего?")]
+        protected TypeEnemyChoice typeOfEnemyChoice;
             [SerializeField, Tooltip("Это динамический юнит?")]
         protected bool isDynamic;
 
@@ -86,6 +82,7 @@ namespace Game
         protected float _moveSpeed;  // DOWNLOADABLE
             [SerializeField, Tooltip("Скорость движения")]
         protected float _standartRadius;  // DOWNLOADABLE
+        private float totalPlayerUnitPower;
 
         protected bool _canPlayAnimAttack;
         protected bool[] _points; // Позиции для атакующих врагов
@@ -131,12 +128,6 @@ namespace Game
 
         // ИЕРАРХИЯ ПРОТИВНИКОВ
         protected bool _changeEnemyFlag; // Флаг на смену противника по иерархии
-        protected float _minDistance; // Минимальная дистанция до противника
-        protected float _minPower; // Минимальная сила противника
-        protected float _minSpeed; // Минимальная скорость противника
-        protected float _tempDistance; // Промежуточная дистанция до противника
-        protected float _tempPower; // Прмоежуточная сила проитвника
-        protected float _tempSpeed; // Промежуточная скорость противника
         protected System.Random randomer = new System.Random(); // Рандомная переменная
         protected static Vector3 _up = new Vector3(0, 0, 0.3f);
 
@@ -334,6 +325,32 @@ namespace Game
                 _attackSpeed = value;
             }
         }
+
+        public TypeEnemyChoice TypeOfEnemyChoice
+        {
+            get
+            {
+                return typeOfEnemyChoice;
+            }
+
+            set
+            {
+                typeOfEnemyChoice = value;
+            }
+        }
+
+        public float TotalPlayerUnitPower
+        {
+            get
+            {
+                return totalPlayerUnitPower;
+            }
+
+            set
+            {
+                totalPlayerUnitPower = value;
+            }
+        }
         #endregion
 
         /// <summary>
@@ -341,6 +358,7 @@ namespace Game
         /// </summary>
         public virtual void StartMethod()
         {
+            SetTotalPlayerUnitPower();
             RpcSetSizeOfUnitVisibleRadius(_standartRadius);
             if (_isTurrel)
                 _maxCountOfAttackers = 3;
@@ -366,6 +384,13 @@ namespace Game
                 _animatorOfPlayer.runtimeAnimatorController
                     = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(_currentAnimation);
             }
+        }
+
+        protected virtual void SetTotalPlayerUnitPower()
+        {
+            totalPlayerUnitPower 
+                = _hpTurrel + _standartDmgNear + _standartRadius + _attackSpeed + _moveSpeed;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -452,7 +477,7 @@ namespace Game
             // если врага нет - ищем врага
             if (_attackedObject == null)
                 _attackedObject = GameObjectsTransformFinder
-                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Standart);
+                    .GetEnemyUnit(transform, _standartRadius / 4, typeOfEnemyChoice);
 
             // переходим в боевую готовность
             if (_attackedObject != null && !_isFighting)
@@ -529,64 +554,10 @@ namespace Game
             if (_isAlive)
             {
                 CheckList();
-                _newAttackedObject = null;
-                if (_firstPower)
-                {
-                    _tempPower = -5;
-                    _minPower = 0;
-                    for (byte i = 0; i < _enemyList.Count; i++)
-                    {
-                        if (_enemyList[i] != null
-                            && _enemyList[i].GetComponent<EnemyAbstract>())
-                        {
-                            _tempPower = _enemyList[i].GetComponent<EnemyAbstract>().GetPower();
-                            if (_tempPower > _minPower)
-                            {
-                                _newAttackedObject = _enemyList[i];
-                                _minPower = _tempPower;
-                            }
-                        }
-                    }
-                }
-                else if (_firstFast)
-                {
-                    _tempSpeed = 0;
-                    _minSpeed = -5;
-                    for (byte i = 0; i < _enemyList.Count; i++)
-                    {
-                        if (_enemyList[i] != null &&
-                            _enemyList[i].GetComponent<EnemyAbstract>())
-                        {
-                            _tempSpeed = _enemyList[i].GetComponent<EnemyAbstract>().WalkSpeed;
-                            if (_tempSpeed > _minSpeed)
-                            {
-                                _newAttackedObject = _enemyList[i];
-                                _minSpeed = _tempSpeed;
-                            }
-                        }
-                    }
-                }
-                else if (_firstStandart)
-                {
-                    _tempDistance = 0;
-                    _minDistance = 1000;
-                    for (byte i = 0; i < _enemyList.Count; i++)
-                    {
-                        if (_enemyList[i] != null && 
-                            _enemyList[i].GetComponent<EnemyAbstract>())
-                        {
-                            _tempDistance =
-                                Vector3.Distance(gameObject.transform.position,
-                                    _enemyList[i].transform.position);
-                            if (_tempDistance < _minDistance)
-                            {
-                                _newAttackedObject = _enemyList[i];
-                                _minDistance = _tempDistance;
-                            }
-                        }
-                    }
-                }
-
+                _newAttackedObject = 
+                    GameObjectsTransformFinder.GetEnemyUnit(transform,
+                        _standartRadius, typeOfEnemyChoice);
+                
                 if (_newAttackedObject != null
                     && _attackedObject != null)
                 {
@@ -903,9 +874,7 @@ namespace Game
 
             _cofForChangeAnim = _cofForRest;
             ChangeValues(true, true, true, true);
-            RestartValues();
             ChangeEnemy();
-
         }
 
         /// <summary>
@@ -1098,16 +1067,6 @@ namespace Game
             {
                 _points[_b] = false;
             }
-        }
-
-        /// <summary>
-        /// Обнулить атакуемый объект
-        /// </summary>
-        public void RestartValues()
-        {
-            _minDistance = float.MaxValue;
-            _minPower = 0;
-            _minSpeed = -1;
         }
 
         /// <summary>

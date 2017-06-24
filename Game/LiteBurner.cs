@@ -19,6 +19,13 @@ namespace Game
         private float _standartBurnDmg;
         protected Vector3 _burningPosition;
 
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _standartDmgNear + _standartRadius +
+                _standartBurnDmg + _standartOfAmmo + _standartShootingSpeed;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+        }
+
         public float StandartBurnDmg
         {
             get

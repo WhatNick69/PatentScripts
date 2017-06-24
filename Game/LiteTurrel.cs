@@ -136,7 +136,6 @@ namespace Game {
                 .GetComponent<RespawnWaver>();
             Application.runInBackground = true;
             _points = new bool[4];
-            _minDistance = 1000;
             _maskCursor = 1 << 9;
             for (int i = 0; i < _points.Length; i++)
             {
@@ -166,7 +165,15 @@ namespace Game {
             // Апгрейдовые переменные
             _hpTurrelTemp = _hpTurrel;
 
+            SetTotalPlayerUnitPower();
             StartMethod();
+        }
+
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _standartRadius + _standartDmgFar +
+                _standartShootingSpeed + _standartTimeToReAlive;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -198,7 +205,7 @@ namespace Game {
             if (_attackedObject == null)
             {
                 _attackedObject = GameObjectsTransformFinder
-                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Standart);
+                    .GetEnemyUnit(transform, _standartRadius / 4, typeOfEnemyChoice);
             }
 
             if (_attackedObject != null && !_isFighting && mayToCheckForEnemy)
@@ -391,16 +398,11 @@ namespace Game {
         /// </summary>
         override public void NullAttackedObject()
         {
-            _minDistance = 1000;
-            _minPower = 0;
-            _minSpeed = -1;
-
             _newAttackedObject = null;
             _attackedObject = null;
             _isFighting = false;
             _animatorOfPlayer.speed = 1;
             ChangeValues(true, true, true, true);
-            RestartValues();
         }
 
         /// <summary>

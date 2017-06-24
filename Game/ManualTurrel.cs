@@ -12,6 +12,13 @@ namespace Game
     {
         protected Vector2 mouse;
 
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _standartDmgFar + _standartShootingSpeed +
+                _standartAccuracy + _standartTimeToReAlive;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+        }
+
         public override void StartMethod()
         {
             RpcSetSizeOfUnitVisibleRadius(0.001f);

@@ -51,6 +51,13 @@ namespace Game
                 _maxCountOfAttackers = 1;
         }
 
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _standartDmgFar 
+                + _standartTimeToReAlive + _standartShootingSpeed;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+        }
+
         /// <summary>
         /// Предзагрузка
         /// </summary>

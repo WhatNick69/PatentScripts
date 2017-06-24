@@ -56,6 +56,7 @@ namespace GameGUI {
             _player.GetComponent<PlayerHelper>().IsPickTurrelMode = true;
             _isChecked = true;
             _player.GetComponent<TurrelSetControl>().PlayAudio(2);
+            _player.GetComponent<PlayerHelper>().CheckIsDynamicUnit(_number);
         }
 
         /// <summary>
@@ -63,6 +64,7 @@ namespace GameGUI {
         /// </summary>
         public void UnsetTurrel()
         {
+            _player.GetComponent<PlayerHelper>().SwitchZones(true,true);
             _upgradeButton.SetActive(false);
             _isChecked = false;
             _player.GetComponent<TurrelSetControl>().PlayAudio(0);
@@ -82,7 +84,6 @@ namespace GameGUI {
                 _player.GetComponent<PlayerHelper>().IsPickTurrelMode = false;
                 UnsetTurrel();
             }
-            Debug.Log(_player.GetComponent<PlayerHelper>().name);
             _player.GetComponent<PlayerHelper>().CurrentUnit = _number;
         }
     }

@@ -150,8 +150,16 @@ namespace Game
             // Апгрейдовые переменные
             _hpTurrelTemp = _hpTurrel;
 
+            SetTotalPlayerUnitPower();
             SetMinesPerSecond();
             CheckRoad();
+        }
+
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _mineDamage 
+                + _standartReloadTime + _standartTimeToReAlive;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         private void SetMinesPerSecond()

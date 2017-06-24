@@ -86,6 +86,7 @@ namespace GameGUI
         public void OnClickUpgrade()
         {  
             UnshowPageWithUnits(); // выключаем лист с юнитами
+            GetComponent<PlayerHelper>().SwitchZones(true, true);
             upgradeSystem.SetActive(true); // включаем визуализацию системы апгрейда
             arrayObjects[_unitNumber].transform.GetChild(0).gameObject.SetActive(false);
             arrayObjects[_unitNumber].GetComponent<TurrelNumber>().IsChecked = false;

@@ -50,6 +50,9 @@ namespace Game
         private bool _gameOver;
         private ChatMessagesController chatMessagesController;
 
+        private GameObject staticZone;
+        private GameObject dynamicZone;
+
         [SyncVar]
         private string playerUniqueName;
         [SyncVar]
@@ -276,15 +279,60 @@ namespace Game
         }
 
         /// <summary>
+        /// Переключить визуализацию зон доступности для расстановки юнитов
+        /// </summary>
+        /// <param name="deactiveAll"></param>
+        public void SwitchZones(bool isDynamic,bool deactiveAll = false)
+        {
+            if (deactiveAll)
+            {
+                dynamicZone.GetComponent<SpriteRenderer>().enabled = false;
+                dynamicZone.GetComponent<Animation>().enabled = false;
+                staticZone.GetComponent<SpriteRenderer>().enabled = false;
+                staticZone.GetComponent<Animation>().enabled = false;
+            }
+            else
+            {
+                if (isDynamic)
+                {
+                    dynamicZone.GetComponent<SpriteRenderer>().enabled = true;
+                    dynamicZone.GetComponent<Animation>().enabled = true;
+                    staticZone.GetComponent<SpriteRenderer>().enabled = false;
+                    staticZone.GetComponent<Animation>().enabled = false;
+                }
+                else
+                {
+                    staticZone.GetComponent<SpriteRenderer>().enabled = true;
+                    staticZone.GetComponent<Animation>().enabled = true;
+                    dynamicZone.GetComponent<SpriteRenderer>().enabled = false;
+                    dynamicZone.GetComponent<Animation>().enabled = false;
+                }
+            }       
+        }
+
+        public void CheckIsDynamicUnit(int number)
+        {
+            if (_units[number].GetComponent<PlayerAbstract>().IsDynamic)
+                SwitchZones(true);
+            else
+                SwitchZones(false);
+        }
+
+        /// <summary>
         /// Начальный метод
         /// </summary>
         private void Start()
         {
             if (isLocalPlayer)
             {
-                GameObject.Find("ButtonDisconnect").GetComponent<Button>().onClick.AddListener(ListenerForDisconnectButton);
-                GameObject.Find("BackToGameAgainButton").GetComponent<Button>().onClick.AddListener(ListenerForBackToGameButton);
-                GameObject.Find("NetworkManager").GetComponent<NetworkManagerCustom>().StartCoroutineFunc();
+                GameObject.Find("ButtonDisconnect")
+                    .GetComponent<Button>().onClick.AddListener(ListenerForDisconnectButton);
+                GameObject.Find("BackToGameAgainButton")
+                    .GetComponent<Button>().onClick.AddListener(ListenerForBackToGameButton);
+                GameObject.Find("NetworkManager")
+                    .GetComponent<NetworkManagerCustom>().StartCoroutineFunc();
+                dynamicZone = GameObject.Find("DynamicZone");
+                staticZone = GameObject.Find("StaticZone");
                 unitsParent.GetComponent<ScrollRect>().verticalNormalizedPosition = 1;
                 _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money;
                 _xpField.transform.GetChild(0).GetComponent<Text>().text = _playerXP.ToString();
@@ -400,7 +448,7 @@ namespace Game
             {
                 if (Physics.Raycast(ray, out hit, 100, _playerLayer))
                 {
-                    if (hit.collider.transform.parent.
+                    if (hit.collider.
                         GetComponent<PlayerAbstract>().NetID == playerNetID) // Принадлежит ли нам объект
                     {
                         if (_tempRadiusGameObject == null)
@@ -411,7 +459,7 @@ namespace Game
                         }
                         if (!_isRadiusVisible)
                         {
-                            hit.collider.transform.parent.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(true);
+                            hit.collider.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(true);
                             _isRadiusVisible = true;
                             _tempRadiusGameObject = hit.collider.gameObject;
                             PlayAudioForRadius(true);
@@ -420,13 +468,13 @@ namespace Game
                         {
                             if (!_tempRadiusGameObject.Equals(hit.collider.gameObject))
                             {
-                                _tempRadiusGameObject.transform.parent.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
-                                hit.collider.transform.parent.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(true);
+                                _tempRadiusGameObject.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
+                                hit.collider.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(true);
                                 _tempRadiusGameObject = hit.collider.gameObject;
                             }
                             else
                             {
-                                hit.collider.transform.parent.gameObject.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
+                                hit.collider.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
                                 _isRadiusVisible = false;
                                 _tempRadiusGameObject = hit.collider.gameObject;
                                 PlayAudioForRadius(false);
@@ -438,7 +486,7 @@ namespace Game
                 {
                     if (_tempRadiusGameObject != null)
                     {
-                        _tempRadiusGameObject.transform.parent.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
+                        _tempRadiusGameObject.GetComponent<PlayerAbstract>().VisibleRadiusOfAttack(false);
                     }
                     _tempRadiusGameObject = null;
                     _isRadiusVisible = false;
@@ -522,7 +570,8 @@ namespace Game
             objectForInstantiate.name = 
                 objectForInstantiate.GetComponent<PlayerAbstract>().PlayerType +"#" + _numberOfUnits;
             DataPlayer.SetNewSkillsOfUnitForInstantiate(skillString, objectForInstantiate, currentNumber);
-
+            objectForInstantiate.GetComponent<PlayerAbstract>().TypeOfEnemyChoice 
+                = GameObjectsTransformFinder.SetRandomTypeOfEnemyChoiceForPlayerUnit();
             NetworkServer.Spawn(objectForInstantiate);
             GameObjectsTransformFinder
                 .AddToPlayerTransformList(objectForInstantiate.transform);

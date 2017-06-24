@@ -278,6 +278,8 @@ namespace Game
                 + "#Power" + clone.GetComponent<EnemyAbstract>().GetPower() + "#" + _numberOfEnemies;
             clone.GetComponent<EnemyAbstract>().EnemyType = clone.name;
             _numberOfEnemies++;
+            clone.GetComponent<EnemyAbstract>().TypeOfEnemyChoice 
+                = GameObjectsTransformFinder.SetRandomTypeOfEnemyChoiceForPlayerUnit();
             NetworkServer.Spawn(clone);
             GameObjectsTransformFinder
                 .AddToEnemyTransformList(clone.transform);

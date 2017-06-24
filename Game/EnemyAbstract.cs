@@ -3,10 +3,10 @@ using UnityEngine;
 using MovementEffects;
 using UnityEngine.Networking;
 using UnityEngine.AI;
-using System;
 using UpgradeSystemAndData;
 
-namespace Game {
+namespace Game
+{
 
     /// <summary>
     /// Описывает основное поведение врага
@@ -55,11 +55,15 @@ namespace Game {
         protected GameObject _bullet; // bullet-prefab
             [SerializeField, Tooltip("Скорость передвижения врага")]
         protected float _walkSpeed; // walk speed
+            [SerializeField, Tooltip("Радиус видимости")]
+        protected float _radiusOfSearchingPlayerUnit; // search speed
             [SerializeField, Tooltip("Цель атаки для юнита")]
         protected GameObject _attackedObject; // attacked object by player
         protected byte _countOfAttackers; // count attackers of enemy
             [SerializeField, Tooltip("Максимальное количество атакующих")]
         protected byte _maxCountOfAttackers; // max count attackers of enemy
+        [SerializeField, Tooltip("Какого противника искать прежде всего?")]
+        private TypeEnemyChoice typeOfEnemyChoice;
         protected bool _mayDamagedByFire;
         protected float _power;
 
@@ -179,6 +183,19 @@ namespace Game {
             set
             {
                 _hp = value;
+            }
+        }
+
+        public TypeEnemyChoice TypeOfEnemyChoice
+        {
+            get
+            {
+                return typeOfEnemyChoice;
+            }
+
+            set
+            {
+                typeOfEnemyChoice = value;
             }
         }
         #endregion
@@ -307,7 +324,7 @@ namespace Game {
             if (_attackedObject == null)
             {
                 _attackedObject = GameObjectsTransformFinder
-                    .GetPlayerUnit(transform, 1);
+                    .GetPlayerUnit(transform, _radiusOfSearchingPlayerUnit);
             }
 
             if (_attackedObject != null && !_attackFlag)
@@ -712,7 +729,6 @@ namespace Game {
                 _pA.DecreaseCountOfTurrelFighters(gameObject);
                 _pA.ToMoveBack();
                 _pA.ChangeCanToNull();
-                _pA.RestartValues(); // increase AI
                 _pA.ChangeEnemy(); // changing enemy, if it haves
             }
         }

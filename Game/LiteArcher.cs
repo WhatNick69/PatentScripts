@@ -132,7 +132,15 @@ namespace Game
             _agent.speed = _moveSpeed;
             _countOfAmmo = _standartOfAmmo;
 
+            SetTotalPlayerUnitPower();
             StartMethod();
+        }
+
+        protected override void SetTotalPlayerUnitPower()
+        {
+            TotalPlayerUnitPower = _hpTurrel + _standartDmgNear + _standartRadius +
+                _standartDmgFar + _standartOfAmmo + _standartShootingSpeed;
+            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -222,7 +230,7 @@ namespace Game
             if (_attackedObject == null)
             {
                 _attackedObject = GameObjectsTransformFinder
-                    .GetEnemyUnit(transform, _standartRadius / 4, TypeEnemyChoice.Fast);
+                    .GetEnemyUnit(transform, _standartRadius / 4, typeOfEnemyChoice);
             }
 
             if (_attackedObject != null

@@ -98,12 +98,10 @@ namespace Game
                         CmdInstantiate(_cluster);
 
                         Destroy(gameObject);
-                        _parentObject.GetComponent<PlayerAbstract>().RestartValues();
                     }
                     else
                     {
                         Destroy(gameObject);
-                        _parentObject.GetComponent<PlayerAbstract>().RestartValues();
                     }
                 }
             }
