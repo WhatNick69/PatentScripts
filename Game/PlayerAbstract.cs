@@ -390,7 +390,7 @@ namespace Game
         {
             totalPlayerUnitPower 
                 = _hpTurrel + _standartDmgNear + _standartRadius + _attackSpeed + _moveSpeed;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -456,6 +456,8 @@ namespace Game
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            AliveUpdater(); // ИЗ UPDATE
+            AliveDrawerAndNuller(); // ИЗ UPDATE
             // если мы живы
             if (_isAlive)
             {
@@ -541,7 +543,7 @@ namespace Game
         public void SetCamera()
         {
             _mainCamera = Camera.main;
-            Debug.Log("Камера установлена");
+            //Debug.Log("Камера установлена");
         }
 
         /// <summary>
@@ -1204,6 +1206,7 @@ namespace Game
         [ClientRpc]
         protected virtual void RpcChangeAnimation(int i, bool side)
         {
+            //Debug.Log("АНимация");
             _animatorOfPlayer.runtimeAnimatorController
                 = ResourcesPlayerHelper.GetElementFromAnimationsPenguins(i);
             _spriteRenderer.flipX = side;

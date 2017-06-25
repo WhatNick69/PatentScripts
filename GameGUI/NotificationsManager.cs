@@ -49,7 +49,7 @@ namespace GameGUI
         /// <param name="playerName"></param>
         public void ShowConnectingNotification()
         {
-            Debug.Log("1");
+            //Debug.Log("1");
             if (GetComponent<AvatarsManager>().BoolOne) // переделать
             {
                 NetStateNotificationActive(true, netStateNotificationClient1);
@@ -59,7 +59,7 @@ namespace GameGUI
                 animOfNetStateNotificationClient1[netAnimation].speed = 1;
                 animOfNetStateNotificationClient1[netAnimation].time = 0;
                 animOfNetStateNotificationClient1.Play();
-                Debug.Log("2");
+                //Debug.Log("2");
             }
         }
 

@@ -18,10 +18,8 @@ namespace UpgradeSystemAndData
         private GameObject[] upgradeElements;
             [SerializeField, Tooltip("Бар с подтверждением покупки")]
         private GameObject buyButton;
-            [SerializeField, Tooltip("Кнопка вниз")]
-        private GameObject downButton;
-            [SerializeField, Tooltip("Кнопка вверх")]
-        private GameObject upButton;
+            [SerializeField, Tooltip("Кнопка отмены покупки")]
+        private GameObject abortButton;
             [SerializeField, Tooltip("Кнопка назад")]
         private GameObject backButton;
             [SerializeField, Tooltip("Клиент")]
@@ -94,6 +92,19 @@ namespace UpgradeSystemAndData
             set
             {
                 unitName = value;
+            }
+        }
+
+        public GameObject AbortButton
+        {
+            get
+            {
+                return abortButton;
+            }
+
+            set
+            {
+                abortButton = value;
             }
         }
         #endregion
@@ -248,6 +259,7 @@ namespace UpgradeSystemAndData
 
             if (int.Parse(currentXP.text) - (totalCost + tempCostSkill) < 0) return;
 
+            abortButton.SetActive(true);
             // Если это навык с плавающей точкой - парсим его во float. Иначе в int
             if (!upgradeElements[barNumber].GetComponent<Skill>().IsFloat)
             {
@@ -299,6 +311,7 @@ namespace UpgradeSystemAndData
             currentXP.text = (int.Parse(currentXP.text) - (int)totalCost).ToString();
             RefreshDataOfUnit();
             buyButton.SetActive(false);
+            abortButton.SetActive(false);
             totalCost = 0;
         }
 

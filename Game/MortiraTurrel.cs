@@ -55,7 +55,7 @@ namespace Game
         {
             TotalPlayerUnitPower = _hpTurrel + _standartDmgFar 
                 + _standartTimeToReAlive + _standartShootingSpeed;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace Game
                     if (!Physics.Raycast(ray, out hit, 1000, _maskCursor)
                         || hit.collider.gameObject != _childRotatingTurrel.gameObject)
                     {
-                        Debug.Log("Нажали");
+                        //Debug.Log("Нажали");
                         CountActiveMortires--;
                         _targetSpot.SetActive(false);
                     }

@@ -50,7 +50,7 @@ namespace NETControl
             {
                 for (int i = 0; i < NetworkServer.connections.Count; i++)
                 {
-                    Debug.Log(NetworkServer.connections.Count);
+                    //Debug.Log(NetworkServer.connections.Count);
                     if (NetworkServer.connections[i] != null)
                         Debug.Log("Player #" + i + ". He is ready: " + NetworkServer.connections[i].isReady);
                     else

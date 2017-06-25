@@ -8,17 +8,6 @@
     public class LitePenguin
         : PlayerAbstract
     {
-        /// <summary>
-        /// Draw way to enemy
-        /// Alive behavior
-        /// </summary>
-        /// v1.01
-        void Update()
-        {
-            if (!isServer) return; // Выполняется только на сервере
 
-            AliveUpdater();
-            AliveDrawerAndNuller();
-        }
     }
 }

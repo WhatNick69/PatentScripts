@@ -267,7 +267,8 @@ namespace UpgradeSystemAndData
                     }
                     else
                     {
-                        playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
+                        playerHelper.gameObject.GetComponent<TurrelSetControl>()
+                            .ShowPageWithUnitsAndUnshowLoadar();
                     }
                     netMsgController.
                         CmdEnableAvatar(playerHelper.PlayerUniqueName);
@@ -276,7 +277,7 @@ namespace UpgradeSystemAndData
             }
             else if (isServer)
             {
-                Debug.Log("server");
+                //Debug.Log("server");
                 netMsgController.
                     RpcConnectPlayerNotification();
             }
@@ -358,7 +359,7 @@ namespace UpgradeSystemAndData
         private void SavedGameWritten(SavedGameRequestStatus status,
             ISavedGameMetadata game)
         {
-            Debug.Log(status);
+            //Debug.Log(status);
         }
 
         /// <summary>
@@ -420,7 +421,8 @@ namespace UpgradeSystemAndData
             
             LoadDataForUnits();
             isLoaded = true;
-            playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
+            playerHelper.gameObject
+                .GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
         }
 
         /// <summary>
@@ -474,7 +476,8 @@ namespace UpgradeSystemAndData
             LoadDataForUnits();
             popupManager.text += "Local loaded successfully\n";
             isLoaded = true;
-            playerHelper.gameObject.GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
+            playerHelper.gameObject
+                .GetComponent<TurrelSetControl>().ShowPageWithUnitsAndUnshowLoadar();
         }
 
         /// <summary>
@@ -620,7 +623,8 @@ namespace UpgradeSystemAndData
                         values[1];
                     playerUnit.GetComponent<PlayerAbstract>().StandartRadius =
                         values[2];
-                    playerUnit.GetComponent<PlayerAbstract>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<PlayerAbstract>()
+                        .SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
                     playerUnit.GetComponent<PlayerAbstract>().AttackSpeed =
                         values[3];
                     playerUnit.GetComponent<PlayerAbstract>().MoveSpeed =
@@ -634,7 +638,8 @@ namespace UpgradeSystemAndData
                         values[1];
                     playerUnit.GetComponent<LiteArcher>().StandartRadius =
                         values[2];
-                    playerUnit.GetComponent<LiteArcher>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteArcher>()
+                        .SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
                     playerUnit.GetComponent<LiteArcher>().StandartDmgFar =
                         values[3];
                     playerUnit.GetComponent<LiteArcher>().StandartOfAmmo =
@@ -649,7 +654,8 @@ namespace UpgradeSystemAndData
                         values[1];
                     playerUnit.GetComponent<LiteBurner>().StandartRadius =
                         values[2];
-                    playerUnit.GetComponent<LiteBurner>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteBurner>()
+                        .SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
                     playerUnit.GetComponent<LiteBurner>().StandartBurnDmg =
                         values[3];
                     playerUnit.GetComponent<LiteBurner>().StandartOfAmmo =
@@ -662,7 +668,8 @@ namespace UpgradeSystemAndData
                         values[0];
                     playerUnit.GetComponent<LiteTurrel>().StandartRadius =
                         values[1];
-                    playerUnit.GetComponent<LiteTurrel>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteTurrel>()
+                        .SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
                     playerUnit.GetComponent<LiteTurrel>().StandartDmgFar =
                         values[2];
                     playerUnit.GetComponent<LiteTurrel>().StandartShootingSpeed =
@@ -677,7 +684,8 @@ namespace UpgradeSystemAndData
                         values[0];
                     playerUnit.GetComponent<LiteTurrel>().StandartRadius =
                         values[1];
-                    playerUnit.GetComponent<LiteTurrel>().SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
+                    playerUnit.GetComponent<LiteTurrel>()
+                        .SetSizeSadius(playerUnit.GetComponent<PlayerAbstract>().StandartRadius);
                     playerUnit.GetComponent<LiteTurrel>().StandartDmgFar =
                         values[2];
                     playerUnit.GetComponent<LiteTurrel>().StandartShootingSpeed =
@@ -741,7 +749,8 @@ namespace UpgradeSystemAndData
                             un.GetValueSkill("_standartDmgNear");
                         prefab.GetComponent<PlayerAbstract>().StandartRadius =
                             un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<PlayerAbstract>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
+                        prefab.GetComponent<PlayerAbstract>()
+                            .SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
                         prefab.GetComponent<PlayerAbstract>().AttackSpeed =
                             un.GetValueSkill("_attackSpeed");
                         prefab.GetComponent<PlayerAbstract>().MoveSpeed =
@@ -756,7 +765,8 @@ namespace UpgradeSystemAndData
                             un.GetValueSkill("_standartDmgNear");
                         prefab.GetComponent<LiteArcher>().StandartRadius =
                             un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<LiteArcher>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
+                        prefab.GetComponent<LiteArcher>()
+                            .SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
                         prefab.GetComponent<LiteArcher>().StandartDmgFar =
                             un.GetValueSkill("_standartDmgFar");
                         prefab.GetComponent<LiteArcher>().StandartOfAmmo =
@@ -772,7 +782,8 @@ namespace UpgradeSystemAndData
                             un.GetValueSkill("_standartDmgNear");
                         prefab.GetComponent<LiteBurner>().StandartRadius =
                             un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<LiteBurner>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
+                        prefab.GetComponent<LiteBurner>()
+                            .SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
                         prefab.GetComponent<LiteBurner>().StandartBurnDmg =
                             un.GetValueSkill("_standartBurnDmg");
                         prefab.GetComponent<LiteBurner>().StandartOfAmmo =
@@ -786,7 +797,8 @@ namespace UpgradeSystemAndData
                             un.GetValueSkill("_hpTurrel");
                         prefab.GetComponent<LiteTurrel>().StandartRadius =
                             un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<LiteTurrel>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
+                        prefab.GetComponent<LiteTurrel>()
+                            .SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
                         prefab.GetComponent<LiteTurrel>().StandartDmgFar =
                             un.GetValueSkill("_standartDmgFar");
                         prefab.GetComponent<LiteTurrel>().StandartShootingSpeed =
@@ -802,7 +814,8 @@ namespace UpgradeSystemAndData
                             un.GetValueSkill("_hpTurrel");
                         prefab.GetComponent<LiteTurrel>().StandartRadius =
                             un.GetValueSkill("_standartRadius");
-                        prefab.GetComponent<LiteTurrel>().SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
+                        prefab.GetComponent<LiteTurrel>()
+                            .SetSizeSadius(prefab.GetComponent<PlayerAbstract>().StandartRadius);
                         prefab.GetComponent<LiteTurrel>().StandartDmgFar =
                             un.GetValueSkill("_standartDmgFar");
                         prefab.GetComponent<LiteTurrel>().StandartShootingSpeed =

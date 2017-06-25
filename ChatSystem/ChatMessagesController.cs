@@ -58,7 +58,7 @@ namespace ChatSystem
         [Command]
         private void CmdSendMessage(string text,Color color)
         {
-            Debug.Log("CMDSending..");
+            //Debug.Log("CMDSending..");
             RpcSendMessage(text,color);
         }
 
@@ -70,7 +70,7 @@ namespace ChatSystem
         [ClientRpc]
         private void RpcSendMessage(string text,Color color)
         {
-            Debug.Log("RPCSending..");
+            //Debug.Log("RPCSending..");
 
             GameObject newMessageObject = Instantiate(chatMessage);
             newMessageObject.transform.GetComponentInChildren<Text>().text = text;

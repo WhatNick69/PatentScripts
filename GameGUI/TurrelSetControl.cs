@@ -144,10 +144,24 @@ namespace GameGUI
         {
             ShowPageWithUnits();
             buyButtonFromUpgradeSystem.SetActive(false);
+            upgradeSystem.GetComponent<UpgradeSystem>().AbortButton.SetActive(false);
             upgradeSystem.SetActive(false);
             upgradeSystem.GetComponent<UpgradeSystem>().TotalCost = 0;
             upgradeSystem.GetComponent<UpgradeSystem>().UnshowUpgradeElements();
             upgradeSystem.GetComponent<UpgradeSystem>().ShowAddButtonsInUpgradeElements();
+        }
+
+        /// <summary>
+        /// Отменить покупку
+        /// </summary>
+        public void AbortBuy()
+        {
+            buyButtonFromUpgradeSystem.SetActive(false);
+            upgradeSystem.GetComponent<UpgradeSystem>().AbortButton.SetActive(false);
+            upgradeSystem.GetComponent<UpgradeSystem>().TotalCost = 0;
+            upgradeSystem.GetComponent<UpgradeSystem>().
+                    InitialUpgradeUnit(GetComponent<PlayerHelper>()
+                    .GetNameElementUnits(_unitNumber));
         }
     }
 }

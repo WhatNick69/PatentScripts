@@ -140,18 +140,7 @@ namespace Game
         {
             TotalPlayerUnitPower = _hpTurrel + _standartDmgNear + _standartRadius +
                 _standartDmgFar + _standartOfAmmo + _standartShootingSpeed;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
-        }
-
-        /// <summary>
-        /// Обновление
-        /// </summary>
-        void Update()
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            AliveUpdater();
-            AliveDrawerAndNuller();
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -205,6 +194,8 @@ namespace Game
         {
             if (!isServer) return;
 
+            AliveUpdater(); // ИЗ UPDATE
+            AliveDrawerAndNuller(); // ИЗ UPDATE
             if (_isAlive)
             {
                 ChangeEnemy();
@@ -361,7 +352,7 @@ namespace Game
                          gameObject.transform.position.z > _startPosition.z + _maxEdge ||
                              gameObject.transform.position.z < _startPosition.z - _maxEdge)
             {
-                Debug.Log("Превысили");
+                //Debug.Log("Превысили");
                 RemoveFromList(_attackedObject);
                 _isReturning = true;
                 Decreaser();

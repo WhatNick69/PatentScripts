@@ -186,7 +186,7 @@ namespace NETControl
             fromJoinToMainButton = GameObject.Find("ButtonBackFromJoinMenu");
             startHostButton = GameObject.Find("ButtonStartHost");
             closeAppButton = GameObject.Find("ButtonExitGame");
-            fieldIPAdress = GameObject.Find("InputFieldIPAdress");
+            fieldIPAdress = GameObject.Find("RoomNameInput");
             fieldPassword = GameObject.Find("PasswordInput");
             achievementsButton = GameObject.Find("AchButton");
             leaderBoardButton = GameObject.Find("LeadButton");
@@ -239,7 +239,7 @@ namespace NETControl
             }
             else
             {
-                Debug.Log("isNotOnline");
+                //Debug.Log("isNotOnline");
                 startHostButton.transform.
                     GetComponentInChildren<Text>().text = "Play offline";
                 openJoinMenuButton.SetActive(false);
@@ -381,13 +381,13 @@ namespace NETControl
                 fieldPassword.transform.GetComponentInChildren<Text>().text;
             if (isOnline)
             {
-                Debug.Log("ONLINE");
+                //Debug.Log("ONLINE");
                 timeForDisconnect = 5.5f;
                 HostRoom(ipAdress, 2);
             }
             else
             {
-                Debug.Log("OFFLINE");
+                //Debug.Log("OFFLINE");
                 timeForDisconnect = 5f;
                 SetPort();
                 singleton.StartHost();
@@ -567,7 +567,7 @@ namespace NETControl
             gameoverRestartButton.GetComponent<Button>().onClick.RemoveAllListeners();
             gameoverRestartButton.GetComponent<Button>().onClick.AddListener(EventForRestart);
             gameoverRestartButton.transform.parent.gameObject.SetActive(false);
-            Debug.Log("Our network-state is: " + NetworkManager.singleton.IsClientConnected());
+            //Debug.Log("Our network-state is: " + NetworkManager.singleton.IsClientConnected());
         }
 
         /// <summary>

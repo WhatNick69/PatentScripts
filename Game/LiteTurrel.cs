@@ -173,7 +173,7 @@ namespace Game {
         {
             TotalPlayerUnitPower = _hpTurrel + _standartRadius + _standartDmgFar +
                 _standartShootingSpeed + _standartTimeToReAlive;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         /// <summary>
@@ -183,6 +183,8 @@ namespace Game {
         {
             if (!isServer) return; // Выполняется только на сервере
 
+            AliveUpdater(); // ИЗ UPDATE
+            AliveDrawerAndNuller(); // ИЗ UPDATE
             if (_isAlive)
             {
                 if (mayToCheckForEnemy) ChangeEnemy();
@@ -212,18 +214,6 @@ namespace Game {
             {
                 _isFighting = true;
             }
-        }
-
-        /// <summary>
-        /// Обновление
-        /// </summary>
-        /// v1.01
-        void Update()
-        {
-            if (!isServer) return; // Выполняется только на сервере
-
-            AliveUpdater();
-            AliveDrawerAndNuller();
         }
 
         /// <summary>
@@ -360,7 +350,7 @@ namespace Game {
                         _attackedObject.transform.position.z > _startPosition.z + _maxEdge ||
                             _attackedObject.transform.position.z < _startPosition.z - _maxEdge)
             {
-                Debug.Log(gameObject.name + " " + "Превышен лимит. Обнуляемся");
+                //Debug.Log(gameObject.name + " " + "Превышен лимит. Обнуляемся");
                 Decreaser();
                 NullAttackedObject();
             }
@@ -377,8 +367,8 @@ namespace Game {
         {
             if (_attackedObject != null)
             {
-                Debug.DrawLine(gameObject.transform.position,
-                    _attackedObject.transform.position, Color.blue);
+                //Debug.DrawLine(gameObject.transform.position,
+                    //_attackedObject.transform.position, Color.blue);
                 _attackedObject.transform.position = new Vector3(_attackedObject.transform.position.x,
                     0, _attackedObject.transform.position.z);
 

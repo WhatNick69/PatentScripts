@@ -87,7 +87,7 @@ namespace Game
                     _parentObject.GetComponent<PlayerAbstract>().PlayerType, _dmgBullet, 1) != 0
                         && _countOfPenetrations > 0)
                 {
-                    Debug.Log("Снижено");
+                    //Debug.Log("Снижено");
                     _countOfPenetrations--;
                 }
                 else

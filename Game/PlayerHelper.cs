@@ -126,8 +126,9 @@ namespace Game
                     UpgradeSystem.GetComponent<UpgradeSystem>().
                     CheckMoneyAndValueForButtons();
                 _money = _money + value;
-                //if (_money < 0) _money = 0;
-                _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money; // обновить деньги
+                if (_money > 999999) _money = 999999;
+                _moneyfield.transform.GetChild(0)
+                    .GetComponent<Text>().text = _money.ToString(); // обновить деньги
             }
         }
 
@@ -154,7 +155,9 @@ namespace Game
             set
             {
                 _playerXP = _playerXP + value;
-                _xpField.transform.GetChild(0).GetComponent<Text>().text = _playerXP.ToString(); // обновить деньги
+                if (_playerXP > 999999) _playerXP = 999999;
+                _xpField.transform.GetChild(0)
+                    .GetComponent<Text>().text = _playerXP.ToString(); // обновить опыт
             }
         }
 
@@ -334,7 +337,7 @@ namespace Game
                 dynamicZone = GameObject.Find("DynamicZone");
                 staticZone = GameObject.Find("StaticZone");
                 unitsParent.GetComponent<ScrollRect>().verticalNormalizedPosition = 1;
-                _moneyfield.transform.GetChild(0).GetComponent<Text>().text = "$" + _money;
+                _moneyfield.transform.GetChild(0).GetComponent<Text>().text =  _money.ToString();
                 _xpField.transform.GetChild(0).GetComponent<Text>().text = _playerXP.ToString();
 
                 _roadLayer = 1 << 8; // дорога (пингвины)
@@ -416,14 +419,14 @@ namespace Game
                     if (_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _roadLayer))
                     {
-                        Debug.Log("Создали динамику");
+                        //Debug.Log("Создали динамику");
                         LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         InstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита\
                     }
                     else if (!_units[_currentUnit].GetComponent<PlayerAbstract>().IsDynamic &&
                         Physics.Raycast(ray, out hit, 100, _groundLayer))
                     {
-                        Debug.Log("Создали статику");
+                        //Debug.Log("Создали статику");
                         LabelSet(1, _units[_currentUnit].GetComponent<PlayerAbstract>().Cost);
                         InstantiateObject(_target, _currentUnit, _money); // запрос на сервер на инстанс юнита
                     }
@@ -527,7 +530,7 @@ namespace Game
             bool flag;
 
             flag = _money - _units[_currentUnit].GetComponent<PlayerAbstract>().Cost >= 0 ? true : false;
-            Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
+           // Debug.Log("Деньги: " + _money + "\r\n" + "Стоимость: " + _units[_currentUnit].GetComponent<PlayerAbstract>().Cost + "\r\n" + "Разрешение: " + flag);
             //gO.GetComponent<PlayerHelper>()._moneyFlag = flag;
         }
 

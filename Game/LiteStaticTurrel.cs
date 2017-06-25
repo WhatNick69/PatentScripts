@@ -159,7 +159,7 @@ namespace Game
         {
             TotalPlayerUnitPower = _hpTurrel + _mineDamage 
                 + _standartReloadTime + _standartTimeToReAlive;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         private void SetMinesPerSecond()
@@ -193,12 +193,17 @@ namespace Game
             {
                 SyncRotation();
             }
+            else if (isServer)
+            {
+                // ИЗ UPDATE
+                UpdateMethod();
+            }
         }
 
         /// <summary>
-        /// Обновление
+        /// Обновление. Раньше он был Update
         /// </summary>
-        private void Update()
+        private void UpdateMethod()
         {
             if (!isServer) return;
 
@@ -233,7 +238,7 @@ namespace Game
         /// </summary>
         void CheckRoad()
         {
-            Debug.Log(gameObject.name + " загружен!");
+            //Debug.Log(gameObject.name + " загружен!");
             for (int i = 0; i < 360; i++)
             {
                 ray = new Ray(transform.position, transform.forward);

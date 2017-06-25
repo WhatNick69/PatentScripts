@@ -53,7 +53,7 @@ namespace Game
         public static void RemoveFromPlayerTransformList(Transform transPlayer)
         {
             playerTransformList.Remove(transPlayer);
-            Debug.Log(enemyTransformList.Count);
+            //Debug.Log(enemyTransformList.Count);
         }
 
         /// <summary>
@@ -63,7 +63,6 @@ namespace Game
         public static void AddToPlayerTransformList(Transform transPlayer)
         {
             playerTransformList.Add(transPlayer);
-            Debug.Log(enemyTransformList.Count);
         }
 
         /// <summary>

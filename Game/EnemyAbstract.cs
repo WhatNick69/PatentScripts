@@ -281,27 +281,6 @@ namespace Game
         }
 
         /// <summary>
-        /// Обновление
-        /// </summary>
-        public void Update()
-        {
-            if (!isServer) return; // Метод выполняется только на сервере!
-
-            if (_isAlive)
-            {
-                AttackShell();
-            }
-            else
-            {
-                if (_walkSpeed != 0)
-                {
-                    transform.StopFollowing();
-                    RpcChangeAnimation(2, false);
-                }
-            }
-        }
-
-        /// <summary>
         /// Константное обновление
         /// </summary>
         private void FixedUpdate()
@@ -310,9 +289,18 @@ namespace Game
 
             if (_isAlive)
             {
+                AttackShell(); // ИЗ UPDATE
                 Mover();
-
                 VectorCalculating();
+            }
+            else
+            {
+                // ТЕЛО ИЗ UPDATE
+                if (_walkSpeed != 0)
+                {
+                    transform.StopFollowing();
+                    RpcChangeAnimation(2, false);
+                }
             }
         }
 
@@ -446,7 +434,7 @@ namespace Game
         /// </summary>
         public void CallToFight()
         {
-            Debug.Log("Подозвали драться");
+            //Debug.Log("Подозвали драться");
             try
             {
                 if (_isAlive
@@ -456,11 +444,14 @@ namespace Game
                             && _attackedObject.GetComponent<PlayerAbstract>().
                                 AttackedObject.transform.GetComponent<EnemyAbstract>().AttackedObject == null)
                 {
-                    Debug.Log("Подозвал драться");
+                    //Debug.Log("Подозвал драться");
                     _attackedObject.GetComponent<PlayerAbstract>().SetEnemyOfPlayer(gameObject);
                 }
             }
-            catch { Debug.Log("Ошибка"); }
+            catch
+            { 
+                //Debug.Log("Ошибка"); 
+            }
         }
 
         /// <summary>

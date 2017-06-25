@@ -366,7 +366,7 @@ namespace Game
         [Command]
         public void CmdStopGeneralSounds()
         {
-            Debug.Log("Остановили");
+            //Debug.Log("Остановили");
             RpcStopGeneralSounds();
         }
 

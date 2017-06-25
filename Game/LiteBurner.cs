@@ -23,7 +23,7 @@ namespace Game
         {
             TotalPlayerUnitPower = _hpTurrel + _standartDmgNear + _standartRadius +
                 _standartBurnDmg + _standartOfAmmo + _standartShootingSpeed;
-            Debug.Log("Посчитано: " + TotalPlayerUnitPower);
+            //Debug.Log("Посчитано: " + TotalPlayerUnitPower);
         }
 
         public float StandartBurnDmg
@@ -50,7 +50,7 @@ namespace Game
             _instantier.transform.LookAt(_attackedObject.transform.position
                 + _plusPos);
 
-            Debug.DrawLine(_instantier.transform.position, _attackedObject.transform.position + _plusPos, Color.red,1);
+            //Debug.DrawLine(_instantier.transform.position, _attackedObject.transform.position + _plusPos, Color.red,1);
             CmdInstantiate(_bullet);
             _countOfAmmo--;
             _coroutineShoot = true;
